@@ -64,6 +64,11 @@ body {
   transition: margin-right 0.25s ease;
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
 @media (max-width: 1023px) {
   .adm-sidebar { transform: translateX(100%); }
   .adm-sidebar.is-open { transform: translateX(0); }

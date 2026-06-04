@@ -107,8 +107,11 @@ export default function Topbar({ onMenuToggle }) {
         </div>
 
         {actionLabel && (
-          <Button variant="primary" style={{ height: 34, fontSize: 12.5 }}
-            className="hidden sm:inline-flex">
+          <Button
+            variant="primary" style={{ height: 34, fontSize: 12.5 }}
+            className="hidden sm:inline-flex"
+            onClick={() => window.dispatchEvent(new CustomEvent('topbar:action'))}
+          >
             {actionLabel}
           </Button>
         )}
