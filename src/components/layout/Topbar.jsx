@@ -1,5 +1,6 @@
-import { useLocation } from 'react-router-dom'
-import { Bell, RefreshCw, Search, Menu } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useLocation, useMatch } from 'react-router-dom'
+import { Bell, RefreshCw, Search, Menu, Check, Eye } from 'lucide-react'
 import Button from '../ui/Button'
 
 const PAGE_META = {
@@ -40,8 +41,23 @@ const IconBtn = ({ children, ...props }) => (
 
 export default function Topbar({ onMenuToggle }) {
   const { pathname } = useLocation()
+  const builderMatch = useMatch('/admin/templates/:id/edit')
+  const isBuilder = !!builderMatch
+
+  const [builderName, setBuilderName] = useState('')
+
+  useEffect(() => {
+    if (!isBuilder) setBuilderName('')
+  }, [isBuilder])
+
+  useEffect(() => {
+    const h = e => setBuilderName(e.detail?.name ?? '')
+    window.addEventListener('topbar:builder-name', h)
+    return () => window.removeEventListener('topbar:builder-name', h)
+  }, [])
+
   const meta = PAGE_META[pathname] ?? { name: '', section: 'الرئيسية' }
-  const actionLabel = ACTION_LABELS[pathname]
+  const actionLabel = isBuilder ? null : ACTION_LABELS[pathname]
 
   return (
     <header
@@ -57,15 +73,36 @@ export default function Topbar({ onMenuToggle }) {
     >
       {/* Page info — first in DOM = rightmost in RTL */}
       <div style={{ flexShrink: 0 }}>
-        <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
-          الرئيسية
-          {meta.section !== 'الرئيسية' && (
-            <> · <span style={{ color: 'var(--c-text-2)' }}>{meta.section}</span></>
-          )}
-        </div>
-        <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)', marginTop: 3, lineHeight: 1 }}>
-          {meta.name}
-        </div>
+        {isBuilder ? (
+          <>
+            <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
+              الرئيسية
+              <span style={{ margin: '0 3px' }}>·</span>
+              <span style={{ color: 'var(--c-text-2)' }}>القوالب</span>
+              {builderName && (
+                <>
+                  <span style={{ margin: '0 3px' }}>·</span>
+                  <span style={{ color: 'var(--c-text)' }}>{builderName}</span>
+                </>
+              )}
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)', marginTop: 3, lineHeight: 1 }}>
+              محرّر القالب
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
+              الرئيسية
+              {meta.section !== 'الرئيسية' && (
+                <> · <span style={{ color: 'var(--c-text-2)' }}>{meta.section}</span></>
+              )}
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)', marginTop: 3, lineHeight: 1 }}>
+              {meta.name}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Search — centered */}
@@ -93,27 +130,51 @@ export default function Topbar({ onMenuToggle }) {
 
       {/* Actions — last in DOM = leftmost in RTL */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <IconBtn><RefreshCw size={15} strokeWidth={1.8} /></IconBtn>
+        {isBuilder ? (
+          <>
+            <Button
+              variant="ghost"
+              style={{ height: 34, fontSize: 12.5 }}
+              className="hidden sm:inline-flex"
+            >
+              <Eye size={14} />
+              معاينة
+            </Button>
+            <Button
+              variant="primary"
+              style={{ height: 34, fontSize: 12.5 }}
+              className="hidden sm:inline-flex"
+              onClick={() => window.dispatchEvent(new CustomEvent('topbar:builder-save'))}
+            >
+              حفظ القالب
+              <Check size={14} />
+            </Button>
+          </>
+        ) : (
+          <>
+            <IconBtn><RefreshCw size={15} strokeWidth={1.8} /></IconBtn>
 
-        <div style={{ position: 'relative' }}>
-          <IconBtn>
-            <Bell size={15} strokeWidth={1.8} />
-          </IconBtn>
-          <span style={{
-            position: 'absolute', top: 5, right: 5,
-            width: 7, height: 7, borderRadius: '50%',
-            background: 'var(--c-rejected)', border: '1.5px solid #fff',
-          }} />
-        </div>
+            <div style={{ position: 'relative' }}>
+              <IconBtn>
+                <Bell size={15} strokeWidth={1.8} />
+              </IconBtn>
+              <span style={{
+                position: 'absolute', top: 5, right: 5,
+                width: 7, height: 7, borderRadius: '50%',
+                background: 'var(--c-rejected)', border: '1.5px solid #fff',
+              }} />
+            </div>
 
-        {actionLabel && (
-          <Button
-            variant="primary" style={{ height: 34, fontSize: 12.5 }}
-            className="hidden sm:inline-flex"
-            onClick={() => window.dispatchEvent(new CustomEvent('topbar:action'))}
-          >
-            {actionLabel}
-          </Button>
+            {actionLabel && (
+              <Button
+                variant="primary" style={{ height: 34, fontSize: 12.5 }}
+                className="hidden sm:inline-flex"
+                onClick={() => window.dispatchEvent(new CustomEvent('topbar:action'))}
+              >
+                {actionLabel}
+              </Button>
+            )}
+          </>
         )}
 
         {/* Hamburger — mobile only */}
