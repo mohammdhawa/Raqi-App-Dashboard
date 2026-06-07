@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5176/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5175/)",
+      "Bash(node delete_doc_test.js)",
+      "Read(//c//**)",
+      "Bash(pwd -W)",
+      "Bash(wslpath -w /tmp/pwtest/delete_modal.png)",
+      "Bash(mount)",
+      "Bash(rm -f /tmp/pwtest/delete_doc_test.js /tmp/pwtest/delete_modal.png /c/tmp/pwtest/delete_doc_test.js)",
+      "Bash(kill %1)",
+      "Bash(pkill -f \"vite\")",
+      "Read(//c/Users/ragab/Desktop/work/**)",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -X POST http://localhost:8000/api/login -H \"Content-Type: application/json\" -H \"Accept: application/json\" -d '{\"email\":\"admin@alraqi.com\",\"password\":\"MoH.1822\"}')",
+      "Bash(node -e \"const i=require\\('lucide-react'\\); ['CalendarCheck','ClipboardCheck','LogIn','LogOut','MapPin','Camera','ClipboardList','ChevronDown','UserCheck','Fingerprint','ScanFace'].forEach\\(n=>console.log\\(n, !!i[n]\\)\\)\")",
+      "Bash(tasklist)",
+      "Bash(findstr -i \"node vite\")",
+      "Bash(ls .claude/skills)",
+      "Bash(ls /c/tmp/pwtest)",
+      "Bash(ls \"c:\\\\tmp\\\\pwtest\")",
+      "Bash(node attendance_test.js)",
+      "Bash(cd \"c:\\\\Users\\\\ragab\\\\Desktop\\\\work\\\\dashboard\" && ls node_modules | grep -i playwright; npm ls playwright 2>/dev/null; find / -maxdepth 4 -iname \"playwright\" -type d 2>/dev/null | head -5)",
+      "Bash(ls -la /tmp/pwtest/*.png | tail -8 && cp /tmp/pwtest/attendance_*.png /c/tmp/pwtest/ && ls /c/tmp/pwtest/*.png)",
+      "Bash(node attendance_test2.js)",
+      "Bash(find / -maxdepth 6 -iname \"attendance_test2.js\" 2>/dev/null)",
+      "Bash(rm -f /tmp/pwtest/attendance_test*.js /tmp/pwtest/attendance_*.png /c/tmp/pwtest/attendance_*.js /c/tmp/pwtest/attendance_*.png && echo cleaned)"
+    ],
+    "additionalDirectories": [
+      "\\tmp\\pwtest"
+    ]
+  }
+}

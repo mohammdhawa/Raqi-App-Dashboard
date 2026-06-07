@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useMatch } from 'react-router-dom'
-import { Bell, RefreshCw, Search, Menu, Check, Eye } from 'lucide-react'
+import { Bell, RefreshCw, Search, Menu, Check } from 'lucide-react'
 import Button from '../ui/Button'
 
 const PAGE_META = {
@@ -9,7 +9,9 @@ const PAGE_META = {
   '/documents/sent':    { name: 'الصادر',             section: 'المستندات' },
   '/documents/drafts':  { name: 'المسودات',           section: 'المستندات' },
   '/documents/archive': { name: 'الأرشيف',            section: 'المستندات' },
+  '/admin/documents':   { name: 'كل المستندات',       section: 'الإدارة' },
   '/admin/users':       { name: 'الأشخاص والصلاحيات', section: 'الإدارة' },
+  '/admin/attendance':  { name: 'الحضور والانصراف',   section: 'الإدارة' },
   '/admin/departments': { name: 'الإدارات',           section: 'الإدارة' },
   '/admin/sections':    { name: 'الأقسام',            section: 'الإدارة' },
   '/admin/templates':   { name: 'قوالب المستندات',    section: 'الإدارة' },
@@ -45,10 +47,18 @@ export default function Topbar({ onMenuToggle }) {
   const isBuilder = !!builderMatch
 
   const [builderName, setBuilderName] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (!isBuilder) setBuilderName('')
   }, [isBuilder])
+
+  const handleRefresh = () => {
+    if (refreshing) return
+    setRefreshing(true)
+    window.dispatchEvent(new CustomEvent('topbar:refresh'))
+    setTimeout(() => setRefreshing(false), 700)
+  }
 
   useEffect(() => {
     const h = e => setBuilderName(e.detail?.name ?? '')
@@ -132,27 +142,26 @@ export default function Topbar({ onMenuToggle }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         {isBuilder ? (
           <>
-            <Button
-              variant="ghost"
-              style={{ height: 34, fontSize: 12.5 }}
-              className="hidden sm:inline-flex"
-            >
-              <Eye size={14} />
-              معاينة
-            </Button>
-            <Button
-              variant="primary"
-              style={{ height: 34, fontSize: 12.5 }}
-              className="hidden sm:inline-flex"
-              onClick={() => window.dispatchEvent(new CustomEvent('topbar:builder-save'))}
-            >
-              حفظ القالب
-              <Check size={14} />
-            </Button>
+            <span className="hidden sm:inline-flex">
+              <Button
+                variant="primary"
+                style={{ height: 34, fontSize: 12.5 }}
+                onClick={() => window.dispatchEvent(new CustomEvent('topbar:builder-save'))}
+              >
+                حفظ القالب
+                <Check size={14} />
+              </Button>
+            </span>
           </>
         ) : (
           <>
-            <IconBtn><RefreshCw size={15} strokeWidth={1.8} /></IconBtn>
+            <IconBtn onClick={handleRefresh} aria-label="تحديث">
+              <RefreshCw
+                size={15}
+                strokeWidth={1.8}
+                style={{ animation: refreshing ? 'spin 0.7s linear' : 'none' }}
+              />
+            </IconBtn>
 
             <div style={{ position: 'relative' }}>
               <IconBtn>
@@ -166,21 +175,24 @@ export default function Topbar({ onMenuToggle }) {
             </div>
 
             {actionLabel && (
-              <Button
-                variant="primary" style={{ height: 34, fontSize: 12.5 }}
-                className="hidden sm:inline-flex"
-                onClick={() => window.dispatchEvent(new CustomEvent('topbar:action'))}
-              >
-                {actionLabel}
-              </Button>
+              <span className="hidden sm:inline-flex">
+                <Button
+                  variant="primary" style={{ height: 34, fontSize: 12.5 }}
+                  onClick={() => window.dispatchEvent(new CustomEvent('topbar:action'))}
+                >
+                  {actionLabel}
+                </Button>
+              </span>
             )}
           </>
         )}
 
         {/* Hamburger — mobile only */}
-        <IconBtn className="lg:hidden" onClick={onMenuToggle} aria-label="القائمة">
-          <Menu size={17} strokeWidth={1.8} />
-        </IconBtn>
+        <span className="lg:hidden">
+          <IconBtn onClick={onMenuToggle} aria-label="القائمة">
+            <Menu size={17} strokeWidth={1.8} />
+          </IconBtn>
+        </span>
       </div>
     </header>
   )

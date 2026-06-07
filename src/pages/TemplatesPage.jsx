@@ -1,15 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../services/api'
+import { useToast } from '../components/ui/Toast'
 import {
   LayoutTemplate, Search, Pencil, Trash2, Copy, X,
   AlertCircle, CheckCircle2,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
-
-const API = import.meta.env.VITE_API_URL ?? ''
-const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
-const TEMPLATES_URL = `${API}/admin/document-templates`
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 
@@ -116,7 +113,8 @@ function TypePill({ type }) {
       padding: '4px 10px', borderRadius: 8,
       fontSize: 12, fontWeight: 700,
       background: c.bg, color: c.color,
-      whiteSpace: 'nowrap',
+      whiteSpace: 'nowrap', maxWidth: '100%',
+      overflow: 'hidden', textOverflow: 'ellipsis',
     }}>
       {type}
     </span>
@@ -169,7 +167,7 @@ function TplRow({ tpl, last, onEdit, onDuplicate, onDelete }) {
       </div>
 
       {/* Type */}
-      <div style={{ flex: '0 0 110px' }}>
+      <div style={{ flex: '0 0 140px', minWidth: 0, overflow: 'hidden' }}>
         <TypePill type={tpl.type} />
       </div>
 
@@ -303,7 +301,7 @@ function CreateDrawer({ onClose, onCreated }) {
         is_active:    form.is_active,
         fields_schema: [],
       }
-      const res = await axios.post(TEMPLATES_URL, payload, { headers: authHeaders() })
+      const res = await api.post('/admin/document-templates', payload)
       onCreated(res.data.template)
     } catch (e) {
       const errs = e.response?.data?.errors
@@ -463,7 +461,7 @@ function DeleteModal({ tpl, onClose, onDeleted }) {
   const handleDelete = async () => {
     setDel(true)
     try {
-      const res = await axios.delete(`${TEMPLATES_URL}/${tpl.id}`, { headers: authHeaders() })
+      const res = await api.delete(`/admin/document-templates/${tpl.id}`)
       const wasDeactivated = (res.data?.message ?? '').toLowerCase().includes('deactivated')
       onDeleted(wasDeactivated)
     } catch { /* noop */ } finally { setDel(false) }
@@ -523,7 +521,7 @@ function DeleteModal({ tpl, onClose, onDeleted }) {
 
 const COLS = [
   { label: 'القالب',    flex: '0 0 200px' },
-  { label: 'النوع',     flex: '0 0 110px' },
+  { label: 'النوع',     flex: '0 0 140px' },
   { label: 'الحقول',   flex: '0 0 80px', center: true },
   { label: 'المستندات', flex: '0 0 80px', center: true },
   { label: 'النسخة',   flex: '0 0 64px' },
@@ -540,6 +538,7 @@ const FILTER_TABS = [
 
 export default function TemplatesPage() {
   const navigate = useNavigate()
+  const toast = useToast()
 
   const [templates, setTemplates] = useState([])
   const [loading, setLoading]     = useState(true)
@@ -554,11 +553,11 @@ export default function TemplatesPage() {
     try {
       const params = {}
       if (search) params.search = search
-      if (filter === 'active')   params.is_active = 1
-      if (filter === 'inactive') params.is_active = 0
-      const res = await axios.get(TEMPLATES_URL, { params, headers: authHeaders() })
+      const res = await api.get('/document-templates', { params })
       const raw  = res.data.templates
-      const list = raw?.data ?? (Array.isArray(raw) ? raw : [])
+      let list = raw?.data ?? (Array.isArray(raw) ? raw : [])
+      if (filter === 'active')   list = list.filter(t => t.is_active)
+      if (filter === 'inactive') list = list.filter(t => !t.is_active)
       setTemplates(list)
       setTotal(raw?.total ?? list.length)
     } catch { setTemplates([]) } finally { setLoading(false) }
@@ -572,6 +571,12 @@ export default function TemplatesPage() {
     window.addEventListener('topbar:action', h)
     return () => window.removeEventListener('topbar:action', h)
   }, [])
+
+  // Topbar refresh button
+  useEffect(() => {
+    window.addEventListener('topbar:refresh', fetchTemplates)
+    return () => window.removeEventListener('topbar:refresh', fetchTemplates)
+  }, [fetchTemplates])
 
   const activeCount = templates.filter(t => t.is_active).length
 
@@ -591,9 +596,10 @@ export default function TemplatesPage() {
         is_active:     false,
         fields_schema: tpl.fields_schema ?? [],
       }
-      await axios.post(TEMPLATES_URL, payload, { headers: authHeaders() })
+      await api.post('/admin/document-templates', payload)
+      toast.success('تم تكرار القالب بنجاح')
       fetchTemplates()
-    } catch { /* noop */ }
+    } catch { toast.error('تعذّر تكرار القالب') }
   }
 
   return (
@@ -759,7 +765,7 @@ export default function TemplatesPage() {
         <DeleteModal
           tpl={deleteTarget}
           onClose={() => setDel(null)}
-          onDeleted={() => { setDel(null); fetchTemplates() }}
+          onDeleted={wasDeactivated => { toast.success(wasDeactivated ? 'تم تعطيل القالب (مرتبط بمستندات)' : 'تم حذف القالب بنجاح'); setDel(null); fetchTemplates() }}
         />
       )}
     </div>

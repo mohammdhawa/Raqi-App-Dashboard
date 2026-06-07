@@ -1,19 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
+import api from '../services/api'
+import { useToast } from '../components/ui/Toast'
 import {
   Users, Settings, Shield, Search, Pencil, Trash2,
   X, User, Mail, Lock, Eye, EyeOff, Star, AlertCircle, Crown,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
-
-const API = import.meta.env.VITE_API_URL ?? ''
-const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
-
-// Base API paths (no /api prefix — the env var already ends at the domain root)
-const USERS_URL    = `${API}/admin/users`
-const DEPTS_URL    = `${API}/admin/departments`
-const SECTIONS_URL = `${API}/admin/sections`
-
 
 // ── Primitive components ──────────────────────────────────────────────────────
 
@@ -270,9 +262,8 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
   // Fetch sections whenever department changes
   useEffect(() => {
     if (!form.department_id) { setSections([]); return }
-    axios.get(SECTIONS_URL, {
+    api.get('/admin/sections', {
       params: { department_id: form.department_id },
-      headers: authHeaders(),
     })
       .then(res => setSections(res.data.sections?.data ?? res.data.sections ?? []))
       .catch(() => setSections([]))
@@ -304,9 +295,9 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
     try {
       const payload = buildPayload()
       if (isEdit) {
-        await axios.patch(`${USERS_URL}/${user.id}`, payload, { headers: authHeaders() })
+        await api.patch(`/admin/users/${user.id}`, payload)
       } else {
-        await axios.post(USERS_URL, payload, { headers: authHeaders() })
+        await api.post('/admin/users', payload)
       }
       onSave()
     } catch (e) {
@@ -527,7 +518,7 @@ function DeleteModal({ user, onClose, onConfirm }) {
     setError('')
     setDeleting(true)
     try {
-      await axios.delete(`${USERS_URL}/${user.id}`, { headers: authHeaders() })
+      await api.delete(`/admin/users/${user.id}`)
       onConfirm()
     } catch (e) {
       setError(e.response?.data?.message ?? 'تعذّر حذف المستخدم.')
@@ -609,6 +600,7 @@ function SkeletonRow() {
 const TABLE_COLS = ['المستخدم', 'الدور', 'الإدارة', 'القسم', 'تسجيل الحضور', 'إجراءات']
 
 export default function UsersPage() {
+  const toast = useToast()
   const [users, setUsers]           = useState([])
   const [departments, setDepts]     = useState([])
   const [loading, setLoading]       = useState(true)
@@ -630,7 +622,7 @@ export default function UsersPage() {
       if (search)     params.search        = search
       if (roleFilter) params.role          = roleFilter
       if (deptFilter) params.department_id = deptFilter
-      const res = await axios.get(USERS_URL, { params, headers: authHeaders() })
+      const res = await api.get('/admin/users', { params })
       const pagination = res.data.users
       setUsers(pagination.data ?? [])
       setPage(pagination.current_page ?? targetPage)
@@ -645,7 +637,7 @@ export default function UsersPage() {
 
   const fetchDepts = useCallback(async () => {
     try {
-      const res = await axios.get(DEPTS_URL, { headers: authHeaders() })
+      const res = await api.get('/admin/departments')
       setDepts(res.data.departments?.data ?? res.data.departments ?? [])
     } catch { /* leave empty */ }
   }, [])
@@ -668,6 +660,13 @@ export default function UsersPage() {
     window.addEventListener('topbar:action', handler)
     return () => window.removeEventListener('topbar:action', handler)
   }, [])
+
+  // Topbar refresh button
+  useEffect(() => {
+    const handler = () => { fetchUsers(page); fetchDepts() }
+    window.addEventListener('topbar:refresh', handler)
+    return () => window.removeEventListener('topbar:refresh', handler)
+  }, [fetchUsers, fetchDepts, page])
 
   // ── Derived — tab filter is client-side on the current page ─────────────────
   const filtered = users.filter(u => {
@@ -694,8 +693,8 @@ export default function UsersPage() {
     { key: 'employee', label: 'موظفون',   count: counts.employee },
   ]
 
-  const handleSave    = () => { setDrawer(null); fetchUsers(page) }
-  const handleDeleted = () => { setDelete(null); fetchUsers(page) }
+  const handleSave    = () => { toast.success(drawer?.mode === 'edit' ? 'تم تعديل المستخدم بنجاح' : 'تم إنشاء المستخدم بنجاح'); setDrawer(null); fetchUsers(page) }
+  const handleDeleted = () => { toast.success('تم حذف المستخدم بنجاح'); setDelete(null); fetchUsers(page) }
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
