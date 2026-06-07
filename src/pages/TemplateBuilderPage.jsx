@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../services/api'
+import { useToast } from '../components/ui/Toast'
 import {
   DndContext, closestCenter,
   KeyboardSensor, PointerSensor, useSensor, useSensors,
@@ -16,10 +17,6 @@ import {
   ChevronDown, LayoutGrid, Eye, Info,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
-
-const API = import.meta.env.VITE_API_URL ?? ''
-const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
-const TEMPLATES_URL = `${API}/admin/document-templates`
 
 // ── Field type registry ───────────────────────────────────────────────────────
 
@@ -39,7 +36,7 @@ const FIELD_MAP = Object.fromEntries(FIELD_TYPES.map(t => [t.key, t]))
 function slugify(s) {
   return s.trim().toLowerCase()
     .replace(/[\s-]+/g, '_')
-    .replace(/[^\w_]/g, '')
+    .replace(/[^\p{L}\p{N}_]/gu, '')
     .replace(/_+/g, '_')
 }
 
@@ -225,6 +222,8 @@ function FieldPanel({ initial, onSave, onCancel }) {
   const [label, setLabel]       = useState(initial?.label ?? '')
   const [key, setKey]           = useState(initial?.key ?? '')
   const [required, setRequired] = useState(initial?.required ?? false)
+  const [options, setOptions]   = useState(initial?.options?.length ? initial.options : ['', ''])
+  const [columns, setColumns]   = useState(initial?.columns?.length ? initial.columns : [{ key: '', label: '' }, { key: '', label: '' }])
 
   const handleLabelChange = e => {
     const v = e.target.value
@@ -234,7 +233,16 @@ function FieldPanel({ initial, onSave, onCancel }) {
 
   const handleSave = () => {
     if (!label.trim() || !key.trim() || !selectedType) return
-    onSave({ key: key.trim(), label: label.trim(), type: selectedType.key, required })
+    const field = { key: key.trim(), label: label.trim(), type: selectedType.key, required }
+    if (selectedType.key === 'select') {
+      field.options = options.map(o => o.trim()).filter(Boolean)
+    }
+    if (selectedType.key === 'table') {
+      field.columns = columns
+        .filter(c => c.label.trim())
+        .map(c => ({ key: c.key || slugify(c.label), label: c.label.trim() }))
+    }
+    onSave(field)
   }
 
   if (step === 'pick') {
@@ -347,6 +355,114 @@ function FieldPanel({ initial, onSave, onCancel }) {
           />
         </FieldWrap>
       </div>
+
+      {/* Select options */}
+      {selectedType?.key === 'select' && (
+        <FieldWrap label="خيارات القائمة" required>
+          {options.map((opt, i) => (
+            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+              <div style={{
+                flex: 1, display: 'flex', alignItems: 'center', height: 38,
+                background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
+                borderRadius: 10, padding: '0 10px',
+              }}>
+                <input
+                  placeholder={`خيار ${i + 1}`}
+                  value={opt}
+                  onChange={e => {
+                    const next = [...options]; next[i] = e.target.value; setOptions(next)
+                  }}
+                  style={{
+                    flex: 1, border: 0, outline: 0, background: 'transparent',
+                    fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
+                    textAlign: 'right', direction: 'rtl',
+                  }}
+                />
+              </div>
+              {options.length > 1 && (
+                <button
+                  onClick={() => setOptions(options.filter((_, j) => j !== i))}
+                  style={{
+                    width: 38, height: 38, borderRadius: 9, flexShrink: 0,
+                    border: '1px solid var(--c-border)', background: '#fff',
+                    color: 'var(--c-text-3)', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            onClick={() => setOptions([...options, ''])}
+            style={{
+              width: '100%', height: 34, borderRadius: 8,
+              border: '1.5px dashed var(--c-border)', background: 'transparent',
+              cursor: 'pointer', fontFamily: 'var(--font-sans)',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            }}
+          >
+            <Plus size={12} /> إضافة خيار
+          </button>
+        </FieldWrap>
+      )}
+
+      {/* Table columns */}
+      {selectedType?.key === 'table' && (
+        <FieldWrap label="أعمدة الجدول" required>
+          {columns.map((col, i) => (
+            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+              <div style={{
+                flex: 1, display: 'flex', alignItems: 'center', height: 38,
+                background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
+                borderRadius: 10, padding: '0 10px',
+              }}>
+                <input
+                  placeholder={`اسم العمود ${i + 1}`}
+                  value={col.label}
+                  onChange={e => {
+                    const next = [...columns]
+                    next[i] = { key: slugify(e.target.value), label: e.target.value }
+                    setColumns(next)
+                  }}
+                  style={{
+                    flex: 1, border: 0, outline: 0, background: 'transparent',
+                    fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
+                    textAlign: 'right', direction: 'rtl',
+                  }}
+                />
+              </div>
+              {columns.length > 1 && (
+                <button
+                  onClick={() => setColumns(columns.filter((_, j) => j !== i))}
+                  style={{
+                    width: 38, height: 38, borderRadius: 9, flexShrink: 0,
+                    border: '1px solid var(--c-border)', background: '#fff',
+                    color: 'var(--c-text-3)', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            onClick={() => setColumns([...columns, { key: '', label: '' }])}
+            style={{
+              width: '100%', height: 34, borderRadius: 8,
+              border: '1.5px dashed var(--c-border)', background: 'transparent',
+              cursor: 'pointer', fontFamily: 'var(--font-sans)',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            }}
+          >
+            <Plus size={12} /> إضافة عمود
+          </button>
+        </FieldWrap>
+      )}
 
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14,
@@ -470,20 +586,29 @@ function LivePreview({ name, fields }) {
 
                 {field.type === 'table' && (
                   <div style={{ border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden' }}>
-                    <div style={{
-                      display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-                      background: 'var(--c-surface)', borderBottom: '1px solid var(--c-border)',
-                    }}>
-                      {['البند', 'الكمية', 'السعر'].map(h => (
-                        <div key={h} style={{
-                          padding: '6px 10px', fontSize: 10.5, fontWeight: 700,
-                          color: 'var(--c-text-2)', textAlign: 'center',
+                    {(field.columns?.length > 0) ? (
+                      <>
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: `repeat(${field.columns.length}, 1fr)`,
+                          background: 'var(--c-surface)', borderBottom: '1px solid var(--c-border)',
                         }}>
-                          {h}
+                          {field.columns.map(col => (
+                            <div key={col.key} style={{
+                              padding: '6px 10px', fontSize: 10.5, fontWeight: 700,
+                              color: 'var(--c-text-2)', textAlign: 'center',
+                            }}>
+                              {col.label}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                    <div style={{ height: 32, background: '#fff' }} />
+                        <div style={{ height: 32, background: '#fff' }} />
+                      </>
+                    ) : (
+                      <div style={{ padding: '10px', fontSize: 11, color: 'var(--c-text-3)', textAlign: 'center' }}>
+                        لم تُحدَّد أعمدة بعد
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -493,7 +618,9 @@ function LivePreview({ name, fields }) {
                     borderRadius: 8, padding: '0 10px',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
-                    <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>{field.label}...</span>
+                    <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>
+                      {field.options?.length ? field.options[0] : `اختر ${field.label}...`}
+                    </span>
                     <ChevronDown size={12} style={{ color: 'var(--c-text-3)' }} />
                   </div>
                 )}
@@ -579,6 +706,7 @@ function BuilderSkeleton() {
 export default function TemplateBuilderPage() {
   const { id }   = useParams()
   const navigate = useNavigate()
+  const toast    = useToast()
 
   const [template, setTemplate]   = useState(null)
   const [loading, setLoading]     = useState(true)
@@ -604,7 +732,7 @@ export default function TemplateBuilderPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await axios.get(`${TEMPLATES_URL}/${id}`, { headers: authHeaders() })
+      const res = await api.get(`/document-templates/${id}`)
       const tpl = res.data.template ?? res.data
       setTemplate(tpl)
       setSettings({
@@ -640,9 +768,10 @@ export default function TemplateBuilderPage() {
     setSaving(true)
     try {
       const payload = { ...settings, fields_schema: fields }
-      const res = await axios.patch(`${TEMPLATES_URL}/${id}`, payload, { headers: authHeaders() })
+      const res = await api.patch(`/admin/document-templates/${id}`, payload)
       const updated = res.data.template ?? res.data
       setTemplate(updated)
+      toast.success('تم حفظ القالب بنجاح')
     } catch (e) {
       const errs = e.response?.data?.errors
       setSaveError(errs

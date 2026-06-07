@@ -69,6 +69,11 @@ body {
   50%       { opacity: 0.45; }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 @media (max-width: 1023px) {
   .adm-sidebar { transform: translateX(100%); }
   .adm-sidebar.is-open { transform: translateX(0); }

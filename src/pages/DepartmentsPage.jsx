@@ -1,15 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../services/api'
+import { useToast } from '../components/ui/Toast'
 import {
   Layers, Building2, Users, Search, Pencil, Trash2,
   X, AlertTriangle, AlertCircle, LayoutGrid,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
-
-const API = import.meta.env.VITE_API_URL ?? ''
-const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
-const DEPTS_URL = `${API}/admin/departments`
 
 // ── Primitive components ──────────────────────────────────────────────────────
 
@@ -230,9 +227,9 @@ function DeptDrawer({ mode, dept, onClose, onSave }) {
     setSaving(true)
     try {
       if (isEdit) {
-        await axios.patch(`${DEPTS_URL}/${dept.id}`, form, { headers: authHeaders() })
+        await api.patch(`/admin/departments/${dept.id}`, form)
       } else {
-        await axios.post(DEPTS_URL, form, { headers: authHeaders() })
+        await api.post('/admin/departments', form)
       }
       onSave()
     } catch (e) {
@@ -353,7 +350,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
   const handleDelete = async () => {
     setDeleting(true)
     try {
-      await axios.delete(`${DEPTS_URL}/${dept.id}`, { headers: authHeaders() })
+      await api.delete(`/admin/departments/${dept.id}`)
       onDeleted()
     } catch (e) {
       if (e.response?.status === 422) {
@@ -491,6 +488,8 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function DepartmentsPage() {
+  const toast = useToast()
+  const navigate = useNavigate()
   const [depts, setDepts]       = useState([])
   const [loading, setLoading]   = useState(true)
   const [search, setSearch]     = useState('')
@@ -503,7 +502,7 @@ export default function DepartmentsPage() {
     try {
       const params = {}
       if (search) params.search = search
-      const res = await axios.get(DEPTS_URL, { params, headers: authHeaders() })
+      const res = await api.get('/admin/departments', { params })
       const raw = res.data.departments
       const list = raw?.data ?? (Array.isArray(raw) ? raw : [])
       setDepts(list)
@@ -525,6 +524,12 @@ export default function DepartmentsPage() {
     return () => window.removeEventListener('topbar:action', handler)
   }, [])
 
+  // Topbar refresh button
+  useEffect(() => {
+    window.addEventListener('topbar:refresh', fetchDepts)
+    return () => window.removeEventListener('topbar:refresh', fetchDepts)
+  }, [fetchDepts])
+
   // Derived metrics — summed from local list
   const totalSections = depts.reduce((s, d) => s + (d.sections_count ?? 0), 0)
   const totalUsers    = depts.reduce((s, d) => s + (d.users_count    ?? 0), 0)
@@ -535,8 +540,8 @@ export default function DepartmentsPage() {
     { Icon: Users,    label: 'موظفاً',   value: totalUsers },
   ]
 
-  const handleSave    = () => { setDrawer(null); fetchDepts() }
-  const handleDeleted = () => { setDel(null);   fetchDepts() }
+  const handleSave    = () => { toast.success(drawer?.mode === 'edit' ? 'تم تعديل الإدارة بنجاح' : 'تم إنشاء الإدارة بنجاح'); setDrawer(null); fetchDepts() }
+  const handleDeleted = () => { toast.success('تم حذف الإدارة بنجاح'); setDel(null); fetchDepts() }
 
   return (
     <div style={{ padding: '28px 28px 48px', maxWidth: 1180, margin: '0 auto' }}>

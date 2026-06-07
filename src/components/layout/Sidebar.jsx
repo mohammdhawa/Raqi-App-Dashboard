@@ -1,8 +1,9 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, Inbox, Send, FileText, Archive,
   Users, Building2, Layers, LayoutTemplate, History,
-  Settings, LogOut,
+  Settings, LogOut, Files, Fingerprint,
 } from 'lucide-react'
 
 const NAV = [
@@ -24,7 +25,9 @@ const NAV = [
   {
     label: 'الإدارة',
     items: [
+      { label: 'كل المستندات',       icon: Files,           path: '/admin/documents' },
       { label: 'الأشخاص والصلاحيات', icon: Users,           path: '/admin/users' },
+      { label: 'الحضور والانصراف',   icon: Fingerprint,     path: '/admin/attendance' },
       { label: 'الإدارات',           icon: Building2,       path: '/admin/departments' },
       { label: 'الأقسام',            icon: Layers,          path: '/admin/sections' },
       { label: 'قوالب المستندات',    icon: LayoutTemplate,  path: '/admin/templates' },
@@ -61,7 +64,11 @@ function NavItem({ item, onNavigate }) {
   )
 }
 
+const ROLE_LABELS = { admin: 'مدير النظام', chief: 'الرئيس الأعلى', manager: 'مدير', employee: 'موظف' }
+
 export default function Sidebar({ isOpen, onNavigate }) {
+  const { user, logout } = useAuth()
+  const initials = (user?.name ?? 'م').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('')
   return (
     /* direction:ltr on the outer element moves the scrollbar to the right edge */
     <aside className={`adm-sidebar ${isOpen ? 'is-open' : ''}`}
@@ -125,17 +132,18 @@ export default function Sidebar({ isOpen, onNavigate }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 13, fontWeight: 800, color: '#fff', flexShrink: 0,
           }}>
-            أ
+            {initials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 12.5, lineHeight: 1.25 }}>
-              أحمد العتيبي
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 12.5, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user?.name ?? '—'}
             </div>
             <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10.5, marginTop: 2 }}>
-              مدير العمليات
+              {ROLE_LABELS[user?.role] ?? 'مستخدم'}
             </div>
           </div>
           <button
+            onClick={logout}
             style={{
               background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)',
               cursor: 'pointer', padding: 4, borderRadius: 6,

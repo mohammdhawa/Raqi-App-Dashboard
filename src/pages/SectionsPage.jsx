@@ -1,16 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import axios from 'axios'
+import api from '../services/api'
+import { useToast } from '../components/ui/Toast'
 import {
   Layers, Users, Search, Pencil, Trash2, Upload,
-  X, AlertCircle, Building2, User, ChevronDown, AlertTriangle,
+  X, AlertCircle, Building2, Eye, ImageOff, ChevronDown, AlertTriangle,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
-
-const API = import.meta.env.VITE_API_URL ?? ''
-const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
-const SECTIONS_URL = `${API}/admin/sections`
-const DEPTS_URL    = `${API}/admin/departments`
 
 // ── Primitive components ──────────────────────────────────────────────────────
 
@@ -94,35 +90,88 @@ function SelectInput({ placeholder, value, onChange, options, disabled }) {
   )
 }
 
-// ── Stamp cell ────────────────────────────────────────────────────────────────
+// ── Stamp preview modal ───────────────────────────────────────────────────────
 
-function StampCell({ section }) {
+function StampPreviewModal({ section, onClose }) {
   const hasStamp = Boolean(section.stamp)
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   return (
-    <div style={{
-      width: 52, height: 52, borderRadius: 12, flexShrink: 0,
-      border: `1.5px dashed ${hasStamp ? 'var(--c-accent)' : 'var(--c-border)'}`,
-      background: hasStamp
-        ? 'repeating-linear-gradient(45deg,rgba(200,163,107,0.07) 0px,rgba(200,163,107,0.07) 2px,transparent 2px,transparent 8px)'
-        : 'var(--c-surface)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      {hasStamp ? (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 50,
+        background: 'rgba(20,32,50,0.48)',
+        backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: 380, background: '#fff', borderRadius: 18,
+          boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
+        }}
+      >
+        {/* Header */}
         <div style={{
-          width: 40, height: 40, borderRadius: '50%',
-          border: '1.5px dashed var(--c-accent)',
-          overflow: 'hidden',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(255,255,255,0.85)',
+          padding: '16px 20px', borderBottom: '1px solid var(--c-border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
         }}>
-          <img
-            src={section.stamp} alt={section.name}
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <Layers size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+            <span style={{
+              fontSize: 13.5, fontWeight: 800, color: 'var(--c-text)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              ختم {section.name}
+            </span>
+          </div>
+          <button
+            onClick={onClose} title="إغلاق"
+            style={{
+              width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+              border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}
+          >
+            <X size={15} />
+          </button>
         </div>
-      ) : (
-        <User size={18} style={{ color: 'var(--c-text-3)' }} />
-      )}
+
+        {/* Body */}
+        <div style={{
+          padding: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--c-surface)', minHeight: 220,
+        }}>
+          {hasStamp ? (
+            <div style={{
+              width: 160, height: 160, borderRadius: '50%',
+              border: '1.5px dashed var(--c-accent)',
+              overflow: 'hidden',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(255,255,255,0.85)',
+            }}>
+              <img
+                src={section.stamp} alt={section.name}
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <ImageOff size={26} style={{ color: 'var(--c-text-3)', marginBottom: 8 }} />
+              <p style={{ margin: 0, fontSize: 12.5, fontWeight: 600, color: 'var(--c-text-2)' }}>
+                لم يتم رفع ختم لهذا القسم بعد
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -231,9 +280,12 @@ function SectionDrawer({ mode, section, departments, onClose, onSave }) {
       if (form.stamp instanceof File) fd.append('stamp', form.stamp)
 
       if (isEdit) {
-        await axios.patch(`${SECTIONS_URL}/${section.id}`, fd, { headers: authHeaders() })
+        // Laravel doesn't parse multipart bodies on PATCH/PUT requests, so the
+        // stamp file would be silently dropped — spoof the method via POST instead.
+        fd.append('_method', 'PATCH')
+        await api.post(`/admin/sections/${section.id}`, fd)
       } else {
-        await axios.post(SECTIONS_URL, fd, { headers: authHeaders() })
+        await api.post('/admin/sections', fd)
       }
       onSave()
     } catch (e) {
@@ -359,7 +411,7 @@ function DeleteSectionModal({ section, onClose, onDeleted }) {
   const handleDelete = async () => {
     setDel(true)
     try {
-      await axios.delete(`${SECTIONS_URL}/${section.id}`, { headers: authHeaders() })
+      await api.delete(`/admin/sections/${section.id}`)
       onDeleted()
     } catch (e) {
       if (e.response?.status === 422) {
@@ -473,9 +525,6 @@ function SkeletonRow() {
   const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)', borderRadius: 7 }
   return (
     <tr>
-      <td style={{ padding: '12px 16px' }}>
-        <div style={{ ...pulse, width: 52, height: 52, borderRadius: 12 }} />
-      </td>
       {[130, 110, 60, 70, 80].map((w, i) => (
         <td key={i} style={{ padding: '12px 16px' }}>
           <div style={{ ...pulse, height: 14, width: w, animationDelay: `${i * 0.1}s` }} />
@@ -487,7 +536,7 @@ function SkeletonRow() {
 
 // ── Section Row (separated to avoid hook-in-loop) ─────────────────────────────
 
-function SectionRow({ section, last, onEdit, onDelete }) {
+function SectionRow({ section, last, onEdit, onDelete, onPreview }) {
   const [hov, setHov] = useState(false)
   const hasStamp = Boolean(section.stamp)
 
@@ -500,11 +549,6 @@ function SectionRow({ section, last, onEdit, onDelete }) {
         transition: 'background .1s',
       }}
     >
-      {/* Stamp cell */}
-      <td style={{ padding: '12px 16px' }}>
-        <StampCell section={section} />
-      </td>
-
       {/* Section name + code */}
       <td style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{section.name}</div>
@@ -561,11 +605,11 @@ function SectionRow({ section, last, onEdit, onDelete }) {
       {/* Actions */}
       <td style={{ padding: '12px 16px' }}>
         <div style={{ display: 'inline-flex', gap: 6 }}>
-          <RowBtn onClick={() => onEdit('edit')} title="تعديل القسم">
-            <Pencil size={14} />
+          <RowBtn onClick={onPreview} title={hasStamp ? 'معاينة الختم' : 'لا يوجد ختم لمعاينته'}>
+            <Eye size={14} />
           </RowBtn>
-          <RowBtn onClick={() => onEdit('stamp')} title="رفع الختم">
-            <Upload size={14} />
+          <RowBtn onClick={onEdit} title="تعديل القسم">
+            <Pencil size={14} />
           </RowBtn>
           <RowBtn danger onClick={onDelete} title="حذف القسم">
             <Trash2 size={14} />
@@ -601,9 +645,10 @@ function PagBtn({ children, active, disabled, onClick }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-const TABLE_COLS = ['الختم', 'القسم', 'الإدارة', 'عدد الموظفين', 'حالة الختم', 'إجراءات']
+const TABLE_COLS = ['القسم', 'الإدارة', 'عدد الموظفين', 'حالة الختم', 'إجراءات']
 
 export default function SectionsPage() {
+  const toast = useToast()
   const [sections, setSections]     = useState([])
   const [departments, setDepts]     = useState([])
   const [loading, setLoading]       = useState(true)
@@ -617,6 +662,7 @@ export default function SectionsPage() {
   )
   const [drawer, setDrawer]         = useState(null)
   const [deleteTarget, setDel]      = useState(null)
+  const [previewTarget, setPreview] = useState(null)
 
   // ── API ────────────────────────────────────────────────────────────────────
 
@@ -626,7 +672,7 @@ export default function SectionsPage() {
       const params = { page: targetPage }
       if (search)     params.search        = search
       if (deptFilter) params.department_id = deptFilter
-      const res = await axios.get(SECTIONS_URL, { params, headers: authHeaders() })
+      const res = await api.get('/admin/sections', { params })
       const pag = res.data.sections
       const list = pag?.data ?? (Array.isArray(pag) ? pag : [])
       setSections(list)
@@ -642,7 +688,7 @@ export default function SectionsPage() {
 
   const fetchDepts = useCallback(async () => {
     try {
-      const res = await axios.get(DEPTS_URL, { headers: authHeaders() })
+      const res = await api.get('/admin/departments')
       const raw = res.data.departments
       setDepts(raw?.data ?? (Array.isArray(raw) ? raw : []))
     } catch { /* leave empty */ }
@@ -664,6 +710,13 @@ export default function SectionsPage() {
     return () => window.removeEventListener('topbar:action', handler)
   }, [])
 
+  // Topbar refresh button
+  useEffect(() => {
+    const handler = () => { fetchSections(page); fetchDepts() }
+    window.addEventListener('topbar:refresh', handler)
+    return () => window.removeEventListener('topbar:refresh', handler)
+  }, [fetchSections, fetchDepts, page])
+
   // ── Derived metrics ────────────────────────────────────────────────────────
   const stampsUploaded = sections.filter(s => s.stamp).length
 
@@ -672,10 +725,10 @@ export default function SectionsPage() {
     { Icon: Layers, label: 'قسماً',          value: total },
   ]
 
-  const handleSave    = () => { setDrawer(null); fetchSections(page) }
-  const handleDeleted = () => { setDel(null);   fetchSections(page) }
+  const handleSave    = () => { toast.success(drawer?.mode === 'edit' ? 'تم تعديل القسم بنجاح' : 'تم إنشاء القسم بنجاح'); setDrawer(null); fetchSections(page) }
+  const handleDeleted = () => { toast.success('تم حذف القسم بنجاح'); setDel(null); fetchSections(page) }
 
-  const handleRowEdit = (section, mode) => setDrawer({ mode: mode === 'stamp' ? 'stamp' : 'edit', section })
+  const handleRowEdit = section => setDrawer({ mode: 'edit', section })
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -804,8 +857,9 @@ export default function SectionsPage() {
                     key={s.id}
                     section={s}
                     last={idx === sections.length - 1}
-                    onEdit={mode => handleRowEdit(s, mode)}
+                    onEdit={() => handleRowEdit(s)}
                     onDelete={() => setDel(s)}
+                    onPreview={() => setPreview(s)}
                   />
                 ))
               }
@@ -841,7 +895,7 @@ export default function SectionsPage() {
       {/* Drawer */}
       {drawer && (
         <SectionDrawer
-          mode={drawer.mode === 'stamp' ? 'edit' : drawer.mode}
+          mode={drawer.mode}
           section={drawer.section}
           departments={departments}
           onClose={() => setDrawer(null)}
@@ -855,6 +909,14 @@ export default function SectionsPage() {
           section={deleteTarget}
           onClose={() => setDel(null)}
           onDeleted={handleDeleted}
+        />
+      )}
+
+      {/* Stamp preview modal */}
+      {previewTarget && (
+        <StampPreviewModal
+          section={previewTarget}
+          onClose={() => setPreview(null)}
         />
       )}
     </div>
