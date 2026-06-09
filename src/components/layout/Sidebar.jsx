@@ -16,23 +16,23 @@ const NAV = [
   {
     label: 'المستندات',
     items: [
-      { label: 'الوارد',    icon: Inbox,    path: '/documents/inbox',   badge: 4 },
-      { label: 'الصادر',   icon: Send,     path: '/documents/sent' },
-      { label: 'المسودات', icon: FileText,  path: '/documents/drafts',  badge: 2 },
-      { label: 'الأرشيف',  icon: Archive,  path: '/documents/archive' },
+      { label: 'الوارد',    icon: Inbox,    path: '/documents/inbox',  badge: 4, roles: ['admin', 'chief', 'manager'] },
+      { label: 'الصادر',   icon: Send,     path: '/documents/sent',              roles: ['admin', 'chief', 'manager'] },
+      { label: 'المسودات', icon: FileText,  path: '/documents/drafts', badge: 2, roles: ['admin', 'chief', 'manager'] },
+      { label: 'الأرشيف',  icon: Archive,  path: '/documents/archive',           roles: ['admin', 'chief', 'manager'] },
     ],
   },
   {
     label: 'الإدارة',
     items: [
-      { label: 'كل المستندات',       icon: Files,           path: '/admin/documents' },
-      { label: 'الأشخاص والصلاحيات', icon: Users,           path: '/admin/users' },
-      { label: 'الحضور والانصراف',   icon: Fingerprint,     path: '/admin/attendance' },
-      { label: 'الإدارات',           icon: Building2,       path: '/admin/departments' },
-      { label: 'الأقسام',            icon: Layers,          path: '/admin/sections' },
-      { label: 'قوالب المستندات',    icon: LayoutTemplate,  path: '/admin/templates' },
-      { label: 'سجل التدقيق',        icon: History,         path: '/admin/audit' },
-      { label: 'الإعدادات',          icon: Settings,        path: '/admin/settings' },
+      { label: 'كل المستندات',       icon: Files,           path: '/admin/documents',   roles: ['admin'] },
+      { label: 'الأشخاص والصلاحيات', icon: Users,           path: '/admin/users',        roles: ['admin'] },
+      { label: 'الحضور والانصراف',   icon: Fingerprint,     path: '/admin/attendance',   show: (auth) => auth.canViewAttendance },
+      { label: 'الإدارات',           icon: Building2,       path: '/admin/departments',  roles: ['admin'] },
+      { label: 'الأقسام',            icon: Layers,          path: '/admin/sections',     roles: ['admin'] },
+      { label: 'قوالب المستندات',    icon: LayoutTemplate,  path: '/admin/templates',    roles: ['admin'] },
+      { label: 'سجل التدقيق',        icon: History,         path: '/admin/audit',        roles: ['admin', 'chief'] },
+      { label: 'الإعدادات',          icon: Settings,        path: '/admin/settings',     roles: ['admin'] },
     ],
   },
 ]
@@ -67,7 +67,15 @@ function NavItem({ item, onNavigate }) {
 const ROLE_LABELS = { admin: 'مدير النظام', chief: 'الرئيس الأعلى', manager: 'مدير', employee: 'موظف' }
 
 export default function Sidebar({ isOpen, onNavigate }) {
-  const { user, logout } = useAuth()
+  const auth = useAuth()
+  const { user, logout } = auth
+
+  function canSee(item) {
+    if (item.show) return item.show(auth)
+    if (item.roles) return item.roles.includes(user?.role)
+    return true
+  }
+
   const initials = (user?.name ?? 'م').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('')
   return (
     /* direction:ltr on the outer element moves the scrollbar to the right edge */
@@ -103,20 +111,24 @@ export default function Sidebar({ isOpen, onNavigate }) {
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '10px 0' }}>
-          {NAV.map((section) => (
-            <div key={section.label} style={{ marginBottom: 4 }}>
-              <div style={{
-                fontSize: 9.5, fontWeight: 800, letterSpacing: '1.2px',
-                color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase',
-                padding: '10px 20px 5px',
-              }}>
-                {section.label}
+          {NAV.map((section) => {
+            const visibleItems = section.items.filter(canSee)
+            if (visibleItems.length === 0) return null
+            return (
+              <div key={section.label} style={{ marginBottom: 4 }}>
+                <div style={{
+                  fontSize: 9.5, fontWeight: 800, letterSpacing: '1.2px',
+                  color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase',
+                  padding: '10px 20px 5px',
+                }}>
+                  {section.label}
+                </div>
+                {visibleItems.map((item) => (
+                  <NavItem key={item.path} item={item} onNavigate={onNavigate} />
+                ))}
               </div>
-              {section.items.map((item) => (
-                <NavItem key={item.path} item={item} onNavigate={onNavigate} />
-              ))}
-            </div>
-          ))}
+            )
+          })}
         </nav>
 
         {/* User footer */}

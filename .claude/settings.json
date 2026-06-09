@@ -25,7 +25,12 @@
       "Bash(ls -la /tmp/pwtest/*.png | tail -8 && cp /tmp/pwtest/attendance_*.png /c/tmp/pwtest/ && ls /c/tmp/pwtest/*.png)",
       "Bash(node attendance_test2.js)",
       "Bash(find / -maxdepth 6 -iname \"attendance_test2.js\" 2>/dev/null)",
-      "Bash(rm -f /tmp/pwtest/attendance_test*.js /tmp/pwtest/attendance_*.png /c/tmp/pwtest/attendance_*.js /c/tmp/pwtest/attendance_*.png && echo cleaned)"
+      "Bash(rm -f /tmp/pwtest/attendance_test*.js /tmp/pwtest/attendance_*.png /c/tmp/pwtest/attendance_*.js /c/tmp/pwtest/attendance_*.png && echo cleaned)",
+      "Bash(cat .env)",
+      "Bash(find . -maxdepth 3 \\\\\\( -iname \"*postman*\" -o -iname \"*swagger*\" -o -iname \"*openapi*\" -o -iname \"*.yaml\" -o -iname \"*.yml\" \\\\\\) -not -path \"*/node_modules/*\")",
+      "Bash(node -e \"const m = require\\('lucide-react'\\); console.log\\('CheckCheck:', !!m.CheckCheck\\); console.log\\('BellOff:', !!m.BellOff\\);\")",
+      "Bash(node notif_test.js)",
+      "Bash(find \"/c/tmp/pwtest\" -maxdepth 2 -iname \"node_modules\" 2>/dev/null; find \"/c/tmp\" -maxdepth 3 -iname \"playwright*\" -not -path \"*node_modules/playwright/*\" 2>/dev/null | head -10; find / -maxdepth 4 -iname \"playwright-core\" -not -path \"*/proc/*\" 2>/dev/null | head -5)"
     ],
     "additionalDirectories": [
       "\\tmp\\pwtest"

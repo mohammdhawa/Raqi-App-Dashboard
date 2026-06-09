@@ -246,9 +246,11 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
     department_id: user.department?.id ?? '',
     section_id: user.section?.id ?? '',
     attendance_check: user.attendance_check ?? false,
+    can_view_attendance: user.can_view_attendance ?? false,
   } : {
     name: '', email: '', password: '', password_confirmation: '',
-    role: 'employee', department_id: '', section_id: '', attendance_check: false,
+    role: 'employee', department_id: '', section_id: '',
+    attendance_check: false, can_view_attendance: false,
   })
 
   const [sections, setSections]   = useState([])
@@ -276,8 +278,9 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
     const p = {
       name:             form.name,
       email:            form.email,
-      role:             form.role,
-      attendance_check: form.attendance_check,
+      role:                form.role,
+      attendance_check:    form.attendance_check,
+      can_view_attendance: form.can_view_attendance,
     }
     // Send integers, omit if empty (API accepts optional nulls)
     if (form.department_id) p.department_id = Number(form.department_id)
@@ -473,6 +476,20 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
               </div>
             </div>
             <Toggle on={form.attendance_check} onChange={v => set('attendance_check', v)} />
+          </div>
+
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 14, padding: '13px 15px',
+            borderRadius: 12, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+            marginTop: 10,
+          }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>صلاحية عرض سجلات الحضور</div>
+              <div style={{ fontSize: 11.5, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5 }}>
+                السماح لهذا المستخدم بعرض سجلات حضور وانصراف الموظفين
+              </div>
+            </div>
+            <Toggle on={form.can_view_attendance} onChange={v => set('can_view_attendance', v)} />
           </div>
         </div>
 
