@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, RequireAuth } from './context/AuthContext'
+import { AuthProvider, RequireAuth, RequireAttendanceAccess } from './context/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/LoginPage'
@@ -27,7 +27,7 @@ export default function App() {
                 <Route path="/admin/users" element={<UsersPage />} />
                 <Route path="/admin/departments" element={<DepartmentsPage />} />
                 <Route path="/admin/sections" element={<SectionsPage />} />
-                <Route path="/admin/attendance" element={<AttendancePage />} />
+                <Route path="/admin/attendance" element={<RequireAttendanceAccess><AttendancePage /></RequireAttendanceAccess>} />
                 <Route path="/admin/templates" element={<TemplatesPage />} />
                 <Route path="/admin/templates/:id/edit" element={<TemplateBuilderPage />} />
               </Route>

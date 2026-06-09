@@ -43,9 +43,10 @@ export function AuthProvider({ children }) {
   }
 
   const isAuthenticated = Boolean(token)
+  const canViewAttendance = user?.role === 'admin' || !!user?.can_view_attendance
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, loading, canViewAttendance, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
@@ -62,6 +63,14 @@ export function RequireAuth({ children }) {
   const location = useLocation()
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+  return children
+}
+
+export function RequireAttendanceAccess({ children }) {
+  const { canViewAttendance } = useAuth()
+  if (!canViewAttendance) {
+    return <Navigate to="/dashboard" replace />
   }
   return children
 }
