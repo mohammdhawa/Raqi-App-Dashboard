@@ -304,9 +304,10 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
       }
       onSave()
     } catch (e) {
-      const msg = e.response?.data?.message ?? e.response?.data?.errors
-        ? Object.values(e.response.data.errors).flat().join(' — ')
-        : 'حدث خطأ. يرجى المحاولة مرة أخرى.'
+      const data = e.response?.data
+      const msg = data?.errors
+        ? Object.values(data.errors).flat().join(' — ')
+        : (data?.message ?? 'حدث خطأ. يرجى المحاولة مرة أخرى.')
       setError(msg)
     } finally {
       setSaving(false)

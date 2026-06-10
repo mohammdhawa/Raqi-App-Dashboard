@@ -22,11 +22,10 @@ export function AuthProvider({ children }) {
       setUser(u)
       return { ok: true }
     } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        (err.response?.data?.errors
-          ? Object.values(err.response.data.errors).flat().join('، ')
-          : 'حدث خطأ، حاول مرة أخرى')
+      const data = err.response?.data
+      const msg = data?.errors
+        ? Object.values(data.errors).flat().join('، ')
+        : (data?.message ?? 'حدث خطأ، حاول مرة أخرى')
       return { ok: false, message: msg }
     } finally {
       setLoading(false)

@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../services/api'
 import { useToast } from '../components/ui/Toast'
 import {
   FileText, Search, ChevronDown, Building2, Layers,
   Clock, CheckCircle2, XCircle, Archive, FileEdit, Calendar, LayoutTemplate,
-  Eye, X, ExternalLink, Loader2, FileX, Trash2,
+  Eye, X, ExternalLink, Loader2, FileX, Trash2, AlertCircle,
 } from 'lucide-react'
 
 const FILE_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -28,8 +28,6 @@ const STATUS_OPTIONS = [
   { value: 'pending',  label: 'قيد الاعتماد' },
   { value: 'approved', label: 'معتمد' },
   { value: 'rejected', label: 'مرفوض' },
-  { value: 'draft',    label: 'مسودة' },
-  { value: 'archived', label: 'مؤرشف' },
 ]
 
 const TABLE_COLS = ['المستند', 'الحالة', 'القالب', 'الإدارة / القسم', 'مقدّم الطلب', 'التاريخ', 'إجراءات']
@@ -470,27 +468,52 @@ export default function DocumentsPage() {
 
   const [previewDoc, setPreviewDoc] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [filterError, setFilterError] = useState('')
+  const reqIdRef = useRef(0)
 
   // ── API ────────────────────────────────────────────────────────────────────
 
   const fetchDocuments = useCallback(async (targetPage) => {
+    if (dateFrom && dateTo && dateTo < dateFrom) {
+      ++reqIdRef.current
+      setDocuments([])
+      setTotal(0)
+      setLastPage(1)
+      setLoading(false)
+      setFilterError('يجب أن يكون تاريخ الانتهاء بعد تاريخ البداية أو مساوياً له.')
+      return
+    }
+    const reqId = ++reqIdRef.current
     setLoading(true)
+    setFilterError('')
     try {
       const params = { page: targetPage }
       if (search)       params.search        = search
-      if (statusFilter) params.status         = statusFilter
-      if (deptFilter)   params.department_id  = deptFilter
-      if (dateFrom)     params.date_from      = dateFrom
-      if (dateTo)       params.date_to        = dateTo
+      if (statusFilter) params.status        = statusFilter
+      if (deptFilter)   params.department_id = deptFilter
+      if (dateFrom)     params.date_from     = dateFrom
+      if (dateTo)       params.date_to       = dateTo
       const res = await api.get('/admin/documents', { params })
+      if (reqId !== reqIdRef.current) return
       const pag = res.data.documents
       const list = pag?.data ?? (Array.isArray(pag) ? pag : [])
       setDocuments(list)
       setLastPage(pag?.last_page ?? 1)
       setTotal(pag?.total ?? list.length)
-    } catch {
+    } catch (e) {
+      if (reqId !== reqIdRef.current) return
+      if (e.response?.status === 422) {
+        const data = e.response.data
+        const errors = data?.errors
+        const msg = errors && typeof errors === 'object'
+          ? Object.values(errors).flat().join(' — ')
+          : (data?.message || 'البيانات المدخلة غير صحيحة.')
+        setFilterError(msg)
+      }
       setDocuments([])
+      setTotal(0)
     } finally {
+      if (reqId !== reqIdRef.current) return
       setLoading(false)
     }
   }, [search, statusFilter, deptFilter, dateFrom, dateTo])
@@ -585,12 +608,18 @@ export default function DocumentsPage() {
           </div>
 
           {/* Date range */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={dateInputStyle} />
-            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>—</span>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={dateInputStyle} />
-          </div>
+          {(() => {
+            const dateInvalid = Boolean(dateFrom && dateTo && dateTo < dateFrom)
+            const invalidStyle = dateInvalid ? { borderColor: 'var(--c-rejected)' } : {}
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Calendar size={13} style={{ color: dateInvalid ? 'var(--c-rejected)' : 'var(--c-text-3)', flexShrink: 0 }} />
+                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ ...dateInputStyle, ...invalidStyle }} />
+                <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>—</span>
+                <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ ...dateInputStyle, ...invalidStyle }} />
+              </div>
+            )
+          })()}
 
           {/* Search */}
           <div style={{
@@ -602,6 +631,7 @@ export default function DocumentsPage() {
             <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="ابحث بالعنوان أو الرقم المرجعي..."
+              maxLength={255}
               style={{
                 flex: 1, border: 0, outline: 0, background: 'transparent',
                 fontFamily: 'var(--font-sans)', fontSize: 12.5, color: 'var(--c-text)', textAlign: 'right',
@@ -609,6 +639,20 @@ export default function DocumentsPage() {
             />
           </div>
         </div>
+
+        {/* Filter validation / 422 error banner */}
+        {filterError && (
+          <div style={{
+            padding: '10px 20px', borderBottom: '1px solid var(--c-border)',
+            background: 'var(--c-rejected-bg)',
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <AlertCircle size={14} style={{ color: 'var(--c-rejected)', flexShrink: 0 }} />
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--c-rejected)', lineHeight: 1.5 }}>
+              {filterError}
+            </span>
+          </div>
+        )}
 
         {/* Table */}
         <div style={{ overflowX: 'auto' }}>

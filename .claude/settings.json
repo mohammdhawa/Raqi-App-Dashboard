@@ -33,7 +33,9 @@
       "Bash(find \"/c/tmp/pwtest\" -maxdepth 2 -iname \"node_modules\" 2>/dev/null; find \"/c/tmp\" -maxdepth 3 -iname \"playwright*\" -not -path \"*node_modules/playwright/*\" 2>/dev/null | head -10; find / -maxdepth 4 -iname \"playwright-core\" -not -path \"*/proc/*\" 2>/dev/null | head -5)"
     ],
     "additionalDirectories": [
-      "\\tmp\\pwtest"
+      "\\tmp\\pwtest",
+      "c:\\Users\\ragab\\Desktop\\work\\Raqi-App\\app\\Http\\Requests",
+      "c:\\Users\\ragab\\Desktop\\work\\Raqi-App\\app\\Http\\Controllers"
     ]
   }
 }
