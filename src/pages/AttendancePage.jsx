@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import {
   Fingerprint, Search, ChevronDown, Calendar, LogIn, LogOut,
-  MapPin, Camera, X, User as UserIcon,
+  MapPin, Camera, X, User as UserIcon, UserX, Building2,
 } from 'lucide-react'
 
 function formatDate(value) {
@@ -32,6 +33,7 @@ const ROLE_META = {
 }
 
 const TABLE_COLS = ['الموظف', 'الدور', 'النوع', 'التاريخ والوقت', 'الموقع', 'الصورة']
+const TABLE_COLS_ABSENT = ['الموظف', 'الدور', 'الإدارة', 'الحالة']
 
 const dateInputStyle = {
   height: 38, borderRadius: 10, border: '1px solid var(--c-border)',
@@ -68,6 +70,21 @@ function RoleBadge({ role }) {
       background: m.bg, color: m.color,
     }}>
       {m.label}
+    </span>
+  )
+}
+
+function AbsentBadge() {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '5px 11px', borderRadius: 999,
+      fontSize: 12, fontWeight: 700, color: 'var(--c-rejected)',
+      background: 'var(--c-rejected-bg)', border: '1px solid var(--c-rejected)22',
+      whiteSpace: 'nowrap',
+    }}>
+      <UserX size={12} />
+      غائب
     </span>
   )
 }
@@ -122,11 +139,14 @@ function SelfieTag({ path }) {
 
 // ── Skeleton row ──────────────────────────────────────────────────────────────
 
-function SkeletonRow() {
+const SKELETON_CELLS = [[170, 34, 17], [80, 22, 7], [100, 26, 7], [90, 16, 7], [110, 16, 7], [90, 22, 7]]
+const SKELETON_CELLS_ABSENT = [[170, 34, 17], [80, 22, 7], [120, 16, 7], [70, 26, 7]]
+
+function SkeletonRow({ cells = SKELETON_CELLS }) {
   const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)' }
   return (
     <tr>
-      {[[170, 34, 17], [80, 22, 7], [100, 26, 7], [90, 16, 7], [110, 16, 7], [90, 22, 7]].map(([w, h, r], i) => (
+      {cells.map(([w, h, r], i) => (
         <td key={i} style={{ padding: '12px 16px' }}>
           <div style={{ ...pulse, height: h, width: w, borderRadius: r, animationDelay: `${i * 0.08}s` }} />
         </td>
@@ -173,6 +193,48 @@ function RecordRow({ record, last }) {
       </td>
       <td style={{ padding: '12px 16px' }}>
         <SelfieTag path={record.selfie_path} />
+      </td>
+    </tr>
+  )
+}
+
+// ── Absent row ────────────────────────────────────────────────────────────────
+
+function AbsentRow({ user, last }) {
+  const [hov, setHov] = useState(false)
+  return (
+    <tr
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        borderBottom: last ? 'none' : '1px solid var(--c-border)',
+        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+        transition: 'background .1s',
+      }}
+    >
+      <td style={{ padding: '12px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <InitialsTag name={user?.name} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{user?.name ?? '—'}</div>
+            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{user?.email ?? '—'}</div>
+          </div>
+        </div>
+      </td>
+      <td style={{ padding: '12px 16px' }}>
+        <RoleBadge role={user?.role} />
+      </td>
+      <td style={{ padding: '12px 16px' }}>
+        {user?.department?.name ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--c-text-2)' }}>
+            <Building2 size={12} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+            {user.department.name}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>
+        )}
+      </td>
+      <td style={{ padding: '12px 16px' }}>
+        <AbsentBadge />
       </td>
     </tr>
   )
@@ -324,6 +386,16 @@ function UserPicker({ selected, onSelect }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function AttendancePage() {
+  const { user } = useAuth()
+  // /admin/users (used by the employee filter) is admin-only — managers/chiefs
+  // and non-admin HR viewers see records auto-scoped to their department instead.
+  const canPickUser = user?.role === 'admin'
+  const hasFullAccess = user?.role === 'admin' || !!user?.can_view_attendance
+
+  // 'records' = attendance log (defaults to today on the backend),
+  // 'absent'  = employees with attendance_check who have no check-in for the day.
+  const [view, setView] = useState('records')
+
   const [records, setRecords] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage]       = useState(1)
@@ -334,7 +406,18 @@ export default function AttendancePage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo]     = useState('')
 
+  // Absent-today tab — single date (empty = today, resolved by the backend).
+  const [absentRows, setAbsentRows]   = useState([])
+  const [absentLoading, setAbsentLoading] = useState(true)
+  const [absentPage, setAbsentPage]   = useState(1)
+  const [absentLastPage, setAbsentLastPage] = useState(1)
+  const [absentTotal, setAbsentTotal] = useState(0)
+  const [absentDate, setAbsentDate]   = useState('')
+  const [resolvedDate, setResolvedDate] = useState('')
+
   const dateRangeInvalid = Boolean(dateFrom && dateTo && dateTo < dateFrom)
+  const isAbsent = view === 'absent'
+  const noDateFilter = !dateFrom && !dateTo
 
   // Guards against a stale in-flight request (e.g. for a previous filter
   // combination) resolving after newer filters have already changed state.
@@ -362,8 +445,30 @@ export default function AttendancePage() {
     }
   }, [selectedUser, dateFrom, dateTo])
 
-  // Reset to page 1 when filters change, then fetch (skip when range is invalid)
+  const absentReqRef = useRef(0)
+  const fetchAbsent = useCallback(async (targetPage) => {
+    const reqId = ++absentReqRef.current
+    setAbsentLoading(true)
+    try {
+      const params = { page: targetPage }
+      if (absentDate) params.date = absentDate
+      const res = await api.get('/attendance/absent-today', { params })
+      if (reqId !== absentReqRef.current) return
+      const pag = res.data.employees
+      setAbsentRows(pag?.data ?? [])
+      setAbsentLastPage(pag?.last_page ?? 1)
+      setAbsentTotal(pag?.total ?? 0)
+      setResolvedDate(res.data.date ?? '')
+    } catch {
+      if (reqId === absentReqRef.current) { setAbsentRows([]); setAbsentTotal(0); setAbsentLastPage(1) }
+    } finally {
+      if (reqId === absentReqRef.current) setAbsentLoading(false)
+    }
+  }, [absentDate])
+
+  // Reset to page 1 when records filters change, then fetch (skip when range is invalid)
   useEffect(() => {
+    if (isAbsent) return
     if (dateRangeInvalid) {
       requestIdRef.current++ // invalidate any in-flight request
       setRecords([]); setTotal(0); setLastPage(1); setLoading(false)
@@ -372,24 +477,49 @@ export default function AttendancePage() {
     setPage(1)
     fetchRecords(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser, dateFrom, dateTo, dateRangeInvalid])
+  }, [selectedUser, dateFrom, dateTo, dateRangeInvalid, view])
 
-  // Fetch when page changes (without resetting)
-  useEffect(() => { if (!dateRangeInvalid) fetchRecords(page) }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Fetch records when page changes (without resetting)
+  useEffect(() => { if (!isAbsent && !dateRangeInvalid) fetchRecords(page) }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Topbar refresh button
+  // Reset to page 1 when the absent date changes, then fetch
   useEffect(() => {
-    const handler = () => { if (!dateRangeInvalid) fetchRecords(page) }
+    if (!isAbsent) return
+    setAbsentPage(1)
+    fetchAbsent(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [absentDate, view])
+
+  // Fetch absentees when page changes (without resetting)
+  useEffect(() => { if (isAbsent) fetchAbsent(absentPage) }, [absentPage]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Topbar refresh button — refresh whichever tab is active
+  useEffect(() => {
+    const handler = () => {
+      if (isAbsent) fetchAbsent(absentPage)
+      else if (!dateRangeInvalid) fetchRecords(page)
+    }
     window.addEventListener('topbar:refresh', handler)
     return () => window.removeEventListener('topbar:refresh', handler)
-  }, [fetchRecords, page, dateRangeInvalid])
+  }, [fetchRecords, fetchAbsent, page, absentPage, dateRangeInvalid, isAbsent])
 
   const hasFilters = Boolean(selectedUser || dateFrom || dateTo)
   const clearFilters = () => { setSelectedUser(null); setDateFrom(''); setDateTo('') }
 
-  const emptyMessage = dateRangeInvalid
+  // Active-tab view-model so the table/empty/pagination blocks stay tab-agnostic.
+  const activeLoading  = isAbsent ? absentLoading  : loading
+  const activeRows     = isAbsent ? absentRows     : records
+  const activeTotal    = isAbsent ? absentTotal    : total
+  const activeLastPage = isAbsent ? absentLastPage : lastPage
+  const activePage     = isAbsent ? absentPage     : page
+  const goToPage = (p) => (isAbsent ? setAbsentPage(p) : setPage(p))
+
+  const recordsEmptyMessage = dateRangeInvalid
     ? 'يرجى تصحيح نطاق التاريخ المحدد'
-    : hasFilters ? 'لا توجد سجلات مطابقة لهذا البحث' : 'لا توجد سجلات حضور مسجّلة بعد'
+    : hasFilters
+      ? (noDateFilter ? 'لا توجد سجلات مطابقة لهذا الموظف اليوم' : 'لا توجد سجلات مطابقة لهذا البحث')
+      : 'لا توجد سجلات حضور لهذا اليوم'
+  const emptyMessage = isAbsent ? 'لا يوجد موظفون غائبون في هذا اليوم' : recordsEmptyMessage
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
@@ -401,7 +531,9 @@ export default function AttendancePage() {
           الحضور والانصراف
         </h1>
         <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
-          متابعة سجلات حضور وانصراف جميع الموظفين، مع موقع التسجيل والصورة الموثّقة لكل عملية.
+          {hasFullAccess
+            ? 'متابعة سجلات حضور وانصراف جميع الموظفين، مع موقع التسجيل والصورة الموثّقة لكل عملية.'
+            : 'متابعة سجلات حضور وانصراف موظفي إدارتك، مع موقع التسجيل والصورة الموثّقة لكل عملية.'}
         </p>
       </div>
 
@@ -411,61 +543,122 @@ export default function AttendancePage() {
         borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
 
+        {/* Tabs */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 4,
+          padding: '8px 12px', borderBottom: '1px solid var(--c-border)',
+        }}>
+          {[
+            { key: 'records', label: 'سجلات الحضور',  icon: Fingerprint },
+            { key: 'absent',  label: 'الغائبون اليوم', icon: UserX },
+          ].map(t => {
+            const Icon = t.icon
+            const active = view === t.key
+            return (
+              <button
+                key={t.key} onClick={() => setView(t.key)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  height: 36, padding: '0 14px', borderRadius: 9, border: 'none',
+                  background: active ? 'var(--c-primary)' : 'transparent',
+                  color: active ? '#fff' : 'var(--c-text-2)',
+                  fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
+                  cursor: 'pointer', transition: 'background .12s',
+                }}
+              >
+                <Icon size={14} />
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+
         {/* Toolbar */}
         <div style={{
           padding: '14px 20px', borderBottom: '1px solid var(--c-border)',
           display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <Fingerprint size={17} style={{ color: 'var(--c-primary)' }} />
-            <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>سجلات الحضور</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
             <span style={{
               fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
               background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
             }}>
-              {total} سجلاً
+              {isAbsent ? `${activeTotal} غائباً` : `${activeTotal} سجلاً`}
             </span>
+            {isAbsent
+              ? resolvedDate && (
+                  <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>ليوم {formatDate(resolvedDate)}</span>
+                )
+              : noDateFilter && (
+                  <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
+                    يُعرض حضور اليوم — حدّد تاريخاً لعرض سجلات أخرى
+                  </span>
+                )}
           </div>
 
           <div style={{ flex: 1 }} />
 
-          {/* User filter */}
-          <UserPicker selected={selectedUser} onSelect={setSelectedUser} />
+          {isAbsent ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+              <input type="date" value={absentDate} onChange={e => setAbsentDate(e.target.value)} style={dateInputStyle} />
+              {absentDate && (
+                <button
+                  onClick={() => setAbsentDate('')} title="العودة إلى اليوم"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    height: 38, padding: '0 12px', borderRadius: 10,
+                    background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+                    fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
+                    color: 'var(--c-text-2)', cursor: 'pointer',
+                  }}
+                >
+                  <X size={13} />
+                  اليوم
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* User filter — relies on /admin/users, which is admin-only */}
+              {canPickUser && <UserPicker selected={selectedUser} onSelect={setSelectedUser} />}
 
-          {/* Date range */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={dateInputStyle} />
-            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>—</span>
-            <input
-              type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-              style={{
-                ...dateInputStyle,
-                ...(dateRangeInvalid ? { border: '1px solid var(--c-rejected)', color: 'var(--c-rejected)' } : {}),
-              }}
-            />
-          </div>
+              {/* Date range */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={dateInputStyle} />
+                <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>—</span>
+                <input
+                  type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                  style={{
+                    ...dateInputStyle,
+                    ...(dateRangeInvalid ? { border: '1px solid var(--c-rejected)', color: 'var(--c-rejected)' } : {}),
+                  }}
+                />
+              </div>
 
-          {dateRangeInvalid && (
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-rejected)', whiteSpace: 'nowrap' }}>
-              تاريخ النهاية يجب أن يكون مساوياً أو بعد تاريخ البداية
-            </span>
-          )}
+              {dateRangeInvalid && (
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-rejected)', whiteSpace: 'nowrap' }}>
+                  تاريخ النهاية يجب أن يكون مساوياً أو بعد تاريخ البداية
+                </span>
+              )}
 
-          {hasFilters && (
-            <button
-              onClick={clearFilters}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 38, padding: '0 12px', borderRadius: 10,
-                background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
-                color: 'var(--c-text-2)', cursor: 'pointer',
-              }}
-            >
-              <X size={13} />
-              مسح الفلاتر
-            </button>
+              {hasFilters && (
+                <button
+                  onClick={clearFilters}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    height: 38, padding: '0 12px', borderRadius: 10,
+                    background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+                    fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
+                    color: 'var(--c-text-2)', cursor: 'pointer',
+                  }}
+                >
+                  <X size={13} />
+                  مسح الفلاتر
+                </button>
+              )}
+            </>
           )}
         </div>
 
@@ -474,7 +667,7 @@ export default function AttendancePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'var(--c-surface)' }}>
-                {TABLE_COLS.map(col => (
+                {(isAbsent ? TABLE_COLS_ABSENT : TABLE_COLS).map(col => (
                   <th key={col} style={{
                     padding: '11px 16px', textAlign: 'right',
                     fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
@@ -486,18 +679,24 @@ export default function AttendancePage() {
               </tr>
             </thead>
             <tbody>
-              {loading
-                ? [0, 1, 2, 3, 4].map(i => <SkeletonRow key={i} />)
-                : records.map((r, idx) => <RecordRow key={r.id} record={r} last={idx === records.length - 1} />)
+              {activeLoading
+                ? [0, 1, 2, 3, 4].map(i => (
+                    <SkeletonRow key={i} cells={isAbsent ? SKELETON_CELLS_ABSENT : SKELETON_CELLS} />
+                  ))
+                : isAbsent
+                  ? activeRows.map((u, idx) => <AbsentRow key={u.id} user={u} last={idx === activeRows.length - 1} />)
+                  : activeRows.map((r, idx) => <RecordRow key={r.id} record={r} last={idx === activeRows.length - 1} />)
               }
             </tbody>
           </table>
         </div>
 
         {/* Empty state */}
-        {!loading && records.length === 0 && (
+        {!activeLoading && activeRows.length === 0 && (
           <div style={{ padding: '56px 20px', textAlign: 'center' }}>
-            <Fingerprint size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
+            {isAbsent
+              ? <UserX size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
+              : <Fingerprint size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />}
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
               {emptyMessage}
             </p>
@@ -505,16 +704,16 @@ export default function AttendancePage() {
         )}
 
         {/* Pagination */}
-        {lastPage > 1 && (
+        {activeLastPage > 1 && (
           <div style={{
             padding: '12px 20px', borderTop: '1px solid var(--c-border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}>
-            <PagBtn disabled={page <= 1}       onClick={() => setPage(p => p - 1)}>‹</PagBtn>
-            {Array.from({ length: lastPage }, (_, i) => i + 1).map(p => (
-              <PagBtn key={p} active={p === page} onClick={() => setPage(p)}>{p}</PagBtn>
+            <PagBtn disabled={activePage <= 1}             onClick={() => goToPage(activePage - 1)}>‹</PagBtn>
+            {Array.from({ length: activeLastPage }, (_, i) => i + 1).map(p => (
+              <PagBtn key={p} active={p === activePage} onClick={() => goToPage(p)}>{p}</PagBtn>
             ))}
-            <PagBtn disabled={page >= lastPage} onClick={() => setPage(p => p + 1)}>›</PagBtn>
+            <PagBtn disabled={activePage >= activeLastPage} onClick={() => goToPage(activePage + 1)}>›</PagBtn>
           </div>
         )}
       </div>

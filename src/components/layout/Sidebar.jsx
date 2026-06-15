@@ -1,7 +1,9 @@
+import { useState, useEffect, useCallback } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import api from '../../services/api'
 import {
-  LayoutDashboard, Inbox, Send, FileText, Archive,
+  LayoutDashboard, Inbox, Send, Plus,
   Users, Building2, Layers, LayoutTemplate, History,
   Settings, LogOut, Files, Fingerprint,
 } from 'lucide-react'
@@ -16,10 +18,9 @@ const NAV = [
   {
     label: 'المستندات',
     items: [
-      { label: 'الوارد',    icon: Inbox,    path: '/documents/inbox',  badge: 4, roles: ['admin', 'chief', 'manager'] },
-      { label: 'الصادر',   icon: Send,     path: '/documents/sent',              roles: ['admin', 'chief', 'manager'] },
-      { label: 'المسودات', icon: FileText,  path: '/documents/drafts', badge: 2, roles: ['admin', 'chief', 'manager'] },
-      { label: 'الأرشيف',  icon: Archive,  path: '/documents/archive',           roles: ['admin', 'chief', 'manager'] },
+      { label: 'الوارد', icon: Inbox, path: '/documents/inbox', roles: ['admin', 'chief', 'manager'] },
+      { label: 'الصادر', icon: Send, path: '/documents/sent',   roles: ['admin', 'chief', 'manager'] },
+      { label: 'مستند جديد', icon: Plus, path: '/documents/new', roles: ['admin', 'chief', 'manager'] },
     ],
   },
   {
@@ -37,8 +38,9 @@ const NAV = [
   },
 ]
 
-function NavItem({ item, onNavigate }) {
+function NavItem({ item, badge, onNavigate }) {
   const Icon = item.icon
+  const badgeValue = badge ?? item.badge
   return (
     <NavLink
       to={item.path}
@@ -55,9 +57,9 @@ function NavItem({ item, onNavigate }) {
     >
       <Icon size={16} strokeWidth={1.8} className="shrink-0 opacity-85" />
       <span className="flex-1 min-w-0">{item.label}</span>
-      {item.badge != null && (
+      {badgeValue != null && (
         <span className="text-[10px] font-extrabold bg-[#C8A36B] text-[#2A2010] rounded-full px-1.5 leading-[17px]">
-          {item.badge}
+          {badgeValue}
         </span>
       )}
     </NavLink>
@@ -69,6 +71,22 @@ const ROLE_LABELS = { admin: 'مدير النظام', chief: 'الرئيس ال�
 export default function Sidebar({ isOpen, onNavigate }) {
   const auth = useAuth()
   const { user, logout } = auth
+
+  const [inboxPendingCount, setInboxPendingCount] = useState(0)
+
+  const fetchInboxCount = useCallback(() => {
+    if (!['admin', 'chief', 'manager'].includes(user?.role)) return
+    api.get('/documents', { params: { type: 'inbox', status: 'pending' } })
+      .then(res => setInboxPendingCount(res.data?.documents?.total ?? 0))
+      .catch(() => {})
+  }, [user?.role])
+
+  useEffect(() => { fetchInboxCount() }, [fetchInboxCount])
+
+  useEffect(() => {
+    window.addEventListener('topbar:refresh', fetchInboxCount)
+    return () => window.removeEventListener('topbar:refresh', fetchInboxCount)
+  }, [fetchInboxCount])
 
   function canSee(item) {
     if (item.show) return item.show(auth)
@@ -124,7 +142,10 @@ export default function Sidebar({ isOpen, onNavigate }) {
                   {section.label}
                 </div>
                 {visibleItems.map((item) => (
-                  <NavItem key={item.path} item={item} onNavigate={onNavigate} />
+                  <NavItem
+                    key={item.path} item={item} onNavigate={onNavigate}
+                    badge={item.path === '/documents/inbox' ? (inboxPendingCount > 0 ? inboxPendingCount : null) : undefined}
+                  />
                 ))}
               </div>
             )
