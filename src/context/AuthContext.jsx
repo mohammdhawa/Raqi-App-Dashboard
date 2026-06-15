@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
   }
 
   const isAuthenticated = Boolean(token)
-  const canViewAttendance = user?.role === 'admin' || !!user?.can_view_attendance
+  const canViewAttendance = ['admin', 'manager', 'chief'].includes(user?.role) || !!user?.can_view_attendance
 
   return (
     <AuthContext.Provider value={{ user, token, isAuthenticated, loading, canViewAttendance, login, logout }}>
@@ -69,6 +69,23 @@ export function RequireAuth({ children }) {
 export function RequireAttendanceAccess({ children }) {
   const { canViewAttendance } = useAuth()
   if (!canViewAttendance) {
+    return <Navigate to="/dashboard" replace />
+  }
+  return children
+}
+
+export function RequireRole({ roles, children }) {
+  const { user } = useAuth()
+  const allowed = Array.isArray(roles) ? roles : [roles]
+  if (!allowed.includes(user?.role)) {
+    return <Navigate to="/dashboard" replace />
+  }
+  return children
+}
+
+export function RequireNotEmployee({ children }) {
+  const { user } = useAuth()
+  if (user?.role === 'employee') {
     return <Navigate to="/dashboard" replace />
   }
   return children

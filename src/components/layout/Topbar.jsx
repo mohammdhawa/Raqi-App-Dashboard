@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation, useMatch } from 'react-router-dom'
-import { Bell, BellOff, CheckCheck, RefreshCw, Search, Menu, Check } from 'lucide-react'
+import { Bell, BellOff, CheckCheck, RefreshCw, Menu, Check } from 'lucide-react'
 import api from '../../services/api'
 import Button from '../ui/Button'
+import { useToast } from '../ui/Toast'
 
 const PAGE_META = {
   '/dashboard':         { name: 'لوحة المعلومات',     section: 'الرئيسية' },
   '/documents/inbox':   { name: 'الوارد',             section: 'المستندات' },
   '/documents/sent':    { name: 'الصادر',             section: 'المستندات' },
-  '/documents/drafts':  { name: 'المسودات',           section: 'المستندات' },
-  '/documents/archive': { name: 'الأرشيف',            section: 'المستندات' },
+  '/documents/new':     { name: 'مستند جديد',         section: 'المستندات' },
   '/admin/documents':   { name: 'كل المستندات',       section: 'الإدارة' },
   '/admin/users':       { name: 'الأشخاص والصلاحيات', section: 'الإدارة' },
   '/admin/attendance':  { name: 'الحضور والانصراف',   section: 'الإدارة' },
@@ -67,18 +67,26 @@ function timeAgo(iso) {
 // reads the common field-name variants and falls back to a generic label.
 function notifText(n) {
   const d = (n && typeof n.data === 'object' && n.data) || {}
-  const title = d.title ?? d.subject ?? d.heading ?? 'إشعار جديد'
-  const body = d.message ?? d.body ?? d.text ?? d.description ?? ''
+  const title = n?.title ?? d.title ?? d.subject ?? d.heading ?? 'إشعار جديد'
+  const body = n?.body ?? d.message ?? d.body ?? d.text ?? d.description ?? ''
   return { title, body }
 }
 
 function NotificationsPanel() {
+  const toast = useToast()
+  const toastRef = useRef(toast)
+  toastRef.current = toast
+
   const [open, setOpen] = useState(false)
+  const openRef = useRef(open)
+  openRef.current = open
+
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [markingAll, setMarkingAll] = useState(false)
   const wrapRef = useRef(null)
+  const prevUnreadRef = useRef(null)
 
   useEffect(() => {
     function onClickOutside(e) {
@@ -88,26 +96,51 @@ function NotificationsPanel() {
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
 
-  const fetchUnreadCount = useCallback(() => {
-    api.get('/notifications/unread-count')
-      .then(res => setUnreadCount(res.data?.unread_count ?? 0))
-      .catch(() => {})
-  }, [])
-
   const fetchNotifications = useCallback(() => {
     setLoading(true)
-    api.get('/notifications')
+    return api.get('/notifications')
       .then(res => {
         const pag = res.data?.notifications ?? res.data
-        setItems(pag?.data ?? (Array.isArray(pag) ? pag : []))
+        const list = pag?.data ?? (Array.isArray(pag) ? pag : [])
+        setItems(list)
+        return list
       })
-      .catch(() => setItems([]))
+      .catch(() => { setItems([]); return [] })
       .finally(() => setLoading(false))
   }, [])
 
+  const fetchUnreadCount = useCallback(() => {
+    api.get('/notifications/unread-count')
+      .then(res => {
+        const count = res.data?.unread_count ?? 0
+        const prev = prevUnreadRef.current
+        prevUnreadRef.current = count
+
+        if (prev !== null && count > prev) {
+          if (openRef.current) {
+            fetchNotifications()
+          } else {
+            api.get('/notifications')
+              .then(r => {
+                const pag = r.data?.notifications ?? r.data
+                const list = pag?.data ?? (Array.isArray(pag) ? pag : [])
+                list.filter(n => !n.read_at).slice(0, count - prev).reverse().forEach(n => {
+                  const { title, body } = notifText(n)
+                  toastRef.current.info(body ? `${title} — ${body}` : title)
+                })
+              })
+              .catch(() => {})
+          }
+        }
+
+        setUnreadCount(count)
+      })
+      .catch(() => {})
+  }, [fetchNotifications])
+
   useEffect(() => {
     fetchUnreadCount()
-    const t = setInterval(fetchUnreadCount, 60000)
+    const t = setInterval(fetchUnreadCount, 30000)
     return () => clearInterval(t)
   }, [fetchUnreadCount])
 
@@ -144,10 +177,14 @@ function NotificationsPanel() {
       </IconBtn>
       {unreadCount > 0 && (
         <span style={{
-          position: 'absolute', top: 5, right: 5,
-          width: 7, height: 7, borderRadius: '50%',
+          position: 'absolute', top: -5, insetInlineEnd: -5,
+          minWidth: 16, height: 16, padding: '0 4px', borderRadius: 8,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 9.5, fontWeight: 800, lineHeight: 1, color: '#fff',
           background: 'var(--c-rejected)', border: '1.5px solid #fff',
-        }} />
+        }}>
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
       )}
 
       {open && (
@@ -238,13 +275,23 @@ export default function Topbar({ onMenuToggle }) {
   const { pathname } = useLocation()
   const builderMatch = useMatch('/admin/templates/:id/edit')
   const isBuilder = !!builderMatch
+  const detailMatch = useMatch('/documents/:id')
+  // useMatch('/documents/:id') also matches static pages like /documents/sent
+  // or /documents/new (treating "sent"/"new" as the :id param), so exclude
+  // any path that already has its own PAGE_META entry.
+  const isDetail = !!detailMatch && !PAGE_META[pathname]
 
   const [builderName, setBuilderName] = useState('')
+  const [detailTitle, setDetailTitle] = useState('')
   const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (!isBuilder) setBuilderName('')
   }, [isBuilder])
+
+  useEffect(() => {
+    if (!isDetail) setDetailTitle('')
+  }, [isDetail])
 
   const handleRefresh = () => {
     if (refreshing) return
@@ -259,8 +306,14 @@ export default function Topbar({ onMenuToggle }) {
     return () => window.removeEventListener('topbar:builder-name', h)
   }, [])
 
+  useEffect(() => {
+    const h = e => setDetailTitle(e.detail?.title ?? '')
+    window.addEventListener('topbar:detail-title', h)
+    return () => window.removeEventListener('topbar:detail-title', h)
+  }, [])
+
   const meta = PAGE_META[pathname] ?? { name: '', section: 'الرئيسية' }
-  const actionLabel = isBuilder ? null : ACTION_LABELS[pathname]
+  const actionLabel = (isBuilder || isDetail) ? null : ACTION_LABELS[pathname]
 
   return (
     <header
@@ -293,6 +346,20 @@ export default function Topbar({ onMenuToggle }) {
               محرّر القالب
             </div>
           </>
+        ) : isDetail ? (
+          <>
+            <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
+              الرئيسية
+              <span style={{ margin: '0 3px' }}>·</span>
+              <span style={{ color: 'var(--c-text-2)' }}>المستندات</span>
+            </div>
+            <div style={{
+              fontSize: 15, fontWeight: 800, color: 'var(--c-text)', marginTop: 3, lineHeight: 1,
+              maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {detailTitle || 'تفاصيل المستند'}
+            </div>
+          </>
         ) : (
           <>
             <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
@@ -308,28 +375,8 @@ export default function Topbar({ onMenuToggle }) {
         )}
       </div>
 
-      {/* Search — centered */}
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', gap: 9,
-            background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-            borderRadius: 10, padding: '0 12px', height: 36,
-            width: '100%', maxWidth: 320,
-          }}
-        >
-          <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-          <input
-            type="text"
-            placeholder="ابحث في المستندات والمعتمدين..."
-            style={{
-              flex: 1, border: 'none', outline: 'none',
-              background: 'transparent', fontFamily: 'var(--font-sans)',
-              fontSize: 12.5, color: 'var(--c-text)', textAlign: 'right',
-            }}
-          />
-        </div>
-      </div>
+      {/* Spacer pushes actions to the start (left in RTL) */}
+      <div style={{ flex: 1 }} />
 
       {/* Actions — last in DOM = leftmost in RTL */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
