@@ -10,8 +10,9 @@ import {
   Workflow, MessageSquare, Paperclip,
 } from 'lucide-react'
 import {
-  FILE_BASE, formatDate, formatDateTime, StatusBadge, STATUS_META, OriginTag,
+  formatDate, formatDateTime, StatusBadge, STATUS_META, OriginTag,
   InitialsAvatar, getApprovalContext, extractErrorMessage, openStampedPdf,
+  fetchDocumentFileUrl, fetchAttachmentFileUrl,
 } from '../components/documents/shared'
 
 // ── Layout primitives ────────────────────────────────────────────────────────
@@ -95,10 +96,36 @@ function HeaderCard({ document }) {
 function PdfCard({ document, fileMime, hasDecisions }) {
   const toast = useToast()
   const [downloading, setDownloading] = useState(false)
+  const [fileUrl, setFileUrl] = useState(null)
+  const [fileLoading, setFileLoading] = useState(true)
+  const [fileFailed, setFileFailed] = useState(false)
   const filePath = document.stamped_file_path || document.file_path
-  const fileUrl = filePath ? `${FILE_BASE}/storage/${filePath}` : null
   const mime = fileMime ?? ''
   const canPreview = mime.includes('pdf') || mime.startsWith('image/')
+
+  useEffect(() => {
+    if (!filePath) { setFileLoading(false); return }
+    let active = true
+    let objectUrl = null
+    setFileLoading(true)
+    setFileFailed(false)
+    fetchDocumentFileUrl(document.id)
+      .then(url => {
+        if (!active) { URL.revokeObjectURL(url); return }
+        objectUrl = url
+        setFileUrl(url)
+      })
+      .catch(() => { if (active) setFileFailed(true) })
+      .finally(() => { if (active) setFileLoading(false) })
+    return () => {
+      active = false
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [document.id, filePath])
+
+  function openInNewTab() {
+    if (fileUrl) window.open(fileUrl, '_blank', 'noopener,noreferrer')
+  }
 
   async function handleStampedDownload() {
     if (downloading) return
@@ -119,18 +146,18 @@ function PdfCard({ document, fileMime, hasDecisions }) {
         <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>معاينة المستند</span>
         <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           {fileUrl && (
-            <a
-              href={fileUrl} target="_blank" rel="noopener noreferrer"
+            <button
+              onClick={openInNewTab}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
                 border: '1px solid var(--c-border)', borderRadius: 9,
-                padding: '6px 11px', textDecoration: 'none',
+                padding: '6px 11px', background: '#fff', cursor: 'pointer',
               }}
             >
               <ExternalLink size={13} />
               فتح في تبويب جديد
-            </a>
+            </button>
           )}
           {hasDecisions && (
             <button
@@ -154,36 +181,48 @@ function PdfCard({ document, fileMime, hasDecisions }) {
       </div>
 
       <div style={{ background: 'var(--c-surface)' }}>
-        {!fileUrl && (
+        {!filePath && (
           <div style={{ padding: '60px 20px', textAlign: 'center' }}>
             <FileX size={28} style={{ color: 'var(--c-text-3)', marginBottom: 10 }} />
             <p style={{ margin: 0, fontSize: 13, color: 'var(--c-text-2)' }}>لا يوجد ملف مرفق لهذا المستند</p>
           </div>
         )}
-        {fileUrl && canPreview && (
+        {filePath && fileLoading && (
+          <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+            <Loader2 size={26} className="animate-spin" style={{ color: 'var(--c-text-3)', marginBottom: 10 }} />
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--c-text-2)' }}>...جارٍ تحميل الملف</p>
+          </div>
+        )}
+        {filePath && !fileLoading && fileFailed && (
+          <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+            <FileX size={28} style={{ color: 'var(--c-text-3)', marginBottom: 10 }} />
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--c-text-2)' }}>تعذّر تحميل ملف المستند</p>
+          </div>
+        )}
+        {filePath && !fileLoading && !fileFailed && fileUrl && canPreview && (
           <iframe
             src={fileUrl} title={document.title || 'معاينة المستند'}
             style={{ width: '100%', height: 640, border: 'none', display: 'block' }}
           />
         )}
-        {fileUrl && !canPreview && (
+        {filePath && !fileLoading && !fileFailed && fileUrl && !canPreview && (
           <div style={{ padding: '60px 20px', textAlign: 'center' }}>
             <FileText size={28} style={{ color: 'var(--c-text-3)', marginBottom: 10 }} />
             <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--c-text-2)' }}>
               لا يمكن معاينة هذا النوع من الملفات مباشرة
             </p>
-            <a
-              href={fileUrl} target="_blank" rel="noopener noreferrer"
+            <button
+              onClick={openInNewTab}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontSize: 12.5, fontWeight: 700, color: '#fff',
                 background: 'var(--c-primary)', borderRadius: 9,
-                padding: '8px 16px', textDecoration: 'none',
+                padding: '8px 16px', border: 0, cursor: 'pointer',
               }}
             >
               <Download size={13} />
               تنزيل الملف
-            </a>
+            </button>
           </div>
         )}
       </div>
@@ -193,8 +232,20 @@ function PdfCard({ document, fileMime, hasDecisions }) {
 
 // ── Attachments card ──────────────────────────────────────────────────────────
 
-function AttachmentsCard({ attachments }) {
+function AttachmentsCard({ documentId, attachments }) {
+  const toast = useToast()
   if (!attachments?.length) return null
+
+  async function handleOpen(attachmentId) {
+    try {
+      const url = await fetchAttachmentFileUrl(documentId, attachmentId)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (e) {
+      toast.error(extractErrorMessage(e, 'تعذّر فتح المرفق.'))
+    }
+  }
+
   return (
     <div style={cardStyle}>
       <div style={cardHeaderStyle}>
@@ -209,12 +260,12 @@ function AttachmentsCard({ attachments }) {
       </div>
       <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {attachments.map(a => (
-          <a
-            key={a.id} href={`${FILE_BASE}/storage/${a.file_path}`} target="_blank" rel="noopener noreferrer"
+          <button
+            key={a.id} onClick={() => handleOpen(a.id)}
             style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
               border: '1px solid var(--c-border)', borderRadius: 10, background: 'var(--c-surface)',
-              textDecoration: 'none',
+              width: '100%', textAlign: 'right', cursor: 'pointer', fontFamily: 'var(--font-sans)',
             }}
           >
             <FileText size={16} style={{ color: 'var(--c-accent)', flexShrink: 0 }} />
@@ -230,7 +281,7 @@ function AttachmentsCard({ attachments }) {
               </div>
             </div>
             <Download size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-          </a>
+          </button>
         ))}
       </div>
     </div>
@@ -676,7 +727,7 @@ export default function DocumentDetailPage() {
         <div style={{ flex: '1 1 600px', minWidth: 0 }}>
           <HeaderCard document={document} />
           <PdfCard document={document} fileMime={file_mime} hasDecisions={hasDecisions} />
-          <AttachmentsCard attachments={document.attachments} />
+          <AttachmentsCard documentId={document.id} attachments={document.attachments} />
           <CommentsCard docId={document.id} />
         </div>
 

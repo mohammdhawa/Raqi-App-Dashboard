@@ -1,13 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../services/api'
 import { useToast } from '../components/ui/Toast'
+import { fetchDocumentFileUrl } from '../components/documents/shared'
 import {
   FileText, Search, ChevronDown, Building2, Layers,
   Clock, CheckCircle2, XCircle, Archive, FileEdit, Calendar, LayoutTemplate,
   Eye, X, ExternalLink, Loader2, FileX, Trash2, AlertCircle,
 } from 'lucide-react'
-
-const FILE_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function formatDate(value) {
   if (!value) return '—'
@@ -329,20 +328,22 @@ function PdfPreviewModal({ doc, onClose }) {
 
   useEffect(() => {
     let active = true
+    let objectUrl = null
     setLoading(true)
     setFailed(false)
     setFileUrl(null)
-    api.get(`/documents/${doc.id}`)
-      .then(res => {
-        if (!active) return
-        const d = res.data?.document
-        const path = d?.stamped_file_path || d?.file_path
-        if (path) setFileUrl(`${FILE_BASE}/storage/${path}`)
-        else setFailed(true)
+    fetchDocumentFileUrl(doc.id)
+      .then(url => {
+        if (!active) { URL.revokeObjectURL(url); return }
+        objectUrl = url
+        setFileUrl(url)
       })
       .catch(() => { if (active) setFailed(true) })
       .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    return () => {
+      active = false
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
   }, [doc.id])
 
   useEffect(() => {
@@ -390,16 +391,16 @@ function PdfPreviewModal({ doc, onClose }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {fileUrl && (
-              <a
-                href={fileUrl} target="_blank" rel="noopener noreferrer" title="فتح في تبويب جديد"
+              <button
+                onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')} title="فتح في تبويب جديد"
                 style={{
                   width: 34, height: 34, borderRadius: 9,
                   border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                 }}
               >
                 <ExternalLink size={15} />
-              </a>
+              </button>
             )}
             <button
               onClick={onClose} title="إغلاق"
