@@ -4,21 +4,34 @@ import {
 } from 'lucide-react'
 import api from '../../services/api'
 
-export const FILE_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
-// ── Authenticated stamped-PDF download ───────────────────────────────────────
+// ── Authenticated file access ────────────────────────────────────────────────
 
 /**
- * Fetches a document's stamped PDF through the authenticated API client and
- * opens it in a new tab. The endpoint requires `auth:sanctum`, so a plain
- * <a href> link (which omits the Authorization header) would get a 401 —
- * this pulls the file as a blob with the Bearer token attached instead.
+ * Fetches a file through the authenticated API client and returns an object
+ * URL for it. These endpoints require `auth:sanctum` (and aren't reachable
+ * via /storage on the production proxy), so a plain <a href>/<iframe src>
+ * pointing at the storage path won't work — this pulls the file as a blob
+ * with the Bearer token attached instead. Caller must release the URL with
+ * URL.revokeObjectURL once it's no longer needed.
  */
+async function fetchFileBlobUrl(path) {
+  const res = await api.get(path, { responseType: 'blob' })
+  return URL.createObjectURL(res.data)
+}
+
+/** Object URL for a document's current file (stamped version if decided, otherwise the original). */
+export function fetchDocumentFileUrl(documentId) {
+  return fetchFileBlobUrl(`/documents/${documentId}/file`)
+}
+
+/** Object URL for one of a document's extra attachments. */
+export function fetchAttachmentFileUrl(documentId, attachmentId) {
+  return fetchFileBlobUrl(`/documents/${documentId}/attachments/${attachmentId}/file`)
+}
+
+/** Fetches a document's stamped PDF and opens it in a new tab. */
 export async function openStampedPdf(documentId) {
-  const res = await api.get(`/documents/${documentId}/stamped-pdf`, {
-    responseType: 'blob',
-  })
-  const url = URL.createObjectURL(res.data)
+  const url = await fetchFileBlobUrl(`/documents/${documentId}/stamped-pdf`)
   window.open(url, '_blank', 'noopener,noreferrer')
   // Give the new tab time to load before releasing the object URL.
   setTimeout(() => URL.revokeObjectURL(url), 60_000)
