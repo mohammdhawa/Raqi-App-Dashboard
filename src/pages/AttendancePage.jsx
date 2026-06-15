@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import {
   Fingerprint, Search, ChevronDown, Calendar, LogIn, LogOut,
   MapPin, Camera, X, User as UserIcon, UserX, Building2,
+  Loader2, ImageOff, ExternalLink,
 } from 'lucide-react'
 
 function formatDate(value) {
@@ -123,17 +124,141 @@ function LocationCell({ lat, lng }) {
   )
 }
 
-function SelfieTag({ path }) {
-  if (!path) return <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>
+function SelfieTag({ record, onView }) {
+  if (!record.selfie_path) return <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>
   return (
-    <span title={path} style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6,
-      padding: '4px 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 700,
-      background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
-    }}>
+    <button
+      onClick={() => onView(record)} title="عرض الصورة"
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '4px 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 700,
+        background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
+        border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)',
+        transition: 'background .12s, color .12s',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'var(--c-primary)'; e.currentTarget.style.color = '#fff' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'var(--c-surface-2)'; e.currentTarget.style.color = 'var(--c-text-2)' }}
+    >
       <Camera size={12} />
       صورة مرفقة
-    </span>
+    </button>
+  )
+}
+
+// ── Selfie preview modal ──────────────────────────────────────────────────────
+
+function SelfiePreviewModal({ record, onClose }) {
+  const [status, setStatus] = useState('loading') // 'loading' | 'loaded' | 'error'
+  const u = record.user
+  const url = record.selfie_url
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 50,
+        background: 'rgba(20,32,50,0.5)',
+        backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: 'min(420px, 100%)', background: '#fff', borderRadius: 16,
+          overflow: 'hidden', boxShadow: 'var(--sh-card-lg)',
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          padding: '14px 18px', borderBottom: '1px solid var(--c-border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              fontSize: 14, fontWeight: 800, color: 'var(--c-text)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              {u?.name ?? '—'}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>
+              {formatDate(record.recorded_at)} — {formatTime(record.recorded_at)}
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {url && status === 'loaded' && (
+              <button
+                onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} title="فتح في تبويب جديد"
+                style={{
+                  width: 34, height: 34, borderRadius: 9,
+                  border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                }}
+              >
+                <ExternalLink size={15} />
+              </button>
+            )}
+            <button
+              onClick={onClose} title="إغلاق"
+              style={{
+                width: 34, height: 34, borderRadius: 9,
+                border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              }}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Image */}
+        <div style={{ position: 'relative', aspectRatio: '1 / 1', background: 'var(--c-surface)' }}>
+          {status === 'loading' && (
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 10,
+            }}>
+              <Loader2 size={24} className="animate-spin" style={{ color: 'var(--c-text-3)' }} />
+              <span style={{ fontSize: 12.5, color: 'var(--c-text-3)' }}>جارٍ تحميل الصورة...</span>
+            </div>
+          )}
+          {status === 'error' && (
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 10,
+            }}>
+              <ImageOff size={28} style={{ color: 'var(--c-text-3)' }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text-2)' }}>
+                تعذّر تحميل الصورة
+              </span>
+            </div>
+          )}
+          {url && (
+            <img
+              src={url} alt="صورة تسجيل الحضور"
+              onLoad={() => setStatus('loaded')}
+              onError={() => setStatus('error')}
+              style={{
+                width: '100%', height: '100%', objectFit: 'cover',
+                display: status === 'loaded' ? 'block' : 'none',
+              }}
+            />
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <TypeBadge type={record.type} />
+          <LocationCell lat={record.latitude} lng={record.longitude} />
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -157,7 +282,7 @@ function SkeletonRow({ cells = SKELETON_CELLS }) {
 
 // ── Record row (separated to avoid hook-in-loop) ─────────────────────────────
 
-function RecordRow({ record, last }) {
+function RecordRow({ record, last, onViewSelfie }) {
   const [hov, setHov] = useState(false)
   const u = record.user
   return (
@@ -192,7 +317,7 @@ function RecordRow({ record, last }) {
         <LocationCell lat={record.latitude} lng={record.longitude} />
       </td>
       <td style={{ padding: '12px 16px' }}>
-        <SelfieTag path={record.selfie_path} />
+        <SelfieTag record={record} onView={onViewSelfie} />
       </td>
     </tr>
   )
@@ -405,6 +530,8 @@ export default function AttendancePage() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo]     = useState('')
+
+  const [selfiePreview, setSelfiePreview] = useState(null)
 
   // Absent-today tab — single date (empty = today, resolved by the backend).
   const [absentRows, setAbsentRows]   = useState([])
@@ -685,7 +812,7 @@ export default function AttendancePage() {
                   ))
                 : isAbsent
                   ? activeRows.map((u, idx) => <AbsentRow key={u.id} user={u} last={idx === activeRows.length - 1} />)
-                  : activeRows.map((r, idx) => <RecordRow key={r.id} record={r} last={idx === activeRows.length - 1} />)
+                  : activeRows.map((r, idx) => <RecordRow key={r.id} record={r} last={idx === activeRows.length - 1} onViewSelfie={setSelfiePreview} />)
               }
             </tbody>
           </table>
@@ -717,6 +844,10 @@ export default function AttendancePage() {
           </div>
         )}
       </div>
+
+      {selfiePreview && (
+        <SelfiePreviewModal record={selfiePreview} onClose={() => setSelfiePreview(null)} />
+      )}
     </div>
   )
 }
