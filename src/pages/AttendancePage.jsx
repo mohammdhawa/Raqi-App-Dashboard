@@ -42,6 +42,13 @@ const dateInputStyle = {
   color: 'var(--c-text-2)', outline: 'none', cursor: 'pointer',
 }
 
+const deptSelectStyle = {
+  height: 38, padding: '0 10px', borderRadius: 10, minWidth: 140,
+  background: '#fff', border: '1px solid var(--c-border)',
+  fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
+  cursor: 'pointer', direction: 'rtl', outline: 'none',
+}
+
 // ── Badges ────────────────────────────────────────────────────────────────────
 
 function TypeBadge({ type }) {
@@ -508,6 +515,23 @@ function UserPicker({ selected, onSelect }) {
   )
 }
 
+// ── Department filter (admin / can_view_attendance only) ─────────────────────
+
+function DepartmentFilter({ departments, value, onChange }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <Building2 size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+      <select
+        value={value} onChange={e => onChange(e.target.value)}
+        style={{ ...deptSelectStyle, color: value ? 'var(--c-text)' : 'var(--c-text-2)' }}
+      >
+        <option value="">الإدارة: الكل</option>
+        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+      </select>
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function AttendancePage() {
@@ -530,6 +554,8 @@ export default function AttendancePage() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo]     = useState('')
+  const [departmentId, setDepartmentId] = useState('')
+  const [departments, setDepartments]   = useState([])
 
   const [selfiePreview, setSelfiePreview] = useState(null)
 
@@ -550,15 +576,25 @@ export default function AttendancePage() {
   // combination) resolving after newer filters have already changed state.
   const requestIdRef = useRef(0)
 
+  // Department picker — only admins / can_view_attendance users can filter by
+  // department, so only fetch the list for them.
+  useEffect(() => {
+    if (!hasFullAccess) return
+    api.get('/attendance/departments')
+      .then(res => setDepartments(res.data.departments ?? []))
+      .catch(() => setDepartments([]))
+  }, [hasFullAccess])
+
   // ── API ──────────────────────────────────────────────────────────────────
   const fetchRecords = useCallback(async (targetPage) => {
     const reqId = ++requestIdRef.current
     setLoading(true)
     try {
       const params = { page: targetPage }
-      if (selectedUser) params.user_id = selectedUser.id
-      if (dateFrom)     params.from    = dateFrom
-      if (dateTo)       params.to      = dateTo
+      if (selectedUser)   params.user_id       = selectedUser.id
+      if (dateFrom)       params.from          = dateFrom
+      if (dateTo)         params.to            = dateTo
+      if (departmentId)   params.department_id = departmentId
       const res = await api.get('/attendance/records', { params })
       if (reqId !== requestIdRef.current) return
       const pag = res.data.records
@@ -570,7 +606,7 @@ export default function AttendancePage() {
     } finally {
       if (reqId === requestIdRef.current) setLoading(false)
     }
-  }, [selectedUser, dateFrom, dateTo])
+  }, [selectedUser, dateFrom, dateTo, departmentId])
 
   const absentReqRef = useRef(0)
   const fetchAbsent = useCallback(async (targetPage) => {
@@ -578,7 +614,8 @@ export default function AttendancePage() {
     setAbsentLoading(true)
     try {
       const params = { page: targetPage }
-      if (absentDate) params.date = absentDate
+      if (absentDate)    params.date          = absentDate
+      if (departmentId)  params.department_id = departmentId
       const res = await api.get('/attendance/absent-today', { params })
       if (reqId !== absentReqRef.current) return
       const pag = res.data.employees
@@ -591,7 +628,7 @@ export default function AttendancePage() {
     } finally {
       if (reqId === absentReqRef.current) setAbsentLoading(false)
     }
-  }, [absentDate])
+  }, [absentDate, departmentId])
 
   // Reset to page 1 when records filters change, then fetch (skip when range is invalid)
   useEffect(() => {
@@ -604,18 +641,18 @@ export default function AttendancePage() {
     setPage(1)
     fetchRecords(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser, dateFrom, dateTo, dateRangeInvalid, view])
+  }, [selectedUser, dateFrom, dateTo, departmentId, dateRangeInvalid, view])
 
   // Fetch records when page changes (without resetting)
   useEffect(() => { if (!isAbsent && !dateRangeInvalid) fetchRecords(page) }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reset to page 1 when the absent date changes, then fetch
+  // Reset to page 1 when the absent date or department changes, then fetch
   useEffect(() => {
     if (!isAbsent) return
     setAbsentPage(1)
     fetchAbsent(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [absentDate, view])
+  }, [absentDate, departmentId, view])
 
   // Fetch absentees when page changes (without resetting)
   useEffect(() => { if (isAbsent) fetchAbsent(absentPage) }, [absentPage]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -630,8 +667,8 @@ export default function AttendancePage() {
     return () => window.removeEventListener('topbar:refresh', handler)
   }, [fetchRecords, fetchAbsent, page, absentPage, dateRangeInvalid, isAbsent])
 
-  const hasFilters = Boolean(selectedUser || dateFrom || dateTo)
-  const clearFilters = () => { setSelectedUser(null); setDateFrom(''); setDateTo('') }
+  const hasFilters = Boolean(selectedUser || dateFrom || dateTo || departmentId)
+  const clearFilters = () => { setSelectedUser(null); setDateFrom(''); setDateTo(''); setDepartmentId('') }
 
   // Active-tab view-model so the table/empty/pagination blocks stay tab-agnostic.
   const activeLoading  = isAbsent ? absentLoading  : loading
@@ -726,29 +763,41 @@ export default function AttendancePage() {
           <div style={{ flex: 1 }} />
 
           {isAbsent ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-              <input type="date" value={absentDate} onChange={e => setAbsentDate(e.target.value)} style={dateInputStyle} />
-              {absentDate && (
-                <button
-                  onClick={() => setAbsentDate('')} title="العودة إلى اليوم"
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    height: 38, padding: '0 12px', borderRadius: 10,
-                    background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-                    fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
-                    color: 'var(--c-text-2)', cursor: 'pointer',
-                  }}
-                >
-                  <X size={13} />
-                  اليوم
-                </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              {/* Department filter — only meaningful for admin / can_view_attendance users */}
+              {hasFullAccess && (
+                <DepartmentFilter departments={departments} value={departmentId} onChange={setDepartmentId} />
               )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+                <input type="date" value={absentDate} onChange={e => setAbsentDate(e.target.value)} style={dateInputStyle} />
+                {absentDate && (
+                  <button
+                    onClick={() => setAbsentDate('')} title="العودة إلى اليوم"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      height: 38, padding: '0 12px', borderRadius: 10,
+                      background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+                      fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
+                      color: 'var(--c-text-2)', cursor: 'pointer',
+                    }}
+                  >
+                    <X size={13} />
+                    اليوم
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <>
               {/* User filter — relies on /admin/users, which is admin-only */}
               {canPickUser && <UserPicker selected={selectedUser} onSelect={setSelectedUser} />}
+
+              {/* Department filter — only meaningful for admin / can_view_attendance users */}
+              {hasFullAccess && (
+                <DepartmentFilter departments={departments} value={departmentId} onChange={setDepartmentId} />
+              )}
 
               {/* Date range */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
