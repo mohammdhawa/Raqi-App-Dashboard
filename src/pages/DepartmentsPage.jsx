@@ -254,7 +254,7 @@ function DeptDrawer({ mode, dept, onClose, onSave }) {
       />
       <div style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
-        width: 520, background: '#fff', zIndex: 40,
+        width: 'min(520px, 100vw)', background: '#fff', zIndex: 40,
         boxShadow: '-14px 0 40px rgba(20,32,50,0.22)',
         display: 'flex', flexDirection: 'column',
         borderInlineEnd: '1px solid var(--c-border)',
@@ -371,7 +371,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
       padding: 16,
     }}>
       <div style={{
-        width: 460, background: '#fff', borderRadius: 18,
+        width: 'min(460px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
         boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
       }}>
 
@@ -544,7 +544,7 @@ export default function DepartmentsPage() {
   const handleDeleted = () => { toast.success('تم حذف الإدارة بنجاح'); setDel(null); fetchDepts() }
 
   return (
-    <div style={{ padding: '28px 28px 48px', maxWidth: 1180, margin: '0 auto' }}>
+    <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1180, margin: '0 auto' }}>
 
       {/* ── Page header ──────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: 26 }}>
@@ -610,7 +610,7 @@ export default function DepartmentsPage() {
 
       {/* ── Grid ─────────────────────────────────────────────────────────────── */}
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[0, 1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} />)}
         </div>
       ) : depts.length === 0 ? (
@@ -621,7 +621,7 @@ export default function DepartmentsPage() {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {depts.map(dept => (
             <DeptCard
               key={dept.id}

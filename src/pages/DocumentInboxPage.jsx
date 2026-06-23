@@ -130,7 +130,7 @@ export default function DocumentInboxPage() {
   const hasFilters = Boolean(statusFilter || search)
 
   return (
-    <div style={{ padding: '28px 28px 48px', maxWidth: 1240, margin: '0 auto' }}>
+    <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1240, margin: '0 auto' }}>
 
       {/* Page header */}
       <div style={{ marginBottom: 26 }}>

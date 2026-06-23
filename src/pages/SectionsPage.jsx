@@ -114,7 +114,7 @@ function StampPreviewModal({ section, onClose }) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: 380, background: '#fff', borderRadius: 18,
+          width: 'min(380px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
           boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
         }}
       >
@@ -312,7 +312,7 @@ function SectionDrawer({ mode, section, departments, onClose, onSave }) {
       />
       <div style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
-        width: 520, background: '#fff', zIndex: 40,
+        width: 'min(520px, 100vw)', background: '#fff', zIndex: 40,
         boxShadow: '-14px 0 40px rgba(20,32,50,0.22)',
         display: 'flex', flexDirection: 'column',
         borderInlineEnd: '1px solid var(--c-border)',
@@ -432,7 +432,7 @@ function DeleteSectionModal({ section, onClose, onDeleted }) {
       padding: 16,
     }}>
       <div style={{
-        width: 440, background: '#fff', borderRadius: 18,
+        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
         boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
       }}>
         {phase === 'blocked' ? (
@@ -732,7 +732,7 @@ export default function SectionsPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: '28px 28px 48px', maxWidth: 1180, margin: '0 auto' }}>
+    <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1180, margin: '0 auto' }}>
 
       {/* ── Page header ──────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: 26 }}>

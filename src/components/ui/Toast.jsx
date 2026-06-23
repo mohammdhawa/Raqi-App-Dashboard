@@ -47,7 +47,7 @@ function ToastItem({ toast, onRemove }) {
     <div
       style={{
         display: 'flex', alignItems: 'flex-start', gap: 10,
-        padding: '12px 14px', borderRadius: 12, maxWidth: 340,
+        padding: '12px 14px', borderRadius: 12, width: 340, maxWidth: 'calc(100vw - 48px)',
         background: '#fff',
         border: `1px solid ${v.border}`,
         boxShadow: '0 4px 16px rgba(27,42,65,0.13)',

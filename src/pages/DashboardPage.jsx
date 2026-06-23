@@ -198,12 +198,12 @@ export default function DashboardPage() {
   const greeting = hour < 12 ? 'صباح الخير' : hour < 18 ? 'مساء الخير' : 'مساء النور'
 
   return (
-    <div style={{ padding: '28px 28px 48px', maxWidth: 1200, margin: '0 auto' }}>
+    <div className="px-4 py-6 sm:px-7 sm:py-8" style={{ maxWidth: 1200, margin: '0 auto' }}>
 
       {/* ── Welcome banner ─────────────────────────────────────────────────── */}
-      <div style={{
+      <div className="px-5 py-6 sm:px-8 sm:py-7" style={{
         background: 'linear-gradient(120deg, var(--c-primary) 0%, #1C3A5E 100%)',
-        borderRadius: 18, padding: '28px 32px', marginBottom: 28,
+        borderRadius: 18, marginBottom: 28,
         position: 'relative', overflow: 'hidden',
         boxShadow: '0 8px 24px rgba(34,65,103,0.22)',
       }}>
@@ -231,7 +231,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Stat cards ─────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
         <StatCard
           icon={Users}
           label="إجمالي المستخدمين"
@@ -267,7 +267,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Two-column grid: activity chart + status breakdown ──────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 16, marginBottom: 24 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 mb-6">
 
         {/* Left: document activity chart */}
         <ChartCard
@@ -336,7 +336,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Bottom row: staff distribution chart + recent docs ──────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Department staff distribution chart */}
         <ChartCard
