@@ -323,7 +323,7 @@ function CreateDrawer({ onClose, onCreated }) {
       />
       <div style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
-        width: 520, background: '#fff', zIndex: 40,
+        width: 'min(520px, 100vw)', background: '#fff', zIndex: 40,
         boxShadow: '-14px 0 40px rgba(20,32,50,0.22)',
         display: 'flex', flexDirection: 'column',
         borderInlineEnd: '1px solid var(--c-border)',
@@ -380,7 +380,7 @@ function CreateDrawer({ onClose, onCreated }) {
             />
           </FieldWrap>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
             <FieldWrap label="النوع" required>
               <TextInput
                 placeholder="مثال: عقد"
@@ -474,7 +474,7 @@ function DeleteModal({ tpl, onClose, onDeleted }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div style={{
-        width: 440, background: '#fff', borderRadius: 18,
+        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
         overflow: 'hidden', boxShadow: 'var(--sh-card-lg)',
       }}>
         <div style={{ padding: '28px 24px 20px', textAlign: 'center' }}>
@@ -603,7 +603,7 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div style={{ padding: '28px 28px 48px', maxWidth: 1180, margin: '0 auto' }}>
+    <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1180, margin: '0 auto' }}>
 
       {/* ── Page header ── */}
       <div style={{ marginBottom: 26 }}>
@@ -708,43 +708,46 @@ export default function TemplatesPage() {
           </div>
         </div>
 
-        {/* Column headers */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 16, padding: '10px 20px',
-          background: 'var(--c-surface)', borderBottom: '1px solid var(--c-border)',
-        }}>
-          <div style={{ flex: '0 0 48px' }} />
-          {COLS.map(col => (
-            <div
-              key={col.label}
-              style={{
-                flex: col.flex,
-                fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
-                textAlign: col.center ? 'center' : 'right',
-              }}
-            >
-              {col.label}
+        {/* Column headers + rows — horizontally scrollable below the row's natural min width */}
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ minWidth: 860 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 16, padding: '10px 20px',
+              background: 'var(--c-surface)', borderBottom: '1px solid var(--c-border)',
+            }}>
+              <div style={{ flex: '0 0 48px' }} />
+              {COLS.map(col => (
+                <div
+                  key={col.label}
+                  style={{
+                    flex: col.flex,
+                    fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
+                    textAlign: col.center ? 'center' : 'right',
+                  }}
+                >
+                  {col.label}
+                </div>
+              ))}
+              <div style={{ marginInlineStart: 'auto', fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
+                إجراءات
+              </div>
             </div>
-          ))}
-          <div style={{ marginInlineStart: 'auto', fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
-            إجراءات
+
+            {loading
+              ? [0, 1, 2, 3].map(i => <SkeletonRow key={i} last={i === 3} />)
+              : templates.map((tpl, idx) => (
+                <TplRow
+                  key={tpl.id}
+                  tpl={tpl}
+                  last={idx === templates.length - 1}
+                  onEdit={() => navigate(`/admin/templates/${tpl.id}/edit`)}
+                  onDuplicate={() => handleDuplicate(tpl)}
+                  onDelete={() => setDel(tpl)}
+                />
+              ))
+            }
           </div>
         </div>
-
-        {/* Rows */}
-        {loading
-          ? [0, 1, 2, 3].map(i => <SkeletonRow key={i} last={i === 3} />)
-          : templates.map((tpl, idx) => (
-            <TplRow
-              key={tpl.id}
-              tpl={tpl}
-              last={idx === templates.length - 1}
-              onEdit={() => navigate(`/admin/templates/${tpl.id}/edit`)}
-              onDuplicate={() => handleDuplicate(tpl)}
-              onDelete={() => setDel(tpl)}
-            />
-          ))
-        }
 
         {/* Empty state */}
         {!loading && templates.length === 0 && (

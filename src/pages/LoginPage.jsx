@@ -37,21 +37,23 @@ export default function LoginPage() {
   return (
     <div
       dir="rtl"
+      className="flex flex-col lg:flex-row"
       style={{
-        minHeight: '100vh', display: 'flex',
+        minHeight: '100vh',
         fontFamily: 'var(--font-sans)',
         background: 'var(--c-bg)',
       }}
     >
-      {/* ── Right panel — brand ─────────────────────────────────────────── */}
-      <div style={{
-        flex: '0 0 46%',
-        background: 'linear-gradient(160deg, #1A3354 0%, #224167 55%, #1C3A5E 100%)',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        padding: '48px 40px',
-        position: 'relative', overflow: 'hidden',
-      }}>
+      {/* ── Right panel — brand (hidden on narrow screens) ──────────────── */}
+      <div
+        className="hidden lg:flex lg:flex-col lg:items-center lg:justify-center"
+        style={{
+          flex: '0 0 46%',
+          background: 'linear-gradient(160deg, #1A3354 0%, #224167 55%, #1C3A5E 100%)',
+          padding: '48px 40px',
+          position: 'relative', overflow: 'hidden',
+        }}
+      >
         {/* Decorative circles */}
         <div style={{
           position: 'absolute', top: -80, right: -80,
@@ -115,10 +117,10 @@ export default function LoginPage() {
       </div>
 
       {/* ── Left panel — login form ─────────────────────────────────────── */}
-      <div style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '48px 40px', background: '#fff',
-      }}>
+      <div
+        className="flex items-center justify-center px-6 py-10 sm:px-10 sm:py-12"
+        style={{ flex: 1, background: '#fff' }}
+      >
         <div style={{ width: '100%', maxWidth: 400 }}>
           {/* Form heading */}
           <div style={{ marginBottom: 32 }}>

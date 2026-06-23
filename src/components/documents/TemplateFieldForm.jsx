@@ -158,9 +158,10 @@ function TableField({ columns, value, onChange, error }) {
 
   return (
     <div>
+      <div style={{ overflowX: 'auto' }}>
       <div style={{
         border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
-        borderRadius: 10, overflow: 'hidden',
+        borderRadius: 10, overflow: 'hidden', minWidth: cols.length > 3 ? cols.length * 110 : undefined,
       }}>
         <div style={{
           display: 'grid', gridTemplateColumns: gridCols,
@@ -215,6 +216,7 @@ function TableField({ columns, value, onChange, error }) {
             </button>
           </div>
         ))}
+      </div>
       </div>
 
       <button

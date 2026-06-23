@@ -522,7 +522,7 @@ export default function DocumentSubmitPage() {
   }
 
   return (
-    <div style={{ padding: '28px 28px 48px', maxWidth: 880, margin: '0 auto' }}>
+    <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 880, margin: '0 auto' }}>
 
       {/* Page header */}
       <div style={{ marginBottom: 26 }}>

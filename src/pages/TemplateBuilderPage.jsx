@@ -254,7 +254,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 12 }}>
           اختر نوع الحقل:
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3" style={{ gap: 8, marginBottom: 10 }}>
           {FIELD_TYPES.map(ft => {
             const Icon = ft.icon
             return (
@@ -337,7 +337,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 10 }}>
         <FieldWrap label="اسم الحقل" required>
           <TextInput
             placeholder="مثال: عنوان العقد"
@@ -494,7 +494,7 @@ function EditFieldModal({ field, onSave, onClose }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div style={{
-        width: 460, background: '#fff', borderRadius: 16,
+        width: 'min(460px, calc(100vw - 32px))', background: '#fff', borderRadius: 16,
         boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
       }}>
         <div style={{
@@ -663,7 +663,7 @@ function BuilderSkeleton() {
     background: 'var(--c-surface-2)', borderRadius: 8,
   }
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start' }}>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px]" style={{ gap: 24, alignItems: 'start' }}>
       <div>
         <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 14, padding: 24, marginBottom: 20 }}>
           <div style={{ ...p, height: 16, width: 140, marginBottom: 20 }} />
@@ -813,7 +813,7 @@ export default function TemplateBuilderPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: '28px 28px 48px', maxWidth: 1320, margin: '0 auto' }}>
+    <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1320, margin: '0 auto' }}>
 
       {/* Page title area */}
       <div style={{ marginBottom: 24 }}>
@@ -876,7 +876,7 @@ export default function TemplateBuilderPage() {
 
       {/* Builder grid */}
       {loading ? <BuilderSkeleton /> : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px]" style={{ gap: 24, alignItems: 'start' }}>
 
           {/* ── Left column ── */}
           <div>
@@ -896,7 +896,7 @@ export default function TemplateBuilderPage() {
               </div>
 
               <div style={{ padding: 20 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 14 }}>
                   <FieldWrap label="اسم القالب" required>
                     <TextInput
                       placeholder="عقد توريد"
@@ -914,7 +914,7 @@ export default function TemplateBuilderPage() {
                   </FieldWrap>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 14 }}>
                   <FieldWrap label="النوع" required>
                     <TextInput
                       placeholder="عقد"

@@ -260,10 +260,10 @@ function DeleteModal({ doc, onClose, onConfirm }) {
       position: 'fixed', inset: 0, zIndex: 50,
       background: 'rgba(20,32,50,0.48)',
       backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div style={{
-        width: 440, background: '#fff', borderRadius: 18,
+        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
         boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
       }}>
         <div style={{ padding: '26px 26px 22px', textAlign: 'center' }}>
@@ -554,7 +554,7 @@ export default function DocumentsPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: '28px 28px 48px', maxWidth: 1240, margin: '0 auto' }}>
+    <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1240, margin: '0 auto' }}>
 
       {/* ── Page header ──────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: 26 }}>
