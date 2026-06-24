@@ -5,7 +5,7 @@ import api from '../../services/api'
 import {
   LayoutDashboard, Inbox, Send, Plus,
   Users, Building2, Layers, LayoutTemplate, History,
-  Settings, LogOut, Files, Fingerprint,
+  Settings, LogOut, Files, Fingerprint, CalendarCheck,
 } from 'lucide-react'
 
 const NAV = [
@@ -29,6 +29,7 @@ const NAV = [
       { label: 'كل المستندات',       icon: Files,           path: '/admin/documents',   roles: ['admin'] },
       { label: 'الأشخاص والصلاحيات', icon: Users,           path: '/admin/users',        roles: ['admin'] },
       { label: 'الحضور والانصراف',   icon: Fingerprint,     path: '/admin/attendance',   show: (auth) => auth.canViewAttendance },
+      { label: 'إدارة الإجازات',      icon: CalendarCheck,   path: '/admin/leave',        roles: ['admin', 'manager', 'chief'] },
       { label: 'الإدارات',           icon: Building2,       path: '/admin/departments',  roles: ['admin'] },
       { label: 'الأقسام',            icon: Layers,          path: '/admin/sections',     roles: ['admin'] },
       { label: 'قوالب المستندات',    icon: LayoutTemplate,  path: '/admin/templates',    roles: ['admin'] },

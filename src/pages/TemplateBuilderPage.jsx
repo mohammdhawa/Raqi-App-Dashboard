@@ -765,6 +765,10 @@ export default function TemplateBuilderPage() {
 
   const handleSave = async () => {
     setSaveError('')
+    if (fields.length === 0) {
+      setSaveError('أضف حقلاً واحداً على الأقل قبل الحفظ.')
+      return
+    }
     setSaving(true)
     try {
       const payload = { ...settings, fields_schema: fields }
