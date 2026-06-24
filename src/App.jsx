@@ -11,6 +11,7 @@ import SectionsPage from './pages/SectionsPage'
 import TemplatesPage from './pages/TemplatesPage'
 import TemplateBuilderPage from './pages/TemplateBuilderPage'
 import AttendancePage from './pages/AttendancePage'
+import LeavePage from './pages/LeavePage'
 import DocumentInboxPage from './pages/DocumentInboxPage'
 import DocumentSentPage from './pages/DocumentSentPage'
 import DocumentSubmitPage from './pages/DocumentSubmitPage'
@@ -28,6 +29,7 @@ export default function App() {
               <Route element={<RequireAuth><AdminLayout /></RequireAuth>}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/admin/attendance" element={<RequireAttendanceAccess><AttendancePage /></RequireAttendanceAccess>} />
+                <Route path="/admin/leave" element={<RequireRole roles={['admin', 'manager', 'chief']}><LeavePage /></RequireRole>} />
 
                 <Route element={<RequireRole roles="admin"><Outlet /></RequireRole>}>
                   <Route path="/admin/documents" element={<DocumentsPage />} />

@@ -13,7 +13,7 @@ import { extractErrorMessage } from '../components/documents/shared'
 
 const UPLOAD_EXTS = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp']
 const ATTACHMENT_EXTS = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp', 'xlsx', 'xls']
-const MAX_FILE_SIZE = 20 * 1024 * 1024
+const MAX_FILE_SIZE = 50 * 1024 * 1024
 const MAX_ATTACHMENTS = 10
 
 const WORKFLOW_MODES = [
@@ -45,7 +45,7 @@ function validateFile(file, allowedExts) {
     return `صيغة الملف غير مدعومة (الصيغ المسموحة: ${allowedExts.join('، ')})`
   }
   if (file.size > MAX_FILE_SIZE) {
-    return 'حجم الملف يتجاوز الحد الأقصى المسموح به (20 ميجابايت)'
+    return 'حجم الملف يتجاوز الحد الأقصى المسموح به (50 ميجابايت)'
   }
   return null
 }
@@ -578,7 +578,7 @@ export default function DocumentSubmitPage() {
               onSelect={handleSelectFile}
               onRemove={() => { setFile(null); setErrors(prev => ({ ...prev, file: undefined })) }}
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
-              hint="الصيغ المدعومة: PDF, Word, JPG, PNG, WEBP — الحد الأقصى 20 ميجابايت"
+              hint="الصيغ المدعومة: PDF, Word, JPG, PNG, WEBP — الحد الأقصى 50 ميجابايت"
               error={errors.file}
             />
           </div>
@@ -728,7 +728,7 @@ export default function DocumentSubmitPage() {
             <FileUp size={22} style={{ color: 'var(--c-text-3)', marginBottom: 6 }} />
             <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>انقر لإضافة مرفقات</div>
             <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 4 }}>
-              حتى {MAX_ATTACHMENTS} ملفات — PDF, Word, Excel, صور — 20 ميجابايت لكل ملف
+              حتى {MAX_ATTACHMENTS} ملفات — PDF, Word, Excel, صور — 50 ميجابايت لكل ملف
             </div>
           </div>
 

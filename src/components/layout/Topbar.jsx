@@ -13,6 +13,7 @@ const PAGE_META = {
   '/admin/documents':   { name: 'كل المستندات',       section: 'الإدارة' },
   '/admin/users':       { name: 'الأشخاص والصلاحيات', section: 'الإدارة' },
   '/admin/attendance':  { name: 'الحضور والانصراف',   section: 'الإدارة' },
+  '/admin/leave':       { name: 'إدارة الإجازات',     section: 'الإدارة' },
   '/admin/departments': { name: 'الإدارات',           section: 'الإدارة' },
   '/admin/sections':    { name: 'الأقسام',            section: 'الإدارة' },
   '/admin/templates':   { name: 'قوالب المستندات',    section: 'الإدارة' },

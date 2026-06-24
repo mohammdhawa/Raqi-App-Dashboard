@@ -299,7 +299,11 @@ function CreateDrawer({ onClose, onCreated }) {
         layout_key:   form.layout_key || 'contract_standard',
         description:  form.description,
         is_active:    form.is_active,
-        fields_schema: [],
+        // API requires at least one field; seed a starter field the
+        // user can rename/replace in the builder step that opens next.
+        fields_schema: [
+          { key: 'field_1', label: 'حقل جديد', type: 'text', required: false },
+        ],
       }
       const res = await api.post('/admin/document-templates', payload)
       onCreated(res.data.template)
@@ -594,7 +598,9 @@ export default function TemplatesPage() {
         layout_key:    tpl.layout_key,
         description:   tpl.description,
         is_active:     false,
-        fields_schema: tpl.fields_schema ?? [],
+        fields_schema: tpl.fields_schema?.length
+          ? tpl.fields_schema
+          : [{ key: 'field_1', label: 'حقل جديد', type: 'text', required: false }],
       }
       await api.post('/admin/document-templates', payload)
       toast.success('تم تكرار القالب بنجاح')
