@@ -705,6 +705,7 @@ function BuilderSkeleton() {
 
 export default function TemplateBuilderPage() {
   const { id }   = useParams()
+  const isNew    = !id
   const navigate = useNavigate()
   const toast    = useToast()
 
@@ -730,6 +731,11 @@ export default function TemplateBuilderPage() {
   // ── Load ───────────────────────────────────────────────────────────────────
 
   const load = useCallback(async () => {
+    if (isNew) {
+      setLoading(false)
+      window.dispatchEvent(new CustomEvent('topbar:builder-name', { detail: { name: '' } }))
+      return
+    }
     setLoading(true)
     try {
       const res = await api.get(`/document-templates/${id}`)
@@ -750,7 +756,7 @@ export default function TemplateBuilderPage() {
     } finally {
       setLoading(false)
     }
-  }, [id, navigate])
+  }, [id, navigate, isNew])
 
   useEffect(() => { load() }, [load])
 
@@ -765,13 +771,28 @@ export default function TemplateBuilderPage() {
 
   const handleSave = async () => {
     setSaveError('')
+    if (!settings.name.trim() || !settings.slug.trim() || !settings.type.trim()) {
+      setSaveError('يرجى تعبئة اسم القالب والمعرّف والنوع.')
+      return
+    }
     if (fields.length === 0) {
       setSaveError('أضف حقلاً واحداً على الأقل قبل الحفظ.')
       return
     }
     setSaving(true)
     try {
-      const payload = { ...settings, fields_schema: fields }
+      const payload = {
+        ...settings,
+        layout_key: settings.layout_key.trim() || 'contract_standard',
+        fields_schema: fields,
+      }
+      if (isNew) {
+        const res = await api.post('/admin/document-templates', payload)
+        const created = res.data.template ?? res.data
+        toast.success('تم إنشاء القالب بنجاح')
+        navigate(`/admin/templates/${created.id}/edit`, { replace: true })
+        return
+      }
       const res = await api.patch(`/admin/document-templates/${id}`, payload)
       const updated = res.data.template ?? res.data
       setTemplate(updated)
@@ -823,9 +844,9 @@ export default function TemplateBuilderPage() {
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.4 }}>
-            تعديل قالب: {settings.name || '...'}
+            {isNew ? 'قالب جديد' : `تعديل قالب: ${settings.name || '...'}`}
           </h1>
-          {template?.version && (
+          {!isNew && template?.version && (
             <span style={{
               fontFamily: "'Courier New', monospace",
               fontSize: 12, fontWeight: 700, color: 'var(--c-primary)',
@@ -851,7 +872,9 @@ export default function TemplateBuilderPage() {
           </span>
         </div>
         <p style={{ margin: 0, fontSize: 13, color: 'var(--c-text-2)' }}>
-          عرّف حقول القالب وترتيبها — يستخدمها المنشئون عند إنشاء مستند من هذا النوع.
+          {isNew
+            ? 'حدّد معلومات القالب وأضف حقوله — يستخدمها المنشئون عند إنشاء مستند من هذا النوع.'
+            : 'عرّف حقول القالب وترتيبها — يستخدمها المنشئون عند إنشاء مستند من هذا النوع.'}
         </p>
       </div>
 
@@ -959,16 +982,18 @@ export default function TemplateBuilderPage() {
                 </div>
 
                 {/* Version increment note */}
-                <div style={{
-                  display: 'flex', gap: 9, alignItems: 'flex-start', marginTop: 16,
-                  padding: '10px 12px',
-                  background: 'var(--c-accent-tint)',
-                  border: '1px solid rgba(200,163,107,0.3)',
-                  borderRadius: 10, fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.65,
-                }}>
-                  <Info size={14} style={{ flexShrink: 0, marginTop: 1, color: 'var(--c-accent)' }} />
-                  أي تعديل على الحقول يرفع رقم النسخة تلقائياً إلى v{nextVersion} مع الحفاظ على المستندات المرتبطة بالنسخ السابقة.
-                </div>
+                {!isNew && (
+                  <div style={{
+                    display: 'flex', gap: 9, alignItems: 'flex-start', marginTop: 16,
+                    padding: '10px 12px',
+                    background: 'var(--c-accent-tint)',
+                    border: '1px solid rgba(200,163,107,0.3)',
+                    borderRadius: 10, fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.65,
+                  }}>
+                    <Info size={14} style={{ flexShrink: 0, marginTop: 1, color: 'var(--c-accent)' }} />
+                    أي تعديل على الحقول يرفع رقم النسخة تلقائياً إلى v{nextVersion} مع الحفاظ على المستندات المرتبطة بالنسخ السابقة.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1060,7 +1085,7 @@ export default function TemplateBuilderPage() {
                 display: 'flex', gap: 10,
               }}>
                 <Button variant="primary" style={{ height: 44, flex: 1 }} onClick={handleSave}>
-                  {saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+                  {saving ? 'جاري الحفظ...' : (isNew ? 'إنشاء القالب' : 'حفظ التعديلات')}
                 </Button>
                 <Button variant="ghost" style={{ height: 44 }} onClick={() => navigate('/admin/templates')}>
                   العودة للقوالب

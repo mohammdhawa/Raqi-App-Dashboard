@@ -40,11 +40,20 @@ export function getLeaveEnd(item) {
   return item?.end_date ?? item?.to ?? item?.to_date ?? item?.ends_at ?? item?.end ?? null
 }
 
-// Requested days — prefer an explicit backend value; otherwise derive an
-// inclusive day count from the date range.
+// Chargeable (deducted) days — as of attendance v5 the backend's `requested_days`
+// counts WORKING days only (weekends/holidays inside the span don't consume
+// balance), so prefer that explicit value. Falls back to the inclusive calendar
+// span when no explicit count is present.
 export function getLeaveDays(item) {
   const explicit = item?.days ?? item?.requested_days ?? item?.days_count ?? item?.duration ?? item?.total_days
   if (explicit != null && explicit !== '') return Number(explicit)
+  return getLeaveCalendarDays(item)
+}
+
+// Inclusive calendar span (end − start + 1) — the full length of the leave
+// regardless of working days. Used alongside getLeaveDays to show both the
+// deducted working days and the real calendar length.
+export function getLeaveCalendarDays(item) {
   const start = getLeaveStart(item)
   const end = getLeaveEnd(item)
   if (!start || !end) return null

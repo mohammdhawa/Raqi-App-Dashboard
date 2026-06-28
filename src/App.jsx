@@ -11,6 +11,9 @@ import SectionsPage from './pages/SectionsPage'
 import TemplatesPage from './pages/TemplatesPage'
 import TemplateBuilderPage from './pages/TemplateBuilderPage'
 import AttendancePage from './pages/AttendancePage'
+import AttendanceReportPage from './pages/AttendanceReportPage'
+import AttendanceMonthlyReportPage from './pages/AttendanceMonthlyReportPage'
+import AttendanceEmployeeReportPage from './pages/AttendanceEmployeeReportPage'
 import LeavePage from './pages/LeavePage'
 import DocumentInboxPage from './pages/DocumentInboxPage'
 import DocumentSentPage from './pages/DocumentSentPage'
@@ -29,6 +32,9 @@ export default function App() {
               <Route element={<RequireAuth><AdminLayout /></RequireAuth>}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/admin/attendance" element={<RequireAttendanceAccess><AttendancePage /></RequireAttendanceAccess>} />
+                <Route path="/admin/attendance/report" element={<RequireAttendanceAccess><AttendanceReportPage /></RequireAttendanceAccess>} />
+                <Route path="/admin/attendance/monthly" element={<RequireAttendanceAccess><AttendanceMonthlyReportPage /></RequireAttendanceAccess>} />
+                <Route path="/admin/attendance/employee" element={<RequireAttendanceAccess><AttendanceEmployeeReportPage /></RequireAttendanceAccess>} />
                 <Route path="/admin/leave" element={<RequireRole roles={['admin', 'manager', 'chief']}><LeavePage /></RequireRole>} />
 
                 <Route element={<RequireRole roles="admin"><Outlet /></RequireRole>}>
@@ -37,6 +43,7 @@ export default function App() {
                   <Route path="/admin/departments" element={<DepartmentsPage />} />
                   <Route path="/admin/sections" element={<SectionsPage />} />
                   <Route path="/admin/templates" element={<TemplatesPage />} />
+                  <Route path="/admin/templates/new" element={<TemplateBuilderPage />} />
                   <Route path="/admin/templates/:id/edit" element={<TemplateBuilderPage />} />
                 </Route>
 

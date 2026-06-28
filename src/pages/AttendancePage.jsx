@@ -4,23 +4,40 @@ import { useAuth } from '../context/AuthContext'
 import {
   Fingerprint, Search, ChevronDown, Calendar, LogIn, LogOut,
   MapPin, Camera, X, User as UserIcon, UserX, Building2,
-  Loader2, ImageOff, ExternalLink, Plane,
+  Loader2, ImageOff, ExternalLink, Plane, CalendarOff,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import { getLeaveUser, getLeaveType, getLeaveStart, getLeaveEnd, getLeaveDays, leaveTypeLabel } from '../utils/leave'
+import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
+import { useDeptSections } from '../utils/useDeptSections'
+
+// The system is single-timezone (Asia/Damascus). `recorded_at` is serialized
+// as UTC ISO by the backend, so pin formatting to Damascus — otherwise times
+// would render in the viewer's browser timezone and disagree with the report.
+const ATT_TZ = 'Asia/Damascus'
 
 function formatDate(value) {
   if (!value) return '—'
-  const d = new Date(value)
+  const d = new Date(String(value).replace(' ', 'T'))
   if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })
+  return d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric', timeZone: ATT_TZ })
 }
 
 function formatTime(value) {
   if (!value) return ''
-  const d = new Date(value)
+  const d = new Date(String(value).replace(' ', 'T'))
   if (Number.isNaN(d.getTime())) return ''
-  return d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', timeZone: ATT_TZ })
+}
+
+// Surface the API's Arabic message: prefer field-validation errors (e.g.
+// errors.section_id when a section doesn't belong to the department), then the
+// business-rule top-level `message`. 401 is handled globally by the interceptor.
+function readApiError(err) {
+  const data = err?.response?.data
+  if (data?.errors) return Object.values(data.errors).flat().join('، ')
+  if (data?.message) return data.message
+  return 'تعذّر تحميل البيانات، حاول مرة أخرى'
 }
 
 const TYPE_META = {
@@ -135,7 +152,8 @@ function LocationCell({ lat, lng }) {
 }
 
 function SelfieTag({ record, onView }) {
-  if (!record.selfie_path) return <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>
+  // Gate on the public URL (null for admin-created checkouts), not selfie_path.
+  if (!record.selfie_url) return <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>
   return (
     <button
       onClick={() => onView(record)} title="عرض الصورة"
@@ -470,150 +488,26 @@ function PagBtn({ children, active, disabled, onClick }) {
   )
 }
 
-// ── User filter combobox (searches /admin/users) ─────────────────────────────
 
-function UserPicker({ selected, onSelect }) {
-  const [open, setOpen]       = useState(false)
-  const [query, setQuery]     = useState('')
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
-  const wrapRef = useRef(null)
 
-  useEffect(() => {
-    function onClickOutside(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [])
-
-  useEffect(() => {
-    if (!open) return
-    setLoading(true)
-    const t = setTimeout(() => {
-      api.get('/admin/users', { params: query ? { search: query } : {} })
-        .then(res => setResults(res.data.users?.data ?? []))
-        .catch(() => setResults([]))
-        .finally(() => setLoading(false))
-    }, 280)
-    return () => clearTimeout(t)
-  }, [query, open])
-
-  const pick = u => { onSelect(u); setOpen(false); setQuery('') }
-
-  return (
-    <div ref={wrapRef} style={{ position: 'relative' }}>
-      <button
-        type="button" onClick={() => setOpen(o => !o)}
-        style={{
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-          height: 38, padding: '0 12px', borderRadius: 10, minWidth: 180,
-          background: '#fff', border: '1px solid var(--c-border)',
-          fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
-          color: selected ? 'var(--c-text)' : 'var(--c-text-2)', cursor: 'pointer',
-        }}
-      >
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, overflow: 'hidden' }}>
-          <UserIcon size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {selected ? selected.name : 'الموظف: الكل'}
-          </span>
-        </span>
-        {selected ? (
-          <span
-            role="button" tabIndex={0}
-            onClick={e => { e.stopPropagation(); onSelect(null) }}
-            style={{ display: 'inline-flex', color: 'var(--c-text-3)', flexShrink: 0 }}
-          >
-            <X size={13} />
-          </span>
-        ) : (
-          <ChevronDown size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-        )}
-      </button>
-
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 6px)', insetInlineStart: 0, zIndex: 20,
-          width: 270, background: '#fff', borderRadius: 12,
-          border: '1px solid var(--c-border)', boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
-        }}>
-          <div style={{ padding: 8, borderBottom: '1px solid var(--c-border)' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: 'var(--c-surface)', borderRadius: 9, padding: '0 10px', height: 36,
-            }}>
-              <Search size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-              <input
-                autoFocus value={query} onChange={e => setQuery(e.target.value)}
-                placeholder="ابحث بالاسم أو البريد..."
-                style={{
-                  flex: 1, border: 0, outline: 0, background: 'transparent',
-                  fontFamily: 'var(--font-sans)', fontSize: 12.5, color: 'var(--c-text)', textAlign: 'right',
-                }}
-              />
-            </div>
-          </div>
-          <div style={{ maxHeight: 260, overflowY: 'auto' }}>
-            {loading && (
-              <div style={{ padding: 16, textAlign: 'center', fontSize: 12, color: 'var(--c-text-3)' }}>جارٍ البحث...</div>
-            )}
-            {!loading && results.length === 0 && (
-              <div style={{ padding: 16, textAlign: 'center', fontSize: 12, color: 'var(--c-text-3)' }}>لا يوجد مستخدمون مطابقون</div>
-            )}
-            {!loading && results.map(u => (
-              <div
-                key={u.id} onClick={() => pick(u)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', cursor: 'pointer',
-                  background: selected?.id === u.id ? 'var(--c-surface)' : 'transparent',
-                  transition: 'background .1s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--c-surface)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = selected?.id === u.id ? 'var(--c-surface)' : 'transparent' }}
-              >
-                <InitialsTag name={u.name} size={28} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {u.name}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--c-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {u.email}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Department filter (admin / can_view_attendance only) ─────────────────────
-
-function DepartmentFilter({ departments, value, onChange }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <Building2 size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-      <select
-        value={value} onChange={e => onChange(e.target.value)}
-        style={{ ...deptSelectStyle, color: value ? 'var(--c-text)' : 'var(--c-text-2)' }}
-      >
-        <option value="">الإدارة: الكل</option>
-        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-      </select>
-    </div>
-  )
-}
 
 // ── Single-date filters (shared by the absent + approved-leave tabs) ─────────
+// Mirrors the records/report filter set: department → dependent section cascade,
+// a name/email search box, and a single date. Section is gated to full-access
+// viewers (managers/chiefs are auto-scoped to their own department server-side).
 
-function SingleDateFilters({ hasFullAccess, departments, departmentId, setDepartmentId, date, setDate }) {
+function SingleDateFilters({
+  hasFullAccess, departments, departmentId, setDepartmentId,
+  sections, sectionId, setSectionId, search, setSearch, date, setDate,
+}) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      <SearchInput value={search} onChange={setSearch} />
       {hasFullAccess && (
-        <DepartmentFilter departments={departments} value={departmentId} onChange={setDepartmentId} />
+        <DepartmentSelect departments={departments} value={departmentId} onChange={setDepartmentId} />
+      )}
+      {hasFullAccess && (
+        <SectionSelect sections={sections} value={sectionId} onChange={setSectionId} disabled={!departmentId} />
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
@@ -642,9 +536,6 @@ function SingleDateFilters({ hasFullAccess, departments, departmentId, setDepart
 
 export default function AttendancePage() {
   const { user } = useAuth()
-  // /admin/users (used by the employee filter) is admin-only — managers/chiefs
-  // and non-admin HR viewers see records auto-scoped to their department instead.
-  const canPickUser = user?.role === 'admin'
   const hasFullAccess = user?.role === 'admin' || !!user?.can_view_attendance
 
   // 'records' = attendance log (defaults to today on the backend),
@@ -657,12 +548,18 @@ export default function AttendancePage() {
   const [page, setPage]       = useState(1)
   const [lastPage, setLastPage] = useState(1)
   const [total, setTotal]     = useState(0)
+  const [recordsWorkingDay, setRecordsWorkingDay] = useState(null)
 
-  const [selectedUser, setSelectedUser] = useState(null)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo]     = useState('')
   const [departmentId, setDepartmentId] = useState('')
   const [departments, setDepartments]   = useState([])
+  const [sectionId, setSectionId] = useState('')
+  const [search, setSearch]       = useState('')
+
+  // Section options depend on the chosen department (avoids the 422 the backend
+  // raises when a section doesn't belong to the selected department).
+  const sections = useDeptSections(departmentId, departments, { canFetch: user?.role === 'admin' })
 
   const [selfiePreview, setSelfiePreview] = useState(null)
 
@@ -674,6 +571,8 @@ export default function AttendancePage() {
   const [absentTotal, setAbsentTotal] = useState(0)
   const [absentDate, setAbsentDate]   = useState('')
   const [resolvedDate, setResolvedDate] = useState('')
+  const [absentWorkingDay, setAbsentWorkingDay] = useState(true)
+  const [absentError, setAbsentError] = useState('')
 
   // Approved-leave tab — single date (empty = today, resolved by the backend).
   const [leaveRows, setLeaveRows]     = useState([])
@@ -683,6 +582,8 @@ export default function AttendancePage() {
   const [leaveTotal, setLeaveTotal]   = useState(0)
   const [leaveDate, setLeaveDate]     = useState('')
   const [leaveResolvedDate, setLeaveResolvedDate] = useState('')
+  const [leaveWorkingDay, setLeaveWorkingDay] = useState(true)
+  const [leaveError, setLeaveError]   = useState('')
 
   const dateRangeInvalid = Boolean(dateFrom && dateTo && dateTo < dateFrom)
   const isAbsent = view === 'absent'
@@ -708,31 +609,36 @@ export default function AttendancePage() {
     setLoading(true)
     try {
       const params = { page: targetPage }
-      if (selectedUser)   params.user_id       = selectedUser.id
       if (dateFrom)       params.from          = dateFrom
       if (dateTo)         params.to            = dateTo
       if (departmentId)   params.department_id = departmentId
+      if (sectionId)      params.section_id    = sectionId
+      if (search.trim())  params.search        = search.trim()
       const res = await api.get('/attendance/records', { params })
       if (reqId !== requestIdRef.current) return
       const pag = res.data.records
       setRecords(pag?.data ?? [])
       setLastPage(pag?.last_page ?? 1)
       setTotal(pag?.total ?? 0)
+      setRecordsWorkingDay(res.data.working_day ?? null)
     } catch {
       if (reqId === requestIdRef.current) setRecords([])
     } finally {
       if (reqId === requestIdRef.current) setLoading(false)
     }
-  }, [selectedUser, dateFrom, dateTo, departmentId])
+  }, [dateFrom, dateTo, departmentId, sectionId, search])
 
   const absentReqRef = useRef(0)
   const fetchAbsent = useCallback(async (targetPage) => {
     const reqId = ++absentReqRef.current
     setAbsentLoading(true)
+    setAbsentError('')
     try {
       const params = { page: targetPage }
       if (absentDate)    params.date          = absentDate
       if (departmentId)  params.department_id = departmentId
+      if (sectionId)     params.section_id    = sectionId
+      if (search.trim()) params.search        = search.trim()
       const res = await api.get('/attendance/absent-today', { params })
       if (reqId !== absentReqRef.current) return
       const pag = res.data.employees
@@ -740,21 +646,28 @@ export default function AttendancePage() {
       setAbsentLastPage(pag?.last_page ?? 1)
       setAbsentTotal(pag?.total ?? 0)
       setResolvedDate(res.data.date ?? '')
-    } catch {
-      if (reqId === absentReqRef.current) { setAbsentRows([]); setAbsentTotal(0); setAbsentLastPage(1) }
+      setAbsentWorkingDay(res.data.working_day ?? true)
+    } catch (err) {
+      if (reqId === absentReqRef.current) {
+        setAbsentRows([]); setAbsentTotal(0); setAbsentLastPage(1)
+        setAbsentError(readApiError(err))
+      }
     } finally {
       if (reqId === absentReqRef.current) setAbsentLoading(false)
     }
-  }, [absentDate, departmentId])
+  }, [absentDate, departmentId, sectionId, search])
 
   const leaveReqRef = useRef(0)
   const fetchLeave = useCallback(async (targetPage) => {
     const reqId = ++leaveReqRef.current
     setLeaveLoading(true)
+    setLeaveError('')
     try {
       const params = { page: targetPage }
-      if (leaveDate)    params.date          = leaveDate
-      if (departmentId) params.department_id = departmentId
+      if (leaveDate)     params.date          = leaveDate
+      if (departmentId)  params.department_id = departmentId
+      if (sectionId)     params.section_id    = sectionId
+      if (search.trim()) params.search        = search.trim()
       const res = await api.get('/attendance/approved-leave-users', { params })
       if (reqId !== leaveReqRef.current) return
       const pag = res.data.users
@@ -762,12 +675,16 @@ export default function AttendancePage() {
       setLeaveLastPage(pag?.last_page ?? 1)
       setLeaveTotal(pag?.total ?? 0)
       setLeaveResolvedDate(res.data.date ?? '')
-    } catch {
-      if (reqId === leaveReqRef.current) { setLeaveRows([]); setLeaveTotal(0); setLeaveLastPage(1) }
+      setLeaveWorkingDay(res.data.working_day ?? true)
+    } catch (err) {
+      if (reqId === leaveReqRef.current) {
+        setLeaveRows([]); setLeaveTotal(0); setLeaveLastPage(1)
+        setLeaveError(readApiError(err))
+      }
     } finally {
       if (reqId === leaveReqRef.current) setLeaveLoading(false)
     }
-  }, [leaveDate, departmentId])
+  }, [leaveDate, departmentId, sectionId, search])
 
   // Reset to page 1 when records filters change, then fetch (skip when range is invalid)
   useEffect(() => {
@@ -780,7 +697,11 @@ export default function AttendancePage() {
     setPage(1)
     fetchRecords(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser, dateFrom, dateTo, departmentId, dateRangeInvalid, view])
+  }, [dateFrom, dateTo, departmentId, sectionId, search, dateRangeInvalid, view])
+
+  // The selected section only belongs to the selected department — clear it
+  // whenever the department changes so we never send an orphan section_id (422).
+  useEffect(() => { setSectionId('') }, [departmentId])
 
   // Fetch records when page changes (without resetting)
   useEffect(() => { if (view === 'records' && !dateRangeInvalid) fetchRecords(page) }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -791,7 +712,7 @@ export default function AttendancePage() {
     setAbsentPage(1)
     fetchAbsent(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [absentDate, departmentId, view])
+  }, [absentDate, departmentId, sectionId, search, view])
 
   // Fetch absentees when page changes (without resetting)
   useEffect(() => { if (isAbsent) fetchAbsent(absentPage) }, [absentPage]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -802,7 +723,7 @@ export default function AttendancePage() {
     setLeavePage(1)
     fetchLeave(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leaveDate, departmentId, view])
+  }, [leaveDate, departmentId, sectionId, search, view])
 
   // Fetch approved-leave users when page changes (without resetting)
   useEffect(() => { if (isLeave) fetchLeave(leavePage) }, [leavePage]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -818,8 +739,11 @@ export default function AttendancePage() {
     return () => window.removeEventListener('topbar:refresh', handler)
   }, [fetchRecords, fetchAbsent, fetchLeave, page, absentPage, leavePage, dateRangeInvalid, isAbsent, isLeave])
 
-  const hasFilters = Boolean(selectedUser || dateFrom || dateTo || departmentId)
-  const clearFilters = () => { setSelectedUser(null); setDateFrom(''); setDateTo(''); setDepartmentId('') }
+  const hasFilters = Boolean(dateFrom || dateTo || departmentId || sectionId || search)
+  const clearFilters = () => {
+    setDateFrom(''); setDateTo('')
+    setDepartmentId(''); setSectionId(''); setSearch('')
+  }
 
   // Active-tab view-model so the table/empty/pagination blocks stay tab-agnostic.
   const activeLoading  = isAbsent ? absentLoading  : isLeave ? leaveLoading  : loading
@@ -828,16 +752,27 @@ export default function AttendancePage() {
   const activeLastPage = isAbsent ? absentLastPage : isLeave ? leaveLastPage : lastPage
   const activePage     = isAbsent ? absentPage     : isLeave ? leavePage     : page
   const goToPage = (p) => (isAbsent ? setAbsentPage(p) : isLeave ? setLeavePage(p) : setPage(p))
+  const activeWorkingDay = isAbsent ? absentWorkingDay : isLeave ? leaveWorkingDay : recordsWorkingDay
 
   const recordsEmptyMessage = dateRangeInvalid
     ? 'يرجى تصحيح نطاق التاريخ المحدد'
-    : hasFilters
-      ? (noDateFilter ? 'لا توجد سجلات مطابقة لهذا الموظف اليوم' : 'لا توجد سجلات مطابقة لهذا البحث')
-      : 'لا توجد سجلات حضور لهذا اليوم'
+    : recordsWorkingDay === false
+      ? 'هذا اليوم يوم عطلة (غير يوم عمل) — لا يُتوقع حضور'
+      : hasFilters
+        ? (noDateFilter ? 'لا توجد سجلات مطابقة لهذا الموظف اليوم' : 'لا توجد سجلات مطابقة لهذا البحث')
+        : 'لا توجد سجلات حضور لهذا اليوم'
+  const HOLIDAY_MESSAGE = 'هذا اليوم يوم عطلة (غير يوم عمل) — لا يُتوقع حضور'
+  // The "في إجازة" tab ignores working_day: leave doesn't pause on weekends/
+  // holidays, so a multi-day leave that spans an off-day must still render. Its
+  // empty state is the normal "no one on leave", never the holiday state.
   const emptyMessage = isAbsent
-    ? 'لا يوجد موظفون غائبون في هذا اليوم'
+    ? (absentError
+        ? absentError
+        : absentWorkingDay
+          ? 'لا يوجد موظفون غائبون في هذا اليوم'
+          : HOLIDAY_MESSAGE)
     : isLeave
-      ? 'لا يوجد موظفون في إجازة معتمدة في هذا اليوم'
+      ? (leaveError ? leaveError : 'لا يوجد موظفون في إجازة معتمدة في هذا اليوم')
       : recordsEmptyMessage
 
   const tabCountLabel = isAbsent
@@ -934,22 +869,34 @@ export default function AttendancePage() {
             <SingleDateFilters
               hasFullAccess={hasFullAccess} departments={departments}
               departmentId={departmentId} setDepartmentId={setDepartmentId}
+              sections={sections} sectionId={sectionId} setSectionId={setSectionId}
+              search={search} setSearch={setSearch}
               date={absentDate} setDate={setAbsentDate}
             />
           ) : isLeave ? (
             <SingleDateFilters
               hasFullAccess={hasFullAccess} departments={departments}
               departmentId={departmentId} setDepartmentId={setDepartmentId}
+              sections={sections} sectionId={sectionId} setSectionId={setSectionId}
+              search={search} setSearch={setSearch}
               date={leaveDate} setDate={setLeaveDate}
             />
           ) : (
             <>
-              {/* User filter — relies on /admin/users, which is admin-only */}
-              {canPickUser && <UserPicker selected={selectedUser} onSelect={setSelectedUser} />}
+              {/* Name/email search */}
+              <SearchInput value={search} onChange={setSearch} />
 
               {/* Department filter — only meaningful for admin / can_view_attendance users */}
               {hasFullAccess && (
-                <DepartmentFilter departments={departments} value={departmentId} onChange={setDepartmentId} />
+                <DepartmentSelect departments={departments} value={departmentId} onChange={setDepartmentId} />
+              )}
+
+              {/* Section filter — dependent on the chosen department */}
+              {hasFullAccess && (
+                <SectionSelect
+                  sections={sections} value={sectionId}
+                  onChange={setSectionId} disabled={!departmentId}
+                />
               )}
 
               {/* Date range */}
@@ -991,49 +938,64 @@ export default function AttendancePage() {
           )}
         </div>
 
-        {/* Table */}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: 'var(--c-surface)' }}>
-                {(isAbsent ? TABLE_COLS_ABSENT : isLeave ? TABLE_COLS_LEAVE : TABLE_COLS).map(col => (
-                  <th key={col} style={{
-                    padding: '11px 16px', textAlign: 'right',
-                    fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
-                    borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
-                  }}>
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {activeLoading
-                ? [0, 1, 2, 3, 4].map(i => (
-                    <SkeletonRow key={i} cells={isAbsent ? SKELETON_CELLS_ABSENT : isLeave ? SKELETON_CELLS_LEAVE : SKELETON_CELLS} />
-                  ))
-                : isAbsent
-                  ? activeRows.map((u, idx) => <AbsentRow key={u.id} user={u} last={idx === activeRows.length - 1} />)
-                  : isLeave
-                    ? activeRows.map((item, idx) => <LeaveRow key={item.id ?? idx} item={item} last={idx === activeRows.length - 1} />)
-                    : activeRows.map((r, idx) => <RecordRow key={r.id} record={r} last={idx === activeRows.length - 1} onViewSelfie={setSelfiePreview} />)
-              }
-            </tbody>
-          </table>
-        </div>
-
-        {/* Empty state */}
-        {!activeLoading && activeRows.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
-            {isAbsent
-              ? <UserX size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
-              : isLeave
-                ? <Plane size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
-                : <Fingerprint size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />}
-            <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
-              {emptyMessage}
+        {/* Table / Holiday Empty State — gated per tab: the leave tab never
+            shows the holiday state (leave spans weekends), only records/absent. */}
+        {!activeLoading && !isLeave && activeWorkingDay === false ? (
+          <div style={{ padding: '56px 24px', textAlign: 'center' }}>
+            <CalendarOff size={36} style={{ color: 'var(--c-text-3)', marginBottom: 14 }} />
+            <p style={{ margin: '0 0 4px', color: 'var(--c-text)', fontSize: 16, fontWeight: 800 }}>
+              يوم عطلة
+            </p>
+            <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 13.5, lineHeight: 1.6 }}>
+              هذا اليوم ليس يوم عمل — لا يُتوقع تسجيل حضور.
             </p>
           </div>
+        ) : (
+          <>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'var(--c-surface)' }}>
+                    {(isAbsent ? TABLE_COLS_ABSENT : isLeave ? TABLE_COLS_LEAVE : TABLE_COLS).map(col => (
+                      <th key={col} style={{
+                        padding: '11px 16px', textAlign: 'right',
+                        fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
+                        borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
+                      }}>
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeLoading
+                    ? [0, 1, 2, 3, 4].map(i => (
+                        <SkeletonRow key={i} cells={isAbsent ? SKELETON_CELLS_ABSENT : isLeave ? SKELETON_CELLS_LEAVE : SKELETON_CELLS} />
+                      ))
+                    : isAbsent
+                      ? activeRows.map((u, idx) => <AbsentRow key={u.id} user={u} last={idx === activeRows.length - 1} />)
+                      : isLeave
+                        ? activeRows.map((item, idx) => <LeaveRow key={item.id ?? idx} item={item} last={idx === activeRows.length - 1} />)
+                        : activeRows.map((r, idx) => <RecordRow key={r.id} record={r} last={idx === activeRows.length - 1} onViewSelfie={setSelfiePreview} />)
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            {/* Empty state */}
+            {!activeLoading && activeRows.length === 0 && (
+              <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+                {isAbsent
+                  ? <UserX size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
+                  : isLeave
+                    ? <Plane size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
+                    : <Fingerprint size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />}
+                <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
+                  {emptyMessage}
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {/* Pagination */}

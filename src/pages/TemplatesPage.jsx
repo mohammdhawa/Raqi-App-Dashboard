@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { useToast } from '../components/ui/Toast'
 import {
-  LayoutTemplate, Search, Pencil, Trash2, Copy, X,
-  AlertCircle, CheckCircle2,
+  LayoutTemplate, Search, Pencil, Trash2, Copy, CheckCircle2,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
 
@@ -27,71 +26,6 @@ function RowBtn({ children, danger, onClick, title }) {
     >
       {children}
     </button>
-  )
-}
-
-function FieldWrap({ label, required, hint, children }) {
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--c-text)', marginBottom: 7 }}>
-        {label}
-        {required && <span style={{ color: 'var(--c-rejected)', marginRight: 3 }}>*</span>}
-      </label>
-      {children}
-      {hint && <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 4 }}>{hint}</div>}
-    </div>
-  )
-}
-
-function TextInput({ placeholder, value, onChange, mono }) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', height: 42,
-      background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-      borderRadius: 10, padding: '0 12px',
-    }}>
-      <input
-        placeholder={placeholder} value={value} onChange={onChange}
-        style={{
-          flex: 1, border: 0, outline: 0, background: 'transparent',
-          fontFamily: mono ? "'Courier New', Courier, monospace" : 'var(--font-sans)',
-          fontSize: 13, color: 'var(--c-text)', textAlign: 'right', direction: 'rtl',
-        }}
-      />
-    </div>
-  )
-}
-
-function Toggle({ checked, onChange }) {
-  return (
-    <div
-      onClick={() => onChange(!checked)}
-      style={{
-        width: 42, height: 24, borderRadius: 999, cursor: 'pointer',
-        background: checked ? 'var(--c-approved)' : 'var(--c-surface-2)',
-        position: 'relative', transition: 'background .18s', flexShrink: 0,
-        border: `1px solid ${checked ? 'var(--c-approved)' : 'var(--c-border)'}`,
-      }}
-    >
-      <span style={{
-        position: 'absolute', top: 2,
-        insetInlineEnd: checked ? 2 : 'auto',
-        insetInlineStart: checked ? 'auto' : 2,
-        width: 18, height: 18, borderRadius: '50%',
-        background: '#fff', transition: 'all .18s',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
-      }} />
-    </div>
-  )
-}
-
-function DrawerSection({ icon: Icon, label }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, marginTop: 22 }}>
-      {Icon && <Icon size={15} style={{ color: 'var(--c-primary)', flexShrink: 0 }} />}
-      <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--c-text)' }}>{label}</span>
-      <span style={{ flex: 1, height: 1, background: 'var(--c-border)' }} />
-    </div>
   )
 }
 
@@ -261,202 +195,6 @@ function SkeletonRow({ last }) {
   )
 }
 
-// ── Create Template Drawer ────────────────────────────────────────────────────
-
-function slugify(s) {
-  return s.trim().toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]/g, '')
-    .replace(/-+/g, '-')
-}
-
-function CreateDrawer({ onClose, onCreated }) {
-  const [form, setForm] = useState({
-    name: '', slug: '', type: '', layout_key: '', description: '', is_active: true,
-  })
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState('')
-
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
-
-  const handleNameChange = e => {
-    const n = e.target.value
-    setForm(f => ({
-      ...f,
-      name: n,
-      slug: (!f.slug || f.slug === slugify(f.name)) ? slugify(n) : f.slug,
-    }))
-  }
-
-  const handleSubmit = async () => {
-    setError('')
-    setSaving(true)
-    try {
-      const payload = {
-        name:         form.name,
-        slug:         form.slug,
-        type:         form.type,
-        layout_key:   form.layout_key || 'contract_standard',
-        description:  form.description,
-        is_active:    form.is_active,
-        // API requires at least one field; seed a starter field the
-        // user can rename/replace in the builder step that opens next.
-        fields_schema: [
-          { key: 'field_1', label: 'حقل جديد', type: 'text', required: false },
-        ],
-      }
-      const res = await api.post('/admin/document-templates', payload)
-      onCreated(res.data.template)
-    } catch (e) {
-      const errs = e.response?.data?.errors
-      setError(errs
-        ? Object.values(errs).flat().join(' — ')
-        : e.response?.data?.message ?? 'حدث خطأ. يرجى المحاولة مرة أخرى.')
-    } finally { setSaving(false) }
-  }
-
-  return (
-    <>
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 39,
-          background: 'rgba(20,32,50,0.42)',
-          backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
-        }}
-      />
-      <div style={{
-        position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
-        width: 'min(520px, 100vw)', background: '#fff', zIndex: 40,
-        boxShadow: '-14px 0 40px rgba(20,32,50,0.22)',
-        display: 'flex', flexDirection: 'column',
-        borderInlineEnd: '1px solid var(--c-border)',
-      }}>
-        {/* Head */}
-        <div style={{
-          padding: '22px 24px 18px', borderBottom: '1px solid var(--c-border)',
-          flexShrink: 0, position: 'relative',
-        }}>
-          <div style={{
-            fontSize: 10.5, fontWeight: 800, letterSpacing: 1.4,
-            color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 6,
-          }}>
-            قالب جديد
-          </div>
-          <h2 style={{ margin: '0 0 4px', fontSize: 21, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.4 }}>
-            إنشاء قالب مستند
-          </h2>
-          <p style={{ margin: 0, fontSize: 12.5, color: 'var(--c-text-2)' }}>
-            حدّد معلومات القالب الأساسية ثم ستُنتقل إلى محرّر الحقول.
-          </p>
-          <button
-            onClick={onClose}
-            style={{
-              position: 'absolute', insetInlineStart: 18, top: 18,
-              width: 34, height: 34, borderRadius: 10,
-              background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-              color: 'var(--c-text-2)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-          <DrawerSection icon={LayoutTemplate} label="معلومات القالب" />
-
-          <FieldWrap label="اسم القالب" required>
-            <TextInput
-              placeholder="مثال: عقد توريد"
-              value={form.name}
-              onChange={handleNameChange}
-            />
-          </FieldWrap>
-
-          <FieldWrap label="المعرّف (slug)" required hint="فريد — لا تُكرّره">
-            <TextInput
-              placeholder="supply-contract"
-              value={form.slug}
-              onChange={e => set('slug', e.target.value)}
-              mono
-            />
-          </FieldWrap>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
-            <FieldWrap label="النوع" required>
-              <TextInput
-                placeholder="مثال: عقد"
-                value={form.type}
-                onChange={e => set('type', e.target.value)}
-              />
-            </FieldWrap>
-            <FieldWrap label="مفتاح التخطيط" required>
-              <TextInput
-                placeholder="contract_standard"
-                value={form.layout_key}
-                onChange={e => set('layout_key', e.target.value)}
-                mono
-              />
-            </FieldWrap>
-          </div>
-
-          <FieldWrap label="الوصف">
-            <div style={{
-              background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-              borderRadius: 10, padding: '10px 12px',
-            }}>
-              <textarea
-                placeholder="وصف اختياري للقالب..."
-                value={form.description}
-                onChange={e => set('description', e.target.value)}
-                rows={3}
-                style={{
-                  width: '100%', border: 0, outline: 0, background: 'transparent',
-                  resize: 'none', fontFamily: 'var(--font-sans)',
-                  fontSize: 13, color: 'var(--c-text)', textAlign: 'right', direction: 'rtl',
-                }}
-              />
-            </div>
-          </FieldWrap>
-
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '14px 0', borderTop: '1px solid var(--c-border)',
-          }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>القالب فعّال</span>
-            <Toggle checked={form.is_active} onChange={v => set('is_active', v)} />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{ flexShrink: 0, borderTop: '1px solid var(--c-border)', background: '#fff' }}>
-          {error && (
-            <div style={{
-              display: 'flex', gap: 9, alignItems: 'flex-start',
-              padding: '10px 24px', background: 'var(--c-rejected-bg)',
-              borderBottom: '1px solid #F4C9C6',
-              fontSize: 12.5, color: 'var(--c-rejected)', lineHeight: 1.6,
-            }}>
-              <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
-              {error}
-            </div>
-          )}
-          <div style={{ padding: '16px 24px', display: 'flex', gap: 10 }}>
-            <Button variant="primary" style={{ flex: 1, height: 46 }} onClick={handleSubmit}>
-              {saving ? '...' : 'إنشاء والانتقال للمحرّر'}
-            </Button>
-            <Button variant="ghost" style={{ flex: 1, height: 46 }} onClick={onClose}>
-              إلغاء
-            </Button>
-          </div>
-        </div>
-      </div>
-    </>
-  )
-}
-
 // ── Delete modal ──────────────────────────────────────────────────────────────
 
 function DeleteModal({ tpl, onClose, onDeleted }) {
@@ -549,7 +287,6 @@ export default function TemplatesPage() {
   const [search, setSearch]       = useState('')
   const [filter, setFilter]       = useState('all')
   const [total, setTotal]         = useState(0)
-  const [drawer, setDrawer]       = useState(false)
   const [deleteTarget, setDel]    = useState(null)
 
   const fetchTemplates = useCallback(async () => {
@@ -569,12 +306,12 @@ export default function TemplatesPage() {
 
   useEffect(() => { fetchTemplates() }, [fetchTemplates])
 
-  // Topbar "+ قالب جديد" button
+  // Topbar "+ قالب جديد" button → dedicated create page
   useEffect(() => {
-    const h = () => setDrawer(true)
+    const h = () => navigate('/admin/templates/new')
     window.addEventListener('topbar:action', h)
     return () => window.removeEventListener('topbar:action', h)
-  }, [])
+  }, [navigate])
 
   // Topbar refresh button
   useEffect(() => {
@@ -583,11 +320,6 @@ export default function TemplatesPage() {
   }, [fetchTemplates])
 
   const activeCount = templates.filter(t => t.is_active).length
-
-  const handleCreated = tpl => {
-    setDrawer(false)
-    navigate(`/admin/templates/${tpl.id}/edit`)
-  }
 
   const handleDuplicate = async tpl => {
     try {
@@ -765,9 +497,6 @@ export default function TemplatesPage() {
           </div>
         )}
       </div>
-
-      {/* Drawer */}
-      {drawer && <CreateDrawer onClose={() => setDrawer(false)} onCreated={handleCreated} />}
 
       {/* Delete modal */}
       {deleteTarget && (
