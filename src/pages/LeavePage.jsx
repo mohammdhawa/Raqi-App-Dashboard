@@ -9,7 +9,7 @@ import {
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import {
   getLeaveUser, getLeaveType, getLeaveReason, getLeaveStart, getLeaveEnd,
-  getLeaveDays, leaveTypeLabel, readLeaveBalance,
+  getLeaveDays, getLeaveCalendarDays, leaveTypeLabel, readLeaveBalance,
 } from '../utils/leave'
 
 const ANNUAL_LEAVE_DEFAULT = 21
@@ -68,6 +68,27 @@ function LeaveTypePill({ type }) {
     }}>
       {leaveTypeLabel(type)}
     </span>
+  )
+}
+
+// Days cell: the deducted working-day count (requested_days) as the headline,
+// with the full calendar span shown underneath when it differs (weekends inside
+// the leave aren't charged, so the two numbers diverge).
+function DaysCell({ item }) {
+  const days = getLeaveDays(item)
+  const calendar = getLeaveCalendarDays(item)
+  if (days == null) return <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+        {days} يوم عمل
+      </span>
+      {calendar != null && calendar !== days && (
+        <span style={{ fontSize: 11, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+          {calendar} يوم تقويمي
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -206,7 +227,7 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
               <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{u?.name ?? '—'}</div>
               <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>
                 {leaveTypeLabel(getLeaveType(item))} · {formatDate(getLeaveStart(item))} — {formatDate(getLeaveEnd(item))}
-                {getLeaveDays(item) != null && ` · ${getLeaveDays(item)} يوم`}
+                {getLeaveDays(item) != null && ` · ${getLeaveDays(item)} يوم عمل`}
               </div>
             </div>
           </div>
@@ -270,7 +291,6 @@ const REASON_CELL_STYLE = {
 function ApprovalRow({ item, last, onReview }) {
   const [hov, setHov] = useState(false)
   const u = getLeaveUser(item)
-  const days = getLeaveDays(item)
   const reason = getLeaveReason(item)
   const isPending = item.status === 'pending'
   return (
@@ -296,11 +316,7 @@ function ApprovalRow({ item, last, onReview }) {
           {formatDate(getLeaveStart(item))} — {formatDate(getLeaveEnd(item))}
         </div>
       </td>
-      <td style={{ padding: '12px 16px' }}>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums' }}>
-          {days != null ? `${days} يوم` : '—'}
-        </span>
-      </td>
+      <td style={{ padding: '12px 16px' }}><DaysCell item={item} /></td>
       <td style={{ padding: '12px 16px' }}>
         {reason ? <div style={REASON_CELL_STYLE} title={reason}>{reason}</div> : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
       </td>
@@ -339,7 +355,6 @@ function ApprovalRow({ item, last, onReview }) {
 
 function MineRow({ item, last }) {
   const [hov, setHov] = useState(false)
-  const days = getLeaveDays(item)
   const reason = getLeaveReason(item)
   return (
     <tr
@@ -355,11 +370,7 @@ function MineRow({ item, last }) {
           {formatDate(getLeaveStart(item))} — {formatDate(getLeaveEnd(item))}
         </div>
       </td>
-      <td style={{ padding: '12px 16px' }}>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums' }}>
-          {days != null ? `${days} يوم` : '—'}
-        </span>
-      </td>
+      <td style={{ padding: '12px 16px' }}><DaysCell item={item} /></td>
       <td style={{ padding: '12px 16px' }}>
         {reason ? <div style={REASON_CELL_STYLE} title={reason}>{reason}</div> : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
       </td>
@@ -384,8 +395,8 @@ function SkeletonRow({ count }) {
   )
 }
 
-const APPROVAL_COLS = ['الموظف', 'نوع الإجازة', 'الفترة', 'الأيام', 'السبب', 'الحالة', 'إجراءات']
-const MINE_COLS = ['نوع الإجازة', 'الفترة', 'الأيام', 'السبب', 'تاريخ الطلب', 'الحالة']
+const APPROVAL_COLS = ['الموظف', 'نوع الإجازة', 'الفترة', 'الأيام المحتسبة', 'السبب', 'الحالة', 'إجراءات']
+const MINE_COLS = ['نوع الإجازة', 'الفترة', 'الأيام المحتسبة', 'السبب', 'تاريخ الطلب', 'الحالة']
 
 // ── Main page ────────────────────────────────────────────────────────────────
 

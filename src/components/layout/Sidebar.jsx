@@ -5,7 +5,7 @@ import api from '../../services/api'
 import {
   LayoutDashboard, Inbox, Send, Plus,
   Users, Building2, Layers, LayoutTemplate, History,
-  Settings, LogOut, Files, Fingerprint, CalendarCheck,
+  Settings, LogOut, Files, Fingerprint, CalendarCheck, ClipboardList, CalendarRange,
 } from 'lucide-react'
 
 const NAV = [
@@ -29,6 +29,8 @@ const NAV = [
       { label: 'كل المستندات',       icon: Files,           path: '/admin/documents',   roles: ['admin'] },
       { label: 'الأشخاص والصلاحيات', icon: Users,           path: '/admin/users',        roles: ['admin'] },
       { label: 'الحضور والانصراف',   icon: Fingerprint,     path: '/admin/attendance',   show: (auth) => auth.canViewAttendance },
+      { label: 'التقرير اليومي',      icon: ClipboardList,   path: '/admin/attendance/report', show: (auth) => auth.canViewAttendance },
+      { label: 'التقرير الشهري',      icon: CalendarRange,   path: '/admin/attendance/monthly', show: (auth) => auth.canViewAttendance },
       { label: 'إدارة الإجازات',      icon: CalendarCheck,   path: '/admin/leave',        roles: ['admin', 'manager', 'chief'] },
       { label: 'الإدارات',           icon: Building2,       path: '/admin/departments',  roles: ['admin'] },
       { label: 'الأقسام',            icon: Layers,          path: '/admin/sections',     roles: ['admin'] },
@@ -45,6 +47,7 @@ function NavItem({ item, badge, onNavigate }) {
   return (
     <NavLink
       to={item.path}
+      end
       onClick={onNavigate}
       className={({ isActive }) =>
         [

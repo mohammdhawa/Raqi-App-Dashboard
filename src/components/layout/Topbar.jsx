@@ -13,6 +13,9 @@ const PAGE_META = {
   '/admin/documents':   { name: 'كل المستندات',       section: 'الإدارة' },
   '/admin/users':       { name: 'الأشخاص والصلاحيات', section: 'الإدارة' },
   '/admin/attendance':  { name: 'الحضور والانصراف',   section: 'الإدارة' },
+  '/admin/attendance/report': { name: 'التقرير اليومي للحضور', section: 'الإدارة' },
+  '/admin/attendance/monthly': { name: 'التقرير الشهري للحضور', section: 'الإدارة' },
+  '/admin/attendance/employee': { name: 'تقرير الموظف التفصيلي', section: 'الإدارة' },
   '/admin/leave':       { name: 'إدارة الإجازات',     section: 'الإدارة' },
   '/admin/departments': { name: 'الإدارات',           section: 'الإدارة' },
   '/admin/sections':    { name: 'الأقسام',            section: 'الإدارة' },
@@ -275,7 +278,8 @@ function NotificationsPanel() {
 export default function Topbar({ onMenuToggle }) {
   const { pathname } = useLocation()
   const builderMatch = useMatch('/admin/templates/:id/edit')
-  const isBuilder = !!builderMatch
+  const newTplMatch = useMatch('/admin/templates/new')
+  const isBuilder = !!builderMatch || !!newTplMatch
   const detailMatch = useMatch('/documents/:id')
   // useMatch('/documents/:id') also matches static pages like /documents/sent
   // or /documents/new (treating "sent"/"new" as the :id param), so exclude
