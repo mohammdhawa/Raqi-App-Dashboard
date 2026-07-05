@@ -6,6 +6,8 @@ import {
   Clock, Building2, Layers, ChevronRight, Loader2,
 } from 'lucide-react'
 import { leaveTypeLabel } from '../utils/leave'
+import { ExportButton, SortableTh, ToggleChip } from '../components/attendance/controls'
+import { sortParams } from '../utils/attendanceQuery'
 
 function fmtDate(value) {
   if (!value) return '—'
@@ -153,7 +155,18 @@ function SkeletonRow() {
   )
 }
 
-const COLS = ['التاريخ', 'الحالة', 'الدخول', 'الخروج', 'ساعات العمل', 'نوع الإجازة']
+// `field` = sortable (employee-report day grid whitelist: date, status, work_hours).
+const COLS = [
+  { label: 'التاريخ', field: 'date' },
+  { label: 'الحالة', field: 'status' },
+  { label: 'الدخول' },
+  { label: 'الخروج' },
+  { label: 'ساعات العمل', field: 'work_hours' },
+  { label: 'نوع الإجازة' },
+]
+
+// Day-status filter options (status=…) — labels reuse STATUS_META.
+const DAY_STATUSES = ['present', 'checked_in', 'missing_checkout', 'on_leave', 'off', 'absent']
 
 export default function AttendanceEmployeeReportPage() {
   const [params] = useSearchParams()
@@ -165,7 +178,20 @@ export default function AttendanceEmployeeReportPage() {
   const [report, setReport] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  // Day filters narrow the `days` grid only; the summary keeps describing the
+  // whole requested range (rendered as-is by design).
+  const [dayStatus, setDayStatus] = useState('')
+  const [workingDaysOnly, setWorkingDaysOnly] = useState(false)
+  const [sort, setSort] = useState(null)
   const reqRef = useRef(0)
+
+  // Shared by the fetch and the XLSX export so the file mirrors the view.
+  const buildParams = useCallback(() => {
+    const params = { user_id: userId, from, to }
+    if (dayStatus)       params.status = dayStatus
+    if (workingDaysOnly) params.working_days_only = 1
+    return { ...params, ...sortParams(sort) }
+  }, [userId, from, to, dayStatus, workingDaysOnly, sort])
 
   const fetchReport = useCallback(async () => {
     if (!userId || !from || !to) { setLoading(false); setError('معلومات الطلب ناقصة'); return }
@@ -173,7 +199,7 @@ export default function AttendanceEmployeeReportPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await api.get('/attendance/report/employee', { params: { user_id: userId, from, to } })
+      const res = await api.get('/attendance/report/employee', { params: buildParams() })
       if (reqId !== reqRef.current) return
       setReport(res.data ?? null)
     } catch (err) {
@@ -181,7 +207,7 @@ export default function AttendanceEmployeeReportPage() {
     } finally {
       if (reqId === reqRef.current) setLoading(false)
     }
-  }, [userId, from, to])
+  }, [userId, from, to, buildParams])
 
   useEffect(() => { fetchReport() }, [fetchReport])
 
@@ -284,6 +310,34 @@ export default function AttendanceEmployeeReportPage() {
         </div>
       )}
 
+      {/* Day filters + export — narrow the grid only; the summary above keeps
+          describing the full range */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+        <select
+          value={dayStatus} onChange={e => setDayStatus(e.target.value)}
+          style={{
+            height: 38, padding: '0 10px', borderRadius: 10, minWidth: 140,
+            background: '#fff', border: '1px solid var(--c-border)',
+            fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
+            cursor: 'pointer', direction: 'rtl', outline: 'none',
+            color: dayStatus ? 'var(--c-text)' : 'var(--c-text-2)',
+          }}
+        >
+          <option value="">حالة اليوم: الكل</option>
+          {DAY_STATUSES.map(s => <option key={s} value={s}>{STATUS_META[s].label}</option>)}
+        </select>
+        <ToggleChip
+          label="أيام العمل فقط" icon={CalendarOff}
+          active={workingDaysOnly} onChange={setWorkingDaysOnly}
+          title="إخفاء أيام العطلة من الجدول"
+        />
+        <div style={{ flex: 1 }} />
+        <ExportButton
+          url="/attendance/report/employee" params={buildParams()}
+          filename="attendance-employee-report.xlsx" disabled={!userId || !from || !to}
+        />
+      </div>
+
       {/* Day-by-day table */}
       <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
         <div style={{ overflowX: 'auto' }}>
@@ -291,12 +345,7 @@ export default function AttendanceEmployeeReportPage() {
             <thead>
               <tr style={{ background: 'var(--c-surface)' }}>
                 {COLS.map(c => (
-                  <th key={c} style={{
-                    padding: '11px 16px', textAlign: 'right', fontSize: 11.5, fontWeight: 700,
-                    color: 'var(--c-text-2)', borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
-                  }}>
-                    {c}
-                  </th>
+                  <SortableTh key={c.label} label={c.label} field={c.field} sort={sort} onSort={setSort} />
                 ))}
               </tr>
             </thead>

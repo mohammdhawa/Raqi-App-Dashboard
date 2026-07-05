@@ -8,6 +8,8 @@ import {
   ShieldCheck, Building2, Layers, RotateCcw,
 } from 'lucide-react'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
+import { ExportButton, SortableTh } from '../components/attendance/controls'
+import { sortParams } from '../utils/attendanceQuery'
 import { useDeptSections } from '../utils/useDeptSections'
 import { leaveTypeLabel } from '../utils/leave'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
@@ -624,6 +626,9 @@ export default function AttendanceReportPage() {
   const [section, setSection] = useState('present')
   const [selfie, setSelfie]   = useState(null)
   const [correcting, setCorrecting] = useState(null)
+  // Applied to the rows of every report section; null keeps the documented
+  // per-section default order.
+  const [sort, setSort] = useState(null)
 
   const sections = useDeptSections(departmentId, departments, { canFetch: user?.role === 'admin' })
   const reqRef = useRef(0)
@@ -638,16 +643,21 @@ export default function AttendanceReportPage() {
   // Clear an orphan section whenever the department changes.
   useEffect(() => { setSectionId('') }, [departmentId])
 
+  // Shared by the fetch and the XLSX export so the file mirrors the view.
+  const buildParams = useCallback(() => {
+    const params = {}
+    if (date)          params.date          = date
+    if (departmentId)  params.department_id = departmentId
+    if (sectionId)     params.section_id    = sectionId
+    if (search.trim()) params.search        = search.trim()
+    return { ...params, ...sortParams(sort) }
+  }, [date, departmentId, sectionId, search, sort])
+
   const fetchReport = useCallback(async () => {
     const reqId = ++reqRef.current
     setLoading(true)
     try {
-      const params = {}
-      if (date)         params.date          = date
-      if (departmentId) params.department_id = departmentId
-      if (sectionId)    params.section_id    = sectionId
-      if (search.trim()) params.search       = search.trim()
-      const res = await api.get('/attendance/report', { params })
+      const res = await api.get('/attendance/report', { params: buildParams() })
       if (reqId !== reqRef.current) return
       setReport(res.data ?? null)
     } catch {
@@ -655,7 +665,7 @@ export default function AttendanceReportPage() {
     } finally {
       if (reqId === reqRef.current) setLoading(false)
     }
-  }, [date, departmentId, sectionId, search])
+  }, [buildParams])
 
   useEffect(() => { fetchReport() }, [fetchReport])
 
@@ -672,10 +682,25 @@ export default function AttendanceReportPage() {
   const rows = report?.[section] ?? []
   const showActions = section === 'missing_checkout'
 
-  const ATT_COLS = ['الموظف', 'القسم', 'الدخول', 'الخروج', 'ساعات العمل', 'الحالة']
+  // `field` = sortable (report whitelist: name, email, department, section,
+  // status, check_in_time, check_out_time, work_hours — applies to all sections).
+  const ATT_COLS = [
+    { label: 'الموظف', field: 'name' },
+    { label: 'القسم', field: 'department' },
+    { label: 'الدخول', field: 'check_in_time' },
+    { label: 'الخروج', field: 'check_out_time' },
+    { label: 'ساعات العمل', field: 'work_hours' },
+    { label: 'الحالة', field: 'status' },
+  ]
   const cols = isLeaveSection
-    ? ['الموظف', 'القسم', 'نوع الإجازة', 'الفترة', 'حالة الإجازة']
-    : showActions ? [...ATT_COLS, 'إجراءات'] : ATT_COLS
+    ? [
+        { label: 'الموظف', field: 'name' },
+        { label: 'القسم', field: 'department' },
+        { label: 'نوع الإجازة' },
+        { label: 'الفترة' },
+        { label: 'حالة الإجازة' },
+      ]
+    : showActions ? [...ATT_COLS, { label: 'إجراءات' }] : ATT_COLS
 
   const activeMeta = SECTIONS.find(s => s.key === section)
   const reportDate = report?.date || date || ''
@@ -730,6 +755,12 @@ export default function AttendanceReportPage() {
             مسح الفلاتر
           </button>
         )}
+        {/* report_section restricts the workbook to the active tile's sheet
+            (plus the summary) so the file matches what's on screen */}
+        <ExportButton
+          url="/attendance/report" params={{ ...buildParams(), report_section: section }}
+          filename="attendance-daily-report.xlsx"
+        />
         <div style={{ flex: 1 }} />
         {reportDate && (
           <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 999, padding: '6px 12px' }}>
@@ -789,9 +820,7 @@ export default function AttendanceReportPage() {
             <thead>
               <tr style={{ background: 'var(--c-surface)' }}>
                 {cols.map(c => (
-                  <th key={c} style={{ padding: '11px 16px', textAlign: 'right', fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>
-                    {c}
-                  </th>
+                  <SortableTh key={c.label} label={c.label} field={c.field} sort={sort} onSort={setSort} />
                 ))}
               </tr>
             </thead>

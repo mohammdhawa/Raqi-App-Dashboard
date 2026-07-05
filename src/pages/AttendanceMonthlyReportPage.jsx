@@ -7,6 +7,8 @@ import {
   Clock, Building2, Layers, ChevronLeft,
 } from 'lucide-react'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
+import { ExportButton, SortableTh, ToggleChip } from '../components/attendance/controls'
+import { sortParams } from '../utils/attendanceQuery'
 import { useDeptSections } from '../utils/useDeptSections'
 
 // Business rules run in Asia/Damascus; the from/to we send are plain Y-m-d
@@ -230,7 +232,21 @@ function SkeletonRow({ count }) {
   )
 }
 
-const COLS = ['الموظف', 'القسم', 'أيام العمل', 'الحضور', 'الإجازات', 'الغياب', 'انصراف ناقص', 'إجمالي الساعات', 'نسبة الحضور', '']
+// `field` = sortable (monthly whitelist: name, email, department, section,
+// expected_days, present_days, on_leave_days, absent_days, missing_checkouts,
+// total_work_hours, attendance_rate). Last column is the row-open chevron.
+const COLS = [
+  { label: 'الموظف', field: 'name' },
+  { label: 'القسم', field: 'department' },
+  { label: 'أيام العمل', field: 'expected_days' },
+  { label: 'الحضور', field: 'present_days' },
+  { label: 'الإجازات', field: 'on_leave_days' },
+  { label: 'الغياب', field: 'absent_days' },
+  { label: 'انصراف ناقص', field: 'missing_checkouts' },
+  { label: 'إجمالي الساعات', field: 'total_work_hours' },
+  { label: 'نسبة الحضور', field: 'attendance_rate' },
+  { label: '' },
+]
 
 export default function AttendanceMonthlyReportPage() {
   const { user } = useAuth()
@@ -248,6 +264,11 @@ export default function AttendanceMonthlyReportPage() {
   const [report, setReport] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  // "Only rows with …" filters — totals are recomputed server-side over the
+  // surviving rows, so the tiles/footer stay consistent with the table.
+  const [hasAbsences, setHasAbsences] = useState(false)
+  const [hasMissingCheckouts, setHasMissingCheckouts] = useState(false)
+  const [sort, setSort] = useState(null)
 
   const sections = useDeptSections(departmentId, departments, { canFetch: user?.role === 'admin' })
   const reqRef = useRef(0)
@@ -270,17 +291,24 @@ export default function AttendanceMonthlyReportPage() {
 
   useEffect(() => { setSectionId('') }, [departmentId])
 
+  // Shared by the fetch and the XLSX export so the file mirrors the view.
+  const buildParams = useCallback(() => {
+    const params = { from, to }
+    if (departmentId)        params.department_id = departmentId
+    if (sectionId)           params.section_id = sectionId
+    if (search.trim())       params.search = search.trim()
+    if (hasAbsences)         params.has_absences = 1
+    if (hasMissingCheckouts) params.has_missing_checkouts = 1
+    return { ...params, ...sortParams(sort) }
+  }, [from, to, departmentId, sectionId, search, hasAbsences, hasMissingCheckouts, sort])
+
   const fetchReport = useCallback(async () => {
     if (!from || !to || rangeInvalid || rangeTooLong) return
     const reqId = ++reqRef.current
     setLoading(true)
     setError('')
     try {
-      const params = { from, to }
-      if (departmentId) params.department_id = departmentId
-      if (sectionId) params.section_id = sectionId
-      if (search.trim()) params.search = search.trim()
-      const res = await api.get('/attendance/report/monthly', { params })
+      const res = await api.get('/attendance/report/monthly', { params: buildParams() })
       if (reqId !== reqRef.current) return
       setReport(res.data ?? null)
     } catch (err) {
@@ -288,7 +316,7 @@ export default function AttendanceMonthlyReportPage() {
     } finally {
       if (reqId === reqRef.current) setLoading(false)
     }
-  }, [from, to, departmentId, sectionId, search, rangeInvalid, rangeTooLong])
+  }, [from, to, rangeInvalid, rangeTooLong, buildParams])
 
   useEffect(() => { fetchReport() }, [fetchReport])
 
@@ -339,6 +367,20 @@ export default function AttendanceMonthlyReportPage() {
         </div>
         <button onClick={() => setPreset(lastMonthRange())} style={presetBtnStyle(isLastMonth)}>الشهر الماضي</button>
         <button onClick={() => setPreset(thisMonthRange())} style={presetBtnStyle(isThisMonth)}>هذا الشهر</button>
+        <ToggleChip
+          label="لديهم غياب فقط" icon={UserX}
+          active={hasAbsences} onChange={setHasAbsences}
+          title="عرض الموظفين الذين لديهم أيام غياب فقط — تُعاد الإجماليات على الصفوف الظاهرة"
+        />
+        <ToggleChip
+          label="انصراف ناقص فقط" icon={AlertTriangle}
+          active={hasMissingCheckouts} onChange={setHasMissingCheckouts}
+          title="عرض الموظفين الذين لديهم انصراف غير مسجّل فقط — تُعاد الإجماليات على الصفوف الظاهرة"
+        />
+        <ExportButton
+          url="/attendance/report/monthly" params={buildParams()}
+          filename="attendance-monthly-report.xlsx" disabled={Boolean(rangeError)}
+        />
         {rangeError && (
           <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-rejected)', whiteSpace: 'nowrap' }}>
             {rangeError}
@@ -382,13 +424,10 @@ export default function AttendanceMonthlyReportPage() {
               <thead>
                 <tr style={{ background: 'var(--c-surface)' }}>
                   {COLS.map((c, i) => (
-                    <th key={i} style={{
-                      padding: '11px 16px', textAlign: i >= 2 && i <= 6 ? 'center' : 'right',
-                      fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
-                      borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
-                    }}>
-                      {c}
-                    </th>
+                    <SortableTh
+                      key={i} label={c.label} field={c.field} sort={sort} onSort={setSort}
+                      align={i >= 2 && i <= 6 ? 'center' : 'right'}
+                    />
                   ))}
                 </tr>
               </thead>

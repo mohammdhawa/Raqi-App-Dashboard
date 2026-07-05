@@ -4,13 +4,18 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/ui/Toast'
 import {
   CalendarCheck, CalendarDays, CalendarClock, Wallet, Check, X,
-  Inbox, Loader2, Building2, MessageSquare,
+  Inbox, Loader2, Building2, MessageSquare, Calendar, ClipboardCheck, Tags,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import {
   getLeaveUser, getLeaveType, getLeaveReason, getLeaveStart, getLeaveEnd,
   getLeaveDays, getLeaveCalendarDays, leaveTypeLabel, readLeaveBalance,
+  LEAVE_TYPE_LABELS,
 } from '../utils/leave'
+import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
+import { ExportButton, SortableTh, ToggleChip, MultiSelect } from '../components/attendance/controls'
+import { sortParams } from '../utils/attendanceQuery'
+import { useDeptSections } from '../utils/useDeptSections'
 
 const ANNUAL_LEAVE_DEFAULT = 21
 
@@ -395,8 +400,45 @@ function SkeletonRow({ count }) {
   )
 }
 
-const APPROVAL_COLS = ['الموظف', 'نوع الإجازة', 'الفترة', 'الأيام المحتسبة', 'السبب', 'الحالة', 'إجراءات']
-const MINE_COLS = ['نوع الإجازة', 'الفترة', 'الأيام المحتسبة', 'السبب', 'تاريخ الطلب', 'الحالة']
+// `field` = sortable (leave-requests whitelist: created_at, start_date,
+// end_date, requested_days, status, leave_type, reviewed_at, id; the approvals
+// queue additionally allows employee_name / employee_email).
+const APPROVAL_COLS = [
+  { label: 'الموظف', field: 'employee_name' },
+  { label: 'نوع الإجازة', field: 'leave_type' },
+  { label: 'الفترة', field: 'start_date' },
+  { label: 'الأيام المحتسبة', field: 'requested_days' },
+  { label: 'السبب' },
+  { label: 'الحالة', field: 'status' },
+  { label: 'إجراءات' },
+]
+const MINE_COLS = [
+  { label: 'نوع الإجازة', field: 'leave_type' },
+  { label: 'الفترة', field: 'start_date' },
+  { label: 'الأيام المحتسبة', field: 'requested_days' },
+  { label: 'السبب' },
+  { label: 'تاريخ الطلب', field: 'created_at' },
+  { label: 'الحالة', field: 'status' },
+]
+
+const STATUS_OPTIONS = [
+  { id: 'pending', name: 'قيد المراجعة' },
+  { id: 'approved', name: 'موافَق عليها' },
+  { id: 'rejected', name: 'مرفوضة' },
+]
+
+const filterSelectStyle = {
+  height: 38, padding: '0 10px', borderRadius: 10, minWidth: 140,
+  background: '#fff', border: '1px solid var(--c-border)',
+  fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
+  cursor: 'pointer', direction: 'rtl', outline: 'none',
+}
+
+const filterDateStyle = {
+  height: 38, borderRadius: 10, border: '1px solid var(--c-border)',
+  background: '#fff', padding: '0 10px', fontSize: 12, fontFamily: 'var(--font-sans)',
+  color: 'var(--c-text-2)', outline: 'none', cursor: 'pointer',
+}
 
 // ── Main page ────────────────────────────────────────────────────────────────
 
@@ -404,6 +446,9 @@ export default function LeavePage() {
   const { user } = useAuth()
   const toast = useToast()
   const canApprove = ['admin', 'manager', 'chief'].includes(user?.role)
+  // Same gate the attendance pages use: only admin / can_view_attendance users
+  // may filter by department (managers/chiefs are dept-scoped server-side).
+  const hasFullAccess = user?.role === 'admin' || !!user?.can_view_attendance
 
   const [tab, setTab] = useState(canApprove ? 'approvals' : 'mine')
 
@@ -418,9 +463,37 @@ export default function LeavePage() {
   const [lastPage, setLastPage] = useState(1)
   const [total, setTotal] = useState(0)
 
+  // Filters shared by both tabs (both endpoints accept them)
+  const [statuses, setStatuses] = useState([])       // pending/approved/rejected
+  const [leaveType, setLeaveType] = useState('')
+  const [dateFrom, setDateFrom] = useState('')       // overlap semantics
+  const [dateTo, setDateTo] = useState('')
+  const [reviewed, setReviewed] = useState(false)
+  // Approvals-only employee-side filters
+  const [search, setSearch] = useState('')
+  const [departmentId, setDepartmentId] = useState('')
+  const [sectionId, setSectionId] = useState('')
+  const [departments, setDepartments] = useState([])
+  const [mineSort, setMineSort] = useState(null)
+  const [approvalsSort, setApprovalsSort] = useState(null)
+
+  const sections = useDeptSections(departmentId, departments, { canFetch: user?.role === 'admin' })
+
   const [review, setReview] = useState(null) // { item, action }
 
   const reqRef = useRef(0)
+
+  const isApprovals = tab === 'approvals'
+
+  useEffect(() => {
+    if (!canApprove || !hasFullAccess) return
+    api.get('/attendance/departments')
+      .then(res => setDepartments(res.data.departments ?? []))
+      .catch(() => setDepartments([]))
+  }, [canApprove, hasFullAccess])
+
+  // Clear an orphan section whenever the department changes (422 otherwise).
+  const changeDepartment = v => { setDepartmentId(v); setSectionId('') }
 
   const fetchBalance = useCallback(() => {
     setBalanceLoading(true)
@@ -430,14 +503,31 @@ export default function LeavePage() {
       .finally(() => setBalanceLoading(false))
   }, [])
 
+  // Filter params of the active tab, shared by the fetch and its XLSX export.
+  const buildFilters = useCallback(() => {
+    const params = {}
+    if (statuses.length) params.statuses  = statuses.join(',')
+    if (leaveType)       params.leave_type = leaveType
+    if (dateFrom)        params.date_from  = dateFrom
+    if (dateTo)          params.date_to    = dateTo
+    if (reviewed)        params.reviewed   = 1
+    if (isApprovals) {
+      if (search.trim()) params.search        = search.trim()
+      if (departmentId)  params.department_id = departmentId
+      if (sectionId)     params.section_id    = sectionId
+    }
+    return { ...params, ...sortParams(isApprovals ? approvalsSort : mineSort) }
+  }, [statuses, leaveType, dateFrom, dateTo, reviewed, isApprovals,
+      search, departmentId, sectionId, approvalsSort, mineSort])
+
   const fetchList = useCallback(async (targetPage) => {
     const reqId = ++reqRef.current
     setLoading(true)
     try {
-      const url = tab === 'approvals'
+      const url = isApprovals
         ? '/attendance/leave-requests/approvals'
         : '/attendance/leave-requests'
-      const res = await api.get(url, { params: { page: targetPage } })
+      const res = await api.get(url, { params: { ...buildFilters(), page: targetPage } })
       if (reqId !== reqRef.current) return
       const pag = pickPage(res.data, ['leave_requests', 'requests', 'approvals'])
       setRows(pag.data ?? [])
@@ -448,16 +538,17 @@ export default function LeavePage() {
     } finally {
       if (reqId === reqRef.current) setLoading(false)
     }
-  }, [tab])
+  }, [isApprovals, buildFilters])
 
   useEffect(() => { fetchBalance() }, [fetchBalance])
 
-  // Reset to page 1 on tab switch, then fetch
+  // Reset to page 1 on tab switch or when any filter/sort changes, then fetch
   useEffect(() => {
     setPage(1)
     fetchList(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab])
+  }, [tab, statuses, leaveType, dateFrom, dateTo, reviewed,
+      search, departmentId, sectionId, mineSort, approvalsSort])
 
   // Fetch on page change (without resetting)
   useEffect(() => { fetchList(page) }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -491,10 +582,20 @@ export default function LeavePage() {
     }
   }
 
-  const cols = tab === 'approvals' ? APPROVAL_COLS : MINE_COLS
-  const emptyMessage = tab === 'approvals'
-    ? 'لا توجد طلبات إجازة بانتظار مراجعتك'
-    : 'لم تقم بإرسال أي طلبات إجازة بعد'
+  const cols = isApprovals ? APPROVAL_COLS : MINE_COLS
+  const hasFilters = Boolean(
+    statuses.length || leaveType || dateFrom || dateTo || reviewed ||
+    (isApprovals && (search || departmentId || sectionId))
+  )
+  const clearFilters = () => {
+    setStatuses([]); setLeaveType(''); setDateFrom(''); setDateTo(''); setReviewed(false)
+    setSearch(''); setDepartmentId(''); setSectionId('')
+  }
+  const emptyMessage = hasFilters
+    ? 'لا توجد طلبات مطابقة لهذه الفلاتر'
+    : isApprovals
+      ? 'لا توجد طلبات إجازة بانتظار مراجعتك'
+      : 'لم تقم بإرسال أي طلبات إجازة بعد'
 
   return (
     <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1240, margin: '0 auto' }}>
@@ -550,10 +651,10 @@ export default function LeavePage() {
           })}
         </div>
 
-        {/* Count bar */}
+        {/* Count bar + filters */}
         <div style={{
           padding: '14px 20px', borderBottom: '1px solid var(--c-border)',
-          display: 'flex', alignItems: 'center', gap: 10,
+          display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
         }}>
           <span style={{
             fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
@@ -561,12 +662,80 @@ export default function LeavePage() {
           }}>
             {total} طلباً
           </span>
-          {tab === 'approvals' && (
+          {isApprovals && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--c-text-3)' }}>
               <MessageSquare size={12} />
               يمكنك الموافقة أو الرفض للطلبات قيد المراجعة فقط
             </span>
           )}
+
+          <div style={{ flex: 1 }} />
+
+          {/* Employee-side filters — approvals queue only */}
+          {isApprovals && <SearchInput value={search} onChange={setSearch} />}
+          {isApprovals && hasFullAccess && (
+            <DepartmentSelect departments={departments} value={departmentId} onChange={changeDepartment} />
+          )}
+          {isApprovals && hasFullAccess && (
+            <SectionSelect sections={sections} value={sectionId} onChange={setSectionId} disabled={!departmentId} />
+          )}
+
+          {/* Status multi-filter (statuses=pending,approved,…) */}
+          <MultiSelect
+            icon={ClipboardCheck} label="الحالة" options={STATUS_OPTIONS}
+            values={statuses} onChange={setStatuses}
+          />
+
+          {/* Leave type */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Tags size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+            <select
+              value={leaveType} onChange={e => setLeaveType(e.target.value)}
+              style={{ ...filterSelectStyle, color: leaveType ? 'var(--c-text)' : 'var(--c-text-2)' }}
+            >
+              <option value="">نوع الإجازة: الكل</option>
+              {Object.entries(LEAVE_TYPE_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Period window — matches any request whose leave overlaps it */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} title="أي طلب تتقاطع فترته مع هذا النطاق">
+            <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={filterDateStyle} />
+            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>—</span>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={filterDateStyle} />
+          </div>
+
+          {/* Reviewed only */}
+          <ToggleChip
+            label="تمت مراجعتها" icon={Check}
+            active={reviewed} onChange={setReviewed}
+            title="عرض الطلبات التي تمت مراجعتها فقط"
+          />
+
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                height: 38, padding: '0 12px', borderRadius: 10,
+                background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
+                color: 'var(--c-text-2)', cursor: 'pointer',
+              }}
+            >
+              <X size={13} />
+              مسح الفلاتر
+            </button>
+          )}
+
+          <ExportButton
+            url={isApprovals ? '/attendance/leave-requests/approvals' : '/attendance/leave-requests'}
+            params={buildFilters()}
+            filename={isApprovals ? 'leave-approvals.xlsx' : 'leave-requests.xlsx'}
+          />
         </div>
 
         {/* Table */}
@@ -575,13 +744,11 @@ export default function LeavePage() {
             <thead>
               <tr style={{ background: 'var(--c-surface)' }}>
                 {cols.map(col => (
-                  <th key={col} style={{
-                    padding: '11px 16px', textAlign: 'right',
-                    fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
-                    borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
-                  }}>
-                    {col}
-                  </th>
+                  <SortableTh
+                    key={col.label} label={col.label} field={col.field}
+                    sort={isApprovals ? approvalsSort : mineSort}
+                    onSort={isApprovals ? setApprovalsSort : setMineSort}
+                  />
                 ))}
               </tr>
             </thead>
