@@ -5,11 +5,14 @@ import {
   Fingerprint, Search, ChevronDown, Calendar, LogIn, LogOut,
   MapPin, Camera, X, User as UserIcon, UserX, Building2,
   Loader2, ImageOff, ExternalLink, Plane, CalendarOff,
+  Layers, AlertTriangle, ShieldCheck, Clock,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import { getLeaveUser, getLeaveType, getLeaveStart, getLeaveEnd, getLeaveDays, leaveTypeLabel } from '../utils/leave'
-import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
-import { useDeptSections } from '../utils/useDeptSections'
+import { SearchInput } from '../components/attendance/filters'
+import { ExportButton, SortableTh, PerPageSelect, ToggleChip, MultiSelect } from '../components/attendance/controls'
+import { sortParams } from '../utils/attendanceQuery'
+import { useDeptsSections } from '../utils/useDeptSections'
 
 // The system is single-timezone (Asia/Damascus). `recorded_at` is serialized
 // as UTC ISO by the backend, so pin formatting to Damascus — otherwise times
@@ -52,9 +55,32 @@ const ROLE_META = {
   employee: { label: 'موظف',          bg: 'var(--c-surface-2)',   color: 'var(--c-text-2)' },
 }
 
-const TABLE_COLS = ['الموظف', 'الدور', 'النوع', 'التاريخ والوقت', 'الموقع', 'الصورة']
-const TABLE_COLS_ABSENT = ['الموظف', 'الدور', 'الإدارة', 'الحالة']
-const TABLE_COLS_LEAVE = ['الموظف', 'الإدارة', 'نوع الإجازة', 'الفترة', 'الأيام', 'الحالة']
+// Column defs: `field` marks a header as sortable and must stay inside the
+// endpoint's whitelist (records: recorded_at/type + relation employee_name;
+// absent-today: name/role/department; approved-leave-users: employee_name/
+// leave_type/start_date/requested_days).
+const TABLE_COLS = [
+  { label: 'الموظف', field: 'employee_name' },
+  { label: 'القسم', field: 'department' },
+  { label: 'النوع', field: 'type' },
+  { label: 'التاريخ والوقت', field: 'recorded_at' },
+  { label: 'الموقع' },
+  { label: 'الصورة' },
+]
+const TABLE_COLS_ABSENT = [
+  { label: 'الموظف', field: 'name' },
+  { label: 'الدور', field: 'role' },
+  { label: 'الإدارة', field: 'department' },
+  { label: 'الحالة' },
+]
+const TABLE_COLS_LEAVE = [
+  { label: 'الموظف', field: 'employee_name' },
+  { label: 'الإدارة' },
+  { label: 'نوع الإجازة', field: 'leave_type' },
+  { label: 'الفترة', field: 'start_date' },
+  { label: 'الأيام', field: 'requested_days' },
+  { label: 'الحالة' },
+]
 
 const dateInputStyle = {
   height: 38, borderRadius: 10, border: '1px solid var(--c-border)',
@@ -333,7 +359,7 @@ function RecordRow({ record, last, onViewSelfie }) {
         </div>
       </td>
       <td style={{ padding: '12px 16px' }}>
-        <RoleBadge role={u?.role} />
+        <DeptSectionCell department={u?.department?.name} section={u?.section?.name} />
       </td>
       <td style={{ padding: '12px 16px' }}>
         <TypeBadge type={record.type} />
@@ -391,6 +417,27 @@ function AbsentRow({ user, last }) {
         <AbsentBadge />
       </td>
     </tr>
+  )
+}
+
+// Department + section stacked cell — same design as the daily report page.
+function DeptSectionCell({ department, section }) {
+  if (!department && !section) return <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {department && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: 'var(--c-text-2)' }}>
+          <Building2 size={12} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+          {department}
+        </span>
+      )}
+      {section && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--c-text-3)' }}>
+          <Layers size={11} style={{ flexShrink: 0 }} />
+          {section}
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -492,22 +539,38 @@ function PagBtn({ children, active, disabled, onClick }) {
 
 
 // ── Single-date filters (shared by the absent + approved-leave tabs) ─────────
-// Mirrors the records/report filter set: department → dependent section cascade,
-// a name/email search box, and a single date. Section is gated to full-access
-// viewers (managers/chiefs are auto-scoped to their own department server-side).
+// Mirrors the records filter set: department(s) → dependent section(s) cascade,
+// employee multi-select, a name/email search box, and a single date. The org
+// filters are gated to full-access viewers (managers/chiefs are auto-scoped to
+// their own department server-side).
 
 function SingleDateFilters({
-  hasFullAccess, departments, departmentId, setDepartmentId,
-  sections, sectionId, setSectionId, search, setSearch, date, setDate,
+  hasFullAccess, departments, departmentIds, setDepartmentIds,
+  sections, sectionIds, setSectionIds,
+  employees, userIds, setUserIds,
+  search, setSearch, date, setDate,
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
       <SearchInput value={search} onChange={setSearch} />
       {hasFullAccess && (
-        <DepartmentSelect departments={departments} value={departmentId} onChange={setDepartmentId} />
+        <MultiSelect
+          icon={Building2} label="الإدارة" options={departments}
+          values={departmentIds} onChange={setDepartmentIds}
+        />
       )}
       {hasFullAccess && (
-        <SectionSelect sections={sections} value={sectionId} onChange={setSectionId} disabled={!departmentId} />
+        <MultiSelect
+          icon={Layers} label="القسم" options={sections}
+          values={sectionIds} onChange={setSectionIds}
+          disabled={!departmentIds.length} disabledTitle="اختر الإدارة أولاً"
+        />
+      )}
+      {employees.length > 0 && (
+        <MultiSelect
+          icon={UserIcon} label="الموظف" options={employees}
+          values={userIds} onChange={setUserIds}
+        />
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
@@ -552,14 +615,26 @@ export default function AttendancePage() {
 
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo]     = useState('')
-  const [departmentId, setDepartmentId] = useState('')
-  const [departments, setDepartments]   = useState([])
-  const [sectionId, setSectionId] = useState('')
-  const [search, setSearch]       = useState('')
+  const [monthValue, setMonthValue] = useState('') // "YYYY-MM" → month/year shorthand
+  const [departmentIds, setDepartmentIds] = useState([])
+  const [departments, setDepartments]     = useState([])
+  const [sectionIds, setSectionIds] = useState([])
+  const [userIds, setUserIds]       = useState([])
+  const [employees, setEmployees]   = useState([])
+  const [search, setSearch]         = useState('')
+  const [type, setType]             = useState('')
+  const [missingCheckout, setMissingCheckout] = useState(false)
+  const [isCorrected, setIsCorrected]         = useState(false)
+  const [whMin, setWhMin] = useState('')
+  const [whMax, setWhMax] = useState('')
+  const [perPage, setPerPage] = useState(25)
+  const [sort, setSort]             = useState(null)
+  const [absentSort, setAbsentSort] = useState(null)
+  const [leaveSort, setLeaveSort]   = useState(null)
 
-  // Section options depend on the chosen department (avoids the 422 the backend
-  // raises when a section doesn't belong to the selected department).
-  const sections = useDeptSections(departmentId, departments, { canFetch: user?.role === 'admin' })
+  // Section options depend on the chosen departments (avoids the 422 the
+  // backend raises when a section doesn't belong to the selected departments).
+  const sections = useDeptsSections(departmentIds, departments, { canFetch: user?.role === 'admin' })
 
   const [selfiePreview, setSelfiePreview] = useState(null)
 
@@ -588,7 +663,7 @@ export default function AttendancePage() {
   const dateRangeInvalid = Boolean(dateFrom && dateTo && dateTo < dateFrom)
   const isAbsent = view === 'absent'
   const isLeave  = view === 'leave'
-  const noDateFilter = !dateFrom && !dateTo
+  const noDateFilter = !dateFrom && !dateTo && !monthValue
 
   // Guards against a stale in-flight request (e.g. for a previous filter
   // combination) resolving after newer filters have already changed state.
@@ -603,17 +678,50 @@ export default function AttendancePage() {
       .catch(() => setDepartments([]))
   }, [hasFullAccess])
 
+  // Employee picker (user_ids) — fed from the admin users list, so admins only.
+  useEffect(() => {
+    if (user?.role !== 'admin') return
+    api.get('/admin/users', { params: { per_page: 100 } })
+      .then(res => setEmployees(res.data.users?.data ?? []))
+      .catch(() => setEmployees([]))
+  }, [user?.role])
+
+  // Setting a date range clears the month shorthand and vice versa (the API
+  // would silently prefer from/to; keeping one active avoids confusion).
+  const changeDateFrom = v => { setDateFrom(v); if (v) setMonthValue('') }
+  const changeDateTo   = v => { setDateTo(v);   if (v) setMonthValue('') }
+  const changeMonth    = v => { setMonthValue(v); if (v) { setDateFrom(''); setDateTo('') } }
+
+  // Filter params shared by the records fetch and its XLSX export (which must
+  // mirror the exact query, minus page/per_page).
+  const buildRecordFilters = useCallback(() => {
+    const params = {}
+    if (dateFrom) params.from = dateFrom
+    if (dateTo)   params.to   = dateTo
+    if (!dateFrom && !dateTo && monthValue) {
+      const [y, m] = monthValue.split('-')
+      params.month = Number(m)
+      params.year  = Number(y)
+    }
+    if (departmentIds.length) params.department_ids = departmentIds.join(',')
+    if (sectionIds.length)    params.section_ids    = sectionIds.join(',')
+    if (userIds.length)       params.user_ids       = userIds.join(',')
+    if (search.trim())        params.search         = search.trim()
+    if (type)                 params.type           = type
+    if (missingCheckout)      params.missing_checkout = 1
+    if (isCorrected)          params.is_corrected     = 1
+    if (whMin !== '')         params.work_hours_min = whMin
+    if (whMax !== '')         params.work_hours_max = whMax
+    return { ...params, ...sortParams(sort) }
+  }, [dateFrom, dateTo, monthValue, departmentIds, sectionIds, userIds, search,
+      type, missingCheckout, isCorrected, whMin, whMax, sort])
+
   // ── API ──────────────────────────────────────────────────────────────────
   const fetchRecords = useCallback(async (targetPage) => {
     const reqId = ++requestIdRef.current
     setLoading(true)
     try {
-      const params = { page: targetPage }
-      if (dateFrom)       params.from          = dateFrom
-      if (dateTo)         params.to            = dateTo
-      if (departmentId)   params.department_id = departmentId
-      if (sectionId)      params.section_id    = sectionId
-      if (search.trim())  params.search        = search.trim()
+      const params = { ...buildRecordFilters(), page: targetPage, per_page: perPage }
       const res = await api.get('/attendance/records', { params })
       if (reqId !== requestIdRef.current) return
       const pag = res.data.records
@@ -626,7 +734,18 @@ export default function AttendancePage() {
     } finally {
       if (reqId === requestIdRef.current) setLoading(false)
     }
-  }, [dateFrom, dateTo, departmentId, sectionId, search])
+  }, [buildRecordFilters, perPage])
+
+  // Filter params shared by the absent fetch and its export.
+  const buildAbsentFilters = useCallback(() => {
+    const params = {}
+    if (absentDate)           params.date            = absentDate
+    if (departmentIds.length) params.department_ids  = departmentIds.join(',')
+    if (sectionIds.length)    params.section_ids     = sectionIds.join(',')
+    if (userIds.length)       params.user_ids        = userIds.join(',')
+    if (search.trim())        params.search          = search.trim()
+    return { ...params, ...sortParams(absentSort) }
+  }, [absentDate, departmentIds, sectionIds, userIds, search, absentSort])
 
   const absentReqRef = useRef(0)
   const fetchAbsent = useCallback(async (targetPage) => {
@@ -634,11 +753,7 @@ export default function AttendancePage() {
     setAbsentLoading(true)
     setAbsentError('')
     try {
-      const params = { page: targetPage }
-      if (absentDate)    params.date          = absentDate
-      if (departmentId)  params.department_id = departmentId
-      if (sectionId)     params.section_id    = sectionId
-      if (search.trim()) params.search        = search.trim()
+      const params = { ...buildAbsentFilters(), page: targetPage, per_page: perPage }
       const res = await api.get('/attendance/absent-today', { params })
       if (reqId !== absentReqRef.current) return
       const pag = res.data.employees
@@ -655,7 +770,18 @@ export default function AttendancePage() {
     } finally {
       if (reqId === absentReqRef.current) setAbsentLoading(false)
     }
-  }, [absentDate, departmentId, sectionId, search])
+  }, [buildAbsentFilters, perPage])
+
+  // Filter params shared by the approved-leave fetch and its export.
+  const buildLeaveFilters = useCallback(() => {
+    const params = {}
+    if (leaveDate)            params.date            = leaveDate
+    if (departmentIds.length) params.department_ids  = departmentIds.join(',')
+    if (sectionIds.length)    params.section_ids     = sectionIds.join(',')
+    if (userIds.length)       params.user_ids        = userIds.join(',')
+    if (search.trim())        params.search          = search.trim()
+    return { ...params, ...sortParams(leaveSort) }
+  }, [leaveDate, departmentIds, sectionIds, userIds, search, leaveSort])
 
   const leaveReqRef = useRef(0)
   const fetchLeave = useCallback(async (targetPage) => {
@@ -663,11 +789,7 @@ export default function AttendancePage() {
     setLeaveLoading(true)
     setLeaveError('')
     try {
-      const params = { page: targetPage }
-      if (leaveDate)     params.date          = leaveDate
-      if (departmentId)  params.department_id = departmentId
-      if (sectionId)     params.section_id    = sectionId
-      if (search.trim()) params.search        = search.trim()
+      const params = { ...buildLeaveFilters(), page: targetPage, per_page: perPage }
       const res = await api.get('/attendance/approved-leave-users', { params })
       if (reqId !== leaveReqRef.current) return
       const pag = res.data.users
@@ -684,7 +806,7 @@ export default function AttendancePage() {
     } finally {
       if (reqId === leaveReqRef.current) setLeaveLoading(false)
     }
-  }, [leaveDate, departmentId, sectionId, search])
+  }, [buildLeaveFilters, perPage])
 
   // Reset to page 1 when records filters change, then fetch (skip when range is invalid)
   useEffect(() => {
@@ -697,33 +819,35 @@ export default function AttendancePage() {
     setPage(1)
     fetchRecords(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFrom, dateTo, departmentId, sectionId, search, dateRangeInvalid, view])
+  }, [dateFrom, dateTo, monthValue, departmentIds, sectionIds, userIds, search,
+      type, missingCheckout, isCorrected, whMin, whMax, sort, perPage,
+      dateRangeInvalid, view])
 
-  // The selected section only belongs to the selected department — clear it
-  // whenever the department changes so we never send an orphan section_id (422).
-  useEffect(() => { setSectionId('') }, [departmentId])
+  // The selected sections only belong to the selected departments — clear them
+  // whenever the departments change so we never send an orphan section_id (422).
+  useEffect(() => { setSectionIds([]) }, [departmentIds])
 
   // Fetch records when page changes (without resetting)
   useEffect(() => { if (view === 'records' && !dateRangeInvalid) fetchRecords(page) }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reset to page 1 when the absent date or department changes, then fetch
+  // Reset to page 1 when the absent filters change, then fetch
   useEffect(() => {
     if (!isAbsent) return
     setAbsentPage(1)
     fetchAbsent(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [absentDate, departmentId, sectionId, search, view])
+  }, [absentDate, departmentIds, sectionIds, userIds, search, absentSort, perPage, view])
 
   // Fetch absentees when page changes (without resetting)
   useEffect(() => { if (isAbsent) fetchAbsent(absentPage) }, [absentPage]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reset to page 1 when the approved-leave date or department changes, then fetch
+  // Reset to page 1 when the approved-leave filters change, then fetch
   useEffect(() => {
     if (!isLeave) return
     setLeavePage(1)
     fetchLeave(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leaveDate, departmentId, sectionId, search, view])
+  }, [leaveDate, departmentIds, sectionIds, userIds, search, leaveSort, perPage, view])
 
   // Fetch approved-leave users when page changes (without resetting)
   useEffect(() => { if (isLeave) fetchLeave(leavePage) }, [leavePage]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -739,10 +863,16 @@ export default function AttendancePage() {
     return () => window.removeEventListener('topbar:refresh', handler)
   }, [fetchRecords, fetchAbsent, fetchLeave, page, absentPage, leavePage, dateRangeInvalid, isAbsent, isLeave])
 
-  const hasFilters = Boolean(dateFrom || dateTo || departmentId || sectionId || search)
+  const hasFilters = Boolean(
+    dateFrom || dateTo || monthValue || departmentIds.length || sectionIds.length ||
+    userIds.length || search || type || missingCheckout || isCorrected ||
+    whMin !== '' || whMax !== ''
+  )
   const clearFilters = () => {
-    setDateFrom(''); setDateTo('')
-    setDepartmentId(''); setSectionId(''); setSearch('')
+    setDateFrom(''); setDateTo(''); setMonthValue('')
+    setDepartmentIds([]); setSectionIds([]); setUserIds([]); setSearch('')
+    setType(''); setMissingCheckout(false); setIsCorrected(false)
+    setWhMin(''); setWhMax('')
   }
 
   // Active-tab view-model so the table/empty/pagination blocks stay tab-agnostic.
@@ -868,16 +998,18 @@ export default function AttendancePage() {
           {isAbsent ? (
             <SingleDateFilters
               hasFullAccess={hasFullAccess} departments={departments}
-              departmentId={departmentId} setDepartmentId={setDepartmentId}
-              sections={sections} sectionId={sectionId} setSectionId={setSectionId}
+              departmentIds={departmentIds} setDepartmentIds={setDepartmentIds}
+              sections={sections} sectionIds={sectionIds} setSectionIds={setSectionIds}
+              employees={employees} userIds={userIds} setUserIds={setUserIds}
               search={search} setSearch={setSearch}
               date={absentDate} setDate={setAbsentDate}
             />
           ) : isLeave ? (
             <SingleDateFilters
               hasFullAccess={hasFullAccess} departments={departments}
-              departmentId={departmentId} setDepartmentId={setDepartmentId}
-              sections={sections} sectionId={sectionId} setSectionId={setSectionId}
+              departmentIds={departmentIds} setDepartmentIds={setDepartmentIds}
+              sections={sections} sectionIds={sectionIds} setSectionIds={setSectionIds}
+              employees={employees} userIds={userIds} setUserIds={setUserIds}
               search={search} setSearch={setSearch}
               date={leaveDate} setDate={setLeaveDate}
             />
@@ -888,28 +1020,84 @@ export default function AttendancePage() {
 
               {/* Department filter — only meaningful for admin / can_view_attendance users */}
               {hasFullAccess && (
-                <DepartmentSelect departments={departments} value={departmentId} onChange={setDepartmentId} />
-              )}
-
-              {/* Section filter — dependent on the chosen department */}
-              {hasFullAccess && (
-                <SectionSelect
-                  sections={sections} value={sectionId}
-                  onChange={setSectionId} disabled={!departmentId}
+                <MultiSelect
+                  icon={Building2} label="الإدارة" options={departments}
+                  values={departmentIds} onChange={setDepartmentIds}
                 />
               )}
+
+              {/* Section filter — dependent on the chosen departments */}
+              {hasFullAccess && (
+                <MultiSelect
+                  icon={Layers} label="القسم" options={sections}
+                  values={sectionIds} onChange={setSectionIds}
+                  disabled={!departmentIds.length} disabledTitle="اختر الإدارة أولاً"
+                />
+              )}
+
+              {/* Employee filter (admin users list) */}
+              {employees.length > 0 && (
+                <MultiSelect
+                  icon={UserIcon} label="الموظف" options={employees}
+                  values={userIds} onChange={setUserIds}
+                />
+              )}
+
+              {/* Event type */}
+              <select
+                value={type} onChange={e => setType(e.target.value)}
+                style={{ ...deptSelectStyle, minWidth: 0, color: type ? 'var(--c-text)' : 'var(--c-text-2)' }}
+              >
+                <option value="">النوع: الكل</option>
+                <option value="check_in">تسجيل دخول</option>
+                <option value="check_out">تسجيل خروج</option>
+              </select>
 
               {/* Date range */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={dateInputStyle} />
+                <input type="date" value={dateFrom} onChange={e => changeDateFrom(e.target.value)} style={dateInputStyle} />
                 <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>—</span>
                 <input
-                  type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                  type="date" value={dateTo} onChange={e => changeDateTo(e.target.value)}
                   style={{
                     ...dateInputStyle,
                     ...(dateRangeInvalid ? { border: '1px solid var(--c-rejected)', color: 'var(--c-rejected)' } : {}),
                   }}
+                />
+              </div>
+
+              {/* Calendar-month shorthand (cleared when a date range is set) */}
+              <input
+                type="month" value={monthValue} onChange={e => changeMonth(e.target.value)}
+                title="عرض شهر كامل" style={dateInputStyle}
+              />
+
+              {/* Boolean filters */}
+              <ToggleChip
+                label="خروج غير مسجّل" icon={AlertTriangle}
+                active={missingCheckout} onChange={setMissingCheckout}
+                title="سجلات الدخول التي أُغلقت تلقائياً بدون انصراف"
+              />
+              <ToggleChip
+                label="سجلات مصحّحة" icon={ShieldCheck}
+                active={isCorrected} onChange={setIsCorrected}
+                title="سجلات الانصراف التي أنشأها مشرف تصحيحاً"
+              />
+
+              {/* Work-hours bounds (check-out rows) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Clock size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+                <input
+                  type="number" min="0" step="0.5" value={whMin} placeholder="ساعات ≥"
+                  onChange={e => setWhMin(e.target.value)}
+                  style={{ ...dateInputStyle, width: 82, cursor: 'text' }}
+                />
+                <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>—</span>
+                <input
+                  type="number" min="0" step="0.5" value={whMax} placeholder="ساعات ≤"
+                  onChange={e => setWhMax(e.target.value)}
+                  style={{ ...dateInputStyle, width: 82, cursor: 'text' }}
                 />
               </div>
 
@@ -936,6 +1124,25 @@ export default function AttendancePage() {
               )}
             </>
           )}
+
+          {/* Page size + Excel export of the active tab's exact query */}
+          <PerPageSelect value={perPage} onChange={setPerPage} />
+          {isAbsent ? (
+            <ExportButton
+              url="/attendance/absent-today" params={buildAbsentFilters()}
+              filename="absent-today.xlsx"
+            />
+          ) : isLeave ? (
+            <ExportButton
+              url="/attendance/approved-leave-users" params={buildLeaveFilters()}
+              filename="approved-leave-users.xlsx"
+            />
+          ) : (
+            <ExportButton
+              url="/attendance/records" params={buildRecordFilters()}
+              filename="attendance-records.xlsx" disabled={dateRangeInvalid}
+            />
+          )}
         </div>
 
         {/* Table / Holiday Empty State — gated per tab: the leave tab never
@@ -957,13 +1164,11 @@ export default function AttendancePage() {
                 <thead>
                   <tr style={{ background: 'var(--c-surface)' }}>
                     {(isAbsent ? TABLE_COLS_ABSENT : isLeave ? TABLE_COLS_LEAVE : TABLE_COLS).map(col => (
-                      <th key={col} style={{
-                        padding: '11px 16px', textAlign: 'right',
-                        fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
-                        borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
-                      }}>
-                        {col}
-                      </th>
+                      <SortableTh
+                        key={col.label} label={col.label} field={col.field}
+                        sort={isAbsent ? absentSort : isLeave ? leaveSort : sort}
+                        onSort={isAbsent ? setAbsentSort : isLeave ? setLeaveSort : setSort}
+                      />
                     ))}
                   </tr>
                 </thead>

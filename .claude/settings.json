@@ -30,7 +30,15 @@
       "Bash(find . -maxdepth 3 \\\\\\( -iname \"*postman*\" -o -iname \"*swagger*\" -o -iname \"*openapi*\" -o -iname \"*.yaml\" -o -iname \"*.yml\" \\\\\\) -not -path \"*/node_modules/*\")",
       "Bash(node -e \"const m = require\\('lucide-react'\\); console.log\\('CheckCheck:', !!m.CheckCheck\\); console.log\\('BellOff:', !!m.BellOff\\);\")",
       "Bash(node notif_test.js)",
-      "Bash(find \"/c/tmp/pwtest\" -maxdepth 2 -iname \"node_modules\" 2>/dev/null; find \"/c/tmp\" -maxdepth 3 -iname \"playwright*\" -not -path \"*node_modules/playwright/*\" 2>/dev/null | head -10; find / -maxdepth 4 -iname \"playwright-core\" -not -path \"*/proc/*\" 2>/dev/null | head -5)"
+      "Bash(find \"/c/tmp/pwtest\" -maxdepth 2 -iname \"node_modules\" 2>/dev/null; find \"/c/tmp\" -maxdepth 3 -iname \"playwright*\" -not -path \"*node_modules/playwright/*\" 2>/dev/null | head -10; find / -maxdepth 4 -iname \"playwright-core\" -not -path \"*/proc/*\" 2>/dev/null | head -5)",
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\ragab\\\\Desktop\\\\work\\\\Raqi-App\\\\routes\\\\api.php\" -Pattern \"attendance\" | Select-Object -First 20 | ForEach-Object { $_.Line.Trim\\(\\) }; \"\"; \\(Test-Path \"C:\\\\Users\\\\ragab\\\\Desktop\\\\work\\\\Raqi-App\\\\.env\"\\); Select-String -Path \"C:\\\\Users\\\\ragab\\\\Desktop\\\\work\\\\Raqi-App\\\\composer.json\" -Pattern \"excel|xlsx|spreadsheet\" | ForEach-Object { $_.Line.Trim\\(\\) })",
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\ragab\\\\Desktop\\\\work\\\\Raqi-App\\\\app\\\\Http\\\\Controllers\\\\AttendanceController.php\" -Pattern \"format|xlsx|sort_by|per_page\" | Select-Object -First 10 | ForEach-Object { \"$\\($_.LineNumber\\): $\\($_.Line.Trim\\(\\)\\)\" })",
+      "PowerShell(php -v | Select-Object -First 1; Select-String -Path \"C:\\\\Users\\\\ragab\\\\Desktop\\\\work\\\\Raqi-App\\\\.env\" -Pattern \"^DB_|^APP_URL\" | ForEach-Object { $_.Line }; Get-ChildItem \"C:\\\\Users\\\\ragab\\\\Desktop\\\\work\\\\Raqi-App\\\\database\\\\seeders\" | Select-Object -ExpandProperty Name)",
+      "PowerShell(Test-NetConnection -ComputerName 127.0.0.1 -Port 3306 -InformationLevel Quiet -WarningAction SilentlyContinue; Select-String -Path \"C:\\\\Users\\\\ragab\\\\Desktop\\\\work\\\\Raqi-App\\\\database\\\\seeders\\\\UserSeeder.php\" -Pattern \"email|password\" | Select-Object -First 12 | ForEach-Object { $_.Line.Trim\\(\\) })",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8000/api/attendance/records)",
+      "Bash(curl -s -X POST http://localhost:8000/api/login -H \"Content-Type: application/json\" -H \"Accept: application/json\" -d '{\"email\":\"alraqimraketing@gmail.com\",\"password\":\"r12345\"}')",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\ragab\\\\Desktop\\\\work\\\\Raqi-App\"; php artisan tinker --execute=\"$u = App\\\\Models\\\\User::find\\(1\\); $u->password = bcrypt\\('r12345'\\); $u->save\\(\\); echo 'ok';\")",
+      "Bash(curl -s -X POST http://localhost:8000/api/login -H \"Content-Type: application/json\" -H \"Accept: application/json\" -d '{\"email\":\"admin@alraqi.com\",\"password\":\"r12345\"}')"
     ],
     "additionalDirectories": [
       "\\tmp\\pwtest",
