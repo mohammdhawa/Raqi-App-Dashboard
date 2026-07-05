@@ -477,7 +477,10 @@ export default function LeavePage() {
   const [mineSort, setMineSort] = useState(null)
   const [approvalsSort, setApprovalsSort] = useState(null)
 
-  const sections = useDeptSections(departmentId, departments, { canFetch: user?.role === 'admin' })
+  // Managers/chiefs have no department picker (their queue is already scoped)
+  // but may still filter by section — feed them their own department's sections.
+  const sectionDeptId = hasFullAccess ? departmentId : (user?.department_id ?? '')
+  const sections = useDeptSections(sectionDeptId, departments, { canFetch: user?.role === 'admin' })
 
   const [review, setReview] = useState(null) // { item, action }
 
@@ -485,12 +488,14 @@ export default function LeavePage() {
 
   const isApprovals = tab === 'approvals'
 
+  // Approvers only (the /attendance/departments route allows managers/chiefs
+  // too — they need it for their own department's nested sections).
   useEffect(() => {
-    if (!canApprove || !hasFullAccess) return
+    if (!canApprove) return
     api.get('/attendance/departments')
       .then(res => setDepartments(res.data.departments ?? []))
       .catch(() => setDepartments([]))
-  }, [canApprove, hasFullAccess])
+  }, [canApprove])
 
   // Clear an orphan section whenever the department changes (422 otherwise).
   const changeDepartment = v => { setDepartmentId(v); setSectionId('') }
@@ -676,8 +681,9 @@ export default function LeavePage() {
           {isApprovals && hasFullAccess && (
             <DepartmentSelect departments={departments} value={departmentId} onChange={changeDepartment} />
           )}
-          {isApprovals && hasFullAccess && (
-            <SectionSelect sections={sections} value={sectionId} onChange={setSectionId} disabled={!departmentId} />
+          {/* Managers/chiefs see it too — fed from their own department */}
+          {isApprovals && (
+            <SectionSelect sections={sections} value={sectionId} onChange={setSectionId} disabled={hasFullAccess && !departmentId} />
           )}
 
           {/* Status multi-filter (statuses=pending,approved,…) */}

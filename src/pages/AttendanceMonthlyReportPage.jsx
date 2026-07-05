@@ -270,7 +270,10 @@ export default function AttendanceMonthlyReportPage() {
   const [hasMissingCheckouts, setHasMissingCheckouts] = useState(false)
   const [sort, setSort] = useState(null)
 
-  const sections = useDeptSections(departmentId, departments, { canFetch: user?.role === 'admin' })
+  // Managers/chiefs have no department picker (dept-locked server-side) but
+  // may still filter by section — feed them their own department's sections.
+  const sectionDeptId = hasFullAccess ? departmentId : (user?.department_id ?? '')
+  const sections = useDeptSections(sectionDeptId, departments, { canFetch: user?.role === 'admin' })
   const reqRef = useRef(0)
 
   const span = spanDays(from, to)
@@ -282,12 +285,13 @@ export default function AttendanceMonthlyReportPage() {
       ? `النطاق يتجاوز الحد الأقصى (${MAX_RANGE_DAYS} يوماً)`
       : ''
 
+  // The /attendance/departments route allows every attendance viewer, and
+  // managers need it for their own department's nested sections.
   useEffect(() => {
-    if (!hasFullAccess) return
     api.get('/attendance/departments')
       .then(res => setDepartments(res.data.departments ?? []))
       .catch(() => setDepartments([]))
-  }, [hasFullAccess])
+  }, [])
 
   useEffect(() => { setSectionId('') }, [departmentId])
 
@@ -355,7 +359,8 @@ export default function AttendanceMonthlyReportPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
         <SearchInput value={search} onChange={setSearch} />
         {hasFullAccess && <DepartmentSelect departments={departments} value={departmentId} onChange={setDepartmentId} />}
-        {hasFullAccess && <SectionSelect sections={sections} value={sectionId} onChange={setSectionId} disabled={!departmentId} />}
+        {/* Managers/chiefs see it too — fed from their own department */}
+        <SectionSelect sections={sections} value={sectionId} onChange={setSectionId} disabled={hasFullAccess && !departmentId} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <CalendarRange size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
           <input type="date" value={from} onChange={e => setFrom(e.target.value)} style={dateInputStyle} />
