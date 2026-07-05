@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -540,9 +540,10 @@ function PagBtn({ children, active, disabled, onClick }) {
 
 // ── Single-date filters (shared by the absent + approved-leave tabs) ─────────
 // Mirrors the records filter set: department(s) → dependent section(s) cascade,
-// employee multi-select, a name/email search box, and a single date. The org
-// filters are gated to full-access viewers (managers/chiefs are auto-scoped to
-// their own department server-side).
+// employee multi-select, a name/email search box, and a single date. The
+// department picker is gated to full-access viewers (managers/chiefs are
+// auto-scoped to their own department server-side); the section picker shows
+// for everyone, fed from the manager's own department when there's no picker.
 
 function SingleDateFilters({
   hasFullAccess, departments, departmentIds, setDepartmentIds,
@@ -559,13 +560,12 @@ function SingleDateFilters({
           values={departmentIds} onChange={setDepartmentIds}
         />
       )}
-      {hasFullAccess && (
-        <MultiSelect
-          icon={Layers} label="القسم" options={sections}
-          values={sectionIds} onChange={setSectionIds}
-          disabled={!departmentIds.length} disabledTitle="اختر الإدارة أولاً"
-        />
-      )}
+      {/* Managers/chiefs see it too — fed from their own department */}
+      <MultiSelect
+        icon={Layers} label="القسم" options={sections}
+        values={sectionIds} onChange={setSectionIds}
+        disabled={hasFullAccess && !departmentIds.length} disabledTitle="اختر الإدارة أولاً"
+      />
       {employees.length > 0 && (
         <MultiSelect
           icon={UserIcon} label="الموظف" options={employees}
@@ -634,7 +634,16 @@ export default function AttendancePage() {
 
   // Section options depend on the chosen departments (avoids the 422 the
   // backend raises when a section doesn't belong to the selected departments).
-  const sections = useDeptsSections(departmentIds, departments, { canFetch: user?.role === 'admin' })
+  // Managers/chiefs have no department picker (they're dept-locked server-side)
+  // but may still filter by section — feed them their own department's sections.
+  const ownDeptId = user?.department_id ?? null
+  const sectionDeptIds = useMemo(
+    () => hasFullAccess
+      ? departmentIds
+      : (ownDeptId != null ? [String(ownDeptId)] : []),
+    [hasFullAccess, departmentIds, ownDeptId]
+  )
+  const sections = useDeptsSections(sectionDeptIds, departments, { canFetch: user?.role === 'admin' })
 
   const [selfiePreview, setSelfiePreview] = useState(null)
 
@@ -669,14 +678,14 @@ export default function AttendancePage() {
   // combination) resolving after newer filters have already changed state.
   const requestIdRef = useRef(0)
 
-  // Department picker — only admins / can_view_attendance users can filter by
-  // department, so only fetch the list for them.
+  // Departments feed — full-access users get the department picker from it;
+  // managers/chiefs still need it for their own department's nested sections
+  // (the /attendance/departments route allows every attendance viewer).
   useEffect(() => {
-    if (!hasFullAccess) return
     api.get('/attendance/departments')
       .then(res => setDepartments(res.data.departments ?? []))
       .catch(() => setDepartments([]))
-  }, [hasFullAccess])
+  }, [])
 
   // Employee picker (user_ids) — fed from the admin users list, so admins only.
   useEffect(() => {
@@ -1026,14 +1035,14 @@ export default function AttendancePage() {
                 />
               )}
 
-              {/* Section filter — dependent on the chosen departments */}
-              {hasFullAccess && (
-                <MultiSelect
-                  icon={Layers} label="القسم" options={sections}
-                  values={sectionIds} onChange={setSectionIds}
-                  disabled={!departmentIds.length} disabledTitle="اختر الإدارة أولاً"
-                />
-              )}
+              {/* Section filter — dependent on the chosen departments for
+                  full-access users; managers/chiefs get their own dept's
+                  sections without a department picker */}
+              <MultiSelect
+                icon={Layers} label="القسم" options={sections}
+                values={sectionIds} onChange={setSectionIds}
+                disabled={hasFullAccess && !departmentIds.length} disabledTitle="اختر الإدارة أولاً"
+              />
 
               {/* Employee filter (admin users list) */}
               {employees.length > 0 && (
