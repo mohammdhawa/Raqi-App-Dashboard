@@ -62,6 +62,35 @@ export function getLeaveCalendarDays(item) {
   return Math.floor((b - a) / 86400000) + 1
 }
 
+// The leave endpoints' *validation* errors are Arabic (set in the FormRequests),
+// but the business-rule 422s are raised in the controller as English strings.
+// Translate the known ones; anything unrecognised falls through unchanged.
+const LEAVE_API_MESSAGES = {
+  'The selected period contains no working days.':
+    'الفترة المحددة لا تتضمّن أيام عمل.',
+  'Leave request exceeds the remaining annual leave balance.':
+    'طلب الإجازة يتجاوز رصيد الإجازة السنوية المتبقّي.',
+  'A pending or approved leave request already overlaps this period.':
+    'يوجد طلب إجازة قيد المراجعة أو موافق عليه يتقاطع مع هذه الفترة.',
+  'Only pending leave requests can be reviewed.':
+    'لا يمكن مراجعة الطلبات التي تمت مراجعتها مسبقاً.',
+  'Leave request exceeds the employee remaining annual leave balance.':
+    'طلب الإجازة يتجاوز رصيد الإجازة السنوية المتبقّي للموظف.',
+  'Unauthorized.':
+    'ليس لديك صلاحية لتنفيذ هذا الإجراء.',
+}
+
+/** Arabic message for a leave-endpoint error, preferring field validation errors. */
+export function leaveApiMessage(err, fallback = 'تعذّر تنفيذ الإجراء، حاول مرة أخرى') {
+  const data = err?.response?.data
+  if (data?.errors && typeof data.errors === 'object') {
+    return Object.values(data.errors).flat().join('، ')
+  }
+  const msg = data?.message
+  if (!msg) return fallback
+  return LEAVE_API_MESSAGES[msg] ?? msg
+}
+
 // Leave-balance payload reader — { allocated, used, remaining } with fallbacks.
 export function readLeaveBalance(data) {
   const b = data?.balance ?? data?.leave_balance ?? data ?? {}
@@ -70,6 +99,9 @@ export function readLeaveBalance(data) {
     return null
   }
   return {
+    // The year the figures describe — POST /leave-requests returns the balance
+    // for the *request's* year, which isn't necessarily the year on screen.
+    year:      num('year'),
     allocated: num('allocated', 'allocated_days', 'total', 'total_days', 'annual', 'annual_days'),
     used:      num('used', 'used_days', 'taken', 'taken_days', 'consumed'),
     remaining: num('remaining', 'remaining_days', 'balance', 'available', 'available_days', 'left'),

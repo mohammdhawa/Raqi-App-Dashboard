@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Inbox, Send, Plus,
   Users, Building2, Layers, LayoutTemplate, History,
   Settings, LogOut, Files, Fingerprint, CalendarCheck, ClipboardList, CalendarRange,
+  Megaphone,
 } from 'lucide-react'
 
 const NAV = [
@@ -31,10 +32,11 @@ const NAV = [
       { label: 'الحضور والانصراف',   icon: Fingerprint,     path: '/admin/attendance',   show: (auth) => auth.canViewAttendance },
       { label: 'التقرير اليومي',      icon: ClipboardList,   path: '/admin/attendance/report', show: (auth) => auth.canViewAttendance },
       { label: 'التقرير الشهري',      icon: CalendarRange,   path: '/admin/attendance/monthly', show: (auth) => auth.canViewAttendance },
-      { label: 'إدارة الإجازات',      icon: CalendarCheck,   path: '/admin/leave',        roles: ['admin', 'manager', 'chief'] },
+      { label: 'إدارة الإجازات',      icon: CalendarCheck,   path: '/admin/leave',        roles: ['admin', 'manager', 'chief', 'employee'] },
       { label: 'الإدارات',           icon: Building2,       path: '/admin/departments',  roles: ['admin'] },
       { label: 'الأقسام',            icon: Layers,          path: '/admin/sections',     roles: ['admin'] },
       { label: 'قوالب المستندات',    icon: LayoutTemplate,  path: '/admin/templates',    roles: ['admin'] },
+      { label: 'إشعار عام',          icon: Megaphone,       path: '/admin/broadcast',    roles: ['admin'] },
       { label: 'سجل التدقيق',        icon: History,         path: '/admin/audit',        roles: ['admin', 'chief'] },
       { label: 'الإعدادات',          icon: Settings,        path: '/admin/settings',     roles: ['admin'] },
     ],

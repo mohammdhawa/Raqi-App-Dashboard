@@ -28,7 +28,9 @@ function ActorsCell({ doc }) {
 
 function SentRow({ doc, last, onView, onDelete }) {
   const [hov, setHov] = useState(false)
-  const canDelete = (doc.workflows ?? []).every(w => !w.signed_at)
+  // Deletable until the chief sets a final status — a manager signing in between
+  // keeps the document `pending`, so intermediate signatures don't block withdraw.
+  const canDelete = doc.status === 'pending'
   return (
     <tr
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
