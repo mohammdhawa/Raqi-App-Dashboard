@@ -20,6 +20,7 @@ const PAGE_META = {
   '/admin/departments': { name: 'الإدارات',           section: 'الإدارة' },
   '/admin/sections':    { name: 'الأقسام',            section: 'الإدارة' },
   '/admin/templates':   { name: 'قوالب المستندات',    section: 'الإدارة' },
+  '/admin/broadcast':   { name: 'إشعار عام',          section: 'الإدارة' },
   '/admin/audit':       { name: 'سجل التدقيق',        section: 'الإدارة' },
   '/admin/settings':    { name: 'الإعدادات',          section: 'الإدارة' },
 }

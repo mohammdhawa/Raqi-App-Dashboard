@@ -5,19 +5,19 @@ import { useToast } from '../components/ui/Toast'
 import {
   CalendarCheck, CalendarDays, CalendarClock, Wallet, Check, X,
   Inbox, Loader2, Building2, MessageSquare, Calendar, ClipboardCheck, Tags,
+  CalendarPlus,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
+import SubmitLeaveModal from '../components/leave/SubmitLeaveModal'
 import {
   getLeaveUser, getLeaveType, getLeaveReason, getLeaveStart, getLeaveEnd,
   getLeaveDays, getLeaveCalendarDays, leaveTypeLabel, readLeaveBalance,
-  LEAVE_TYPE_LABELS,
+  leaveApiMessage, LEAVE_TYPE_LABELS,
 } from '../utils/leave'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh, ToggleChip, MultiSelect } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
 import { useDeptSections } from '../utils/useDeptSections'
-
-const ANNUAL_LEAVE_DEFAULT = 21
 
 function formatDate(value) {
   if (!value) return '—'
@@ -159,11 +159,10 @@ function BalanceWidget({ balance, loading }) {
       </div>
     )
   }
-  const allocated = balance?.allocated ?? ANNUAL_LEAVE_DEFAULT
   return (
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 22 }}>
       <BalanceTile
-        icon={Wallet} label="الرصيد السنوي المخصص" value={allocated}
+        icon={Wallet} label="الرصيد السنوي المخصص" value={balance?.allocated}
         accent={{ bg: 'var(--c-primary-light)', color: 'var(--c-primary)' }}
       />
       <BalanceTile
@@ -180,8 +179,9 @@ function BalanceWidget({ balance, loading }) {
 
 // ── Review (approve / reject) modal ──────────────────────────────────────────
 
+// No note/comment field: PATCH …/review accepts `status` only, so anything else
+// typed here would be silently dropped by the API.
 function ReviewModal({ item, action, onClose, onConfirm }) {
-  const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const u = getLeaveUser(item)
   const isApprove = action === 'approve'
@@ -194,7 +194,7 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
 
   const confirm = async () => {
     setSubmitting(true)
-    const ok = await onConfirm(note.trim())
+    const ok = await onConfirm()
     if (!ok) setSubmitting(false) // keep modal open on failure; parent closes on success
   }
 
@@ -237,19 +237,19 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
             </div>
           </div>
 
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 6 }}>
-            ملاحظة (اختياري)
-          </label>
-          <textarea
-            value={note} onChange={e => setNote(e.target.value)} rows={3}
-            placeholder={isApprove ? 'ملاحظة للموظف...' : 'سبب الرفض (اختياري)...'}
-            style={{
-              width: '100%', resize: 'vertical', borderRadius: 10, padding: '10px 12px',
-              border: '1px solid var(--c-border)', outline: 'none',
-              fontFamily: 'var(--font-sans)', fontSize: 12.5, color: 'var(--c-text)',
-              background: '#fff', lineHeight: 1.6,
-            }}
-          />
+          {getLeaveReason(item) && (
+            <>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 6 }}>
+                سبب الطلب
+              </div>
+              <div style={{
+                borderRadius: 10, padding: '10px 12px', background: 'var(--c-surface)',
+                fontSize: 12.5, color: 'var(--c-text-2)', lineHeight: 1.6,
+              }}>
+                {getLeaveReason(item)}
+              </div>
+            </>
+          )}
         </div>
 
         <div style={{
@@ -446,6 +446,9 @@ export default function LeavePage() {
   const { user } = useAuth()
   const toast = useToast()
   const canApprove = ['admin', 'manager', 'chief'].includes(user?.role)
+  // POST /leave-requests authorizes employee|manager|chief — admins are rejected
+  // with a 403, so they get no submit button even though they can see the page.
+  const canSubmit = ['employee', 'manager', 'chief'].includes(user?.role)
   // Same gate the attendance pages use: only admin / can_view_attendance users
   // may filter by department (managers/chiefs are dept-scoped server-side).
   const hasFullAccess = user?.role === 'admin' || !!user?.can_view_attendance
@@ -483,6 +486,7 @@ export default function LeavePage() {
   const sections = useDeptSections(sectionDeptId, departments, { canFetch: user?.role === 'admin' })
 
   const [review, setReview] = useState(null) // { item, action }
+  const [submitting, setSubmitting] = useState(false) // new-request modal open
 
   const reqRef = useRef(0)
 
@@ -565,26 +569,34 @@ export default function LeavePage() {
     return () => window.removeEventListener('topbar:refresh', handler)
   }, [fetchBalance, fetchList, page])
 
-  const submitReview = async (note) => {
+  const submitReview = async () => {
     if (!review) return false
     const status = review.action === 'approve' ? 'approved' : 'rejected'
     try {
-      await api.patch(`/attendance/leave-requests/${review.item.id}/review`, {
-        status,
-        ...(note ? { note } : {}),
-      })
+      await api.patch(`/attendance/leave-requests/${review.item.id}/review`, { status })
       toast.success(review.action === 'approve' ? 'تمت الموافقة على طلب الإجازة' : 'تم رفض طلب الإجازة')
       setReview(null)
       fetchList(page)
       return true
     } catch (err) {
-      const data = err.response?.data
-      const msg = data?.errors
-        ? Object.values(data.errors).flat().join('، ')
-        : (data?.message ?? 'تعذّر تنفيذ الإجراء، حاول مرة أخرى')
-      toast.error(msg)
+      toast.error(leaveApiMessage(err))
       return false
     }
+  }
+
+  // The 201 carries a refreshed balance, but for the *request's* year — booking
+  // leave in a future year returns that year's figures, which must not replace
+  // the current year's widget. Only adopt it when the years line up.
+  const onSubmitted = (nextBalance) => {
+    setSubmitting(false)
+    toast.success('تم إرسال طلب الإجازة إلى المسؤول المختار')
+    const sameYear = nextBalance?.year != null && balance?.year != null
+      ? nextBalance.year === balance.year
+      : false
+    if (sameYear) setBalance(nextBalance)
+    else fetchBalance()
+    if (tab === 'mine') fetchList(page)
+    else setTab('mine')
   }
 
   const cols = isApprovals ? APPROVAL_COLS : MINE_COLS
@@ -606,15 +618,34 @@ export default function LeavePage() {
     <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1240, margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 22 }}>
-        <h1 style={{ margin: '0 0 5px', fontSize: 26, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.5 }}>
-          إدارة الإجازات
-        </h1>
-        <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
-          {canApprove
-            ? 'مراجعة طلبات الإجازة المُسندة إليك ومتابعة رصيد إجازاتك الخاص.'
-            : 'متابعة طلبات إجازتك ورصيدك السنوي المتبقّي.'}
-        </p>
+      <div style={{
+        marginBottom: 22, display: 'flex', alignItems: 'flex-start',
+        justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
+      }}>
+        <div>
+          <h1 style={{ margin: '0 0 5px', fontSize: 26, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.5 }}>
+            إدارة الإجازات
+          </h1>
+          <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
+            {canApprove
+              ? 'مراجعة طلبات الإجازة المُسندة إليك ومتابعة رصيد إجازاتك الخاص.'
+              : 'متابعة طلبات إجازتك ورصيدك السنوي المتبقّي.'}
+          </p>
+        </div>
+        {canSubmit && (
+          <button
+            onClick={() => setSubmitting(true)}
+            style={{
+              height: 42, padding: '0 18px', borderRadius: 11, border: 'none', flexShrink: 0,
+              background: 'var(--c-primary)', color: '#fff',
+              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
+              display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
+            }}
+          >
+            <CalendarPlus size={15} />
+            طلب إجازة جديد
+          </button>
+        )}
       </div>
 
       {/* Balance widget */}
@@ -801,6 +832,10 @@ export default function LeavePage() {
           item={review.item} action={review.action}
           onClose={() => setReview(null)} onConfirm={submitReview}
         />
+      )}
+
+      {submitting && (
+        <SubmitLeaveModal onClose={() => setSubmitting(false)} onSubmitted={onSubmitted} />
       )}
     </div>
   )
