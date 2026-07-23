@@ -4,14 +4,13 @@
 // the dashboard (see notifText in Topbar).
 
 export const LEAVE_TYPE_LABELS = {
-  annual:    'سنوية',
-  sick:      'مرضية',
-  emergency: 'طارئة',
-  unpaid:    'بدون راتب',
-  maternity: 'أمومة',
-  paternity: 'أبوة',
-  casual:    'عارضة',
-  other:     'أخرى',
+  sick:         'مرضية',
+  study:        'دراسية',
+  annual:       'سنوية',
+  unpaid:       'بلا أجرة',
+  maternity:    'إجازة أمومة',
+  bereavement:  'إجازة وفاة',
+  compensatory: 'إجازة تعويضية',
 }
 
 export function leaveTypeLabel(type) {
@@ -67,11 +66,15 @@ export function getLeaveCalendarDays(item) {
 // Translate the known ones; anything unrecognised falls through unchanged.
 const LEAVE_API_MESSAGES = {
   'The selected period contains no working days.':
-    'الفترة المحددة لا تتضمّن أيام عمل.',
+    'الفترة المحددة لا تحتوي على أيام عمل.',
   'Leave request exceeds the remaining annual leave balance.':
     'طلب الإجازة يتجاوز رصيد الإجازة السنوية المتبقّي.',
   'A pending or approved leave request already overlaps this period.':
-    'يوجد طلب إجازة قيد المراجعة أو موافق عليه يتقاطع مع هذه الفترة.',
+    'يوجد طلب إجازة معلّق أو معتمد يتداخل مع هذه الفترة.',
+  'Excuse exceeds the employee remaining annual leave balance. Send force=true to record it anyway.':
+    'العذر يتجاوز رصيد الإجازة السنوية المتبقي للموظف.',
+  'Allocation is lower than the days already approved for this year.':
+    'لا يمكن أن يكون الرصيد أقل من الأيام المعتمدة بالفعل هذا العام.',
   'Only pending leave requests can be reviewed.':
     'لا يمكن مراجعة الطلبات التي تمت مراجعتها مسبقاً.',
   'Leave request exceeds the employee remaining annual leave balance.':
@@ -105,5 +108,6 @@ export function readLeaveBalance(data) {
     allocated: num('allocated', 'allocated_days', 'total', 'total_days', 'annual', 'annual_days'),
     used:      num('used', 'used_days', 'taken', 'taken_days', 'consumed'),
     remaining: num('remaining', 'remaining_days', 'balance', 'available', 'available_days', 'left'),
+    overBalance: num('over_balance_days', 'overBalanceDays', 'over_balance', 'overdraft_days') ?? 0,
   }
 }

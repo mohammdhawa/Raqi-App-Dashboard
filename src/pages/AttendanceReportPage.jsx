@@ -5,7 +5,7 @@ import { useToast } from '../components/ui/Toast'
 import {
   Calendar, CalendarOff, X, MapPin, LogIn, LogOut, UserCheck,
   AlertTriangle, Plane, Clock, ImageOff, ExternalLink, Loader2,
-  ShieldCheck, Building2, Layers, RotateCcw,
+  ShieldCheck, Building2, Layers,
 } from 'lucide-react'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh } from '../components/attendance/controls'
@@ -13,6 +13,9 @@ import { sortParams } from '../utils/attendanceQuery'
 import { useDeptSections } from '../utils/useDeptSections'
 import { leaveTypeLabel } from '../utils/leave'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
+import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
+
+const ATTENDANCE_TIME_ZONE = 'Asia/Damascus'
 
 // ── Date/time helpers (backend sends "Y-m-d H:i:s") ──────────────────────────
 function toDate(value) {
@@ -22,11 +25,11 @@ function toDate(value) {
 }
 function fmtTime(value) {
   const d = toDate(value)
-  return d ? d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : null
+  return d ? d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', timeZone: ATTENDANCE_TIME_ZONE }) : null
 }
 function fmtDate(value) {
   const d = toDate(value)
-  return d ? d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+  return d ? d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric', timeZone: ATTENDANCE_TIME_ZONE }) : '—'
 }
 function fmtDateTime(value) {
   const d = toDate(value)
@@ -321,7 +324,7 @@ function LeaveReportRow({ row, last }) {
           {fmtDate(row.start_date)} — {fmtDate(row.end_date)}
         </span>
       </td>
-      <td style={{ padding: '12px 16px' }}><LeaveStatusBadge status="approved_leave" /></td>
+      <td style={{ padding: '12px 16px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}><LeaveStatusBadge status='approved_leave' />{row.is_excuse && <LeaveExcuseBadge compact />}</div></td>
     </tr>
   )
 }

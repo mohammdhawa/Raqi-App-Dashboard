@@ -5,7 +5,7 @@ import api from '../../services/api'
 import {
   LayoutDashboard, Inbox, Send, Plus,
   Users, Building2, Layers, LayoutTemplate, History,
-  Settings, LogOut, Files, Fingerprint, CalendarCheck, ClipboardList, CalendarRange,
+  Settings, LogOut, Files, Fingerprint, CalendarCheck, ClipboardList, CalendarRange, WalletCards,
   Megaphone,
 } from 'lucide-react'
 
@@ -33,6 +33,7 @@ const NAV = [
       { label: 'التقرير اليومي',      icon: ClipboardList,   path: '/admin/attendance/report', show: (auth) => auth.canViewAttendance },
       { label: 'التقرير الشهري',      icon: CalendarRange,   path: '/admin/attendance/monthly', show: (auth) => auth.canViewAttendance },
       { label: 'إدارة الإجازات',      icon: CalendarCheck,   path: '/admin/leave',        roles: ['admin', 'manager', 'chief', 'employee'] },
+      { label: 'أرصدة الإجازات',      icon: WalletCards,     path: '/admin/leave-balances', show: (auth) => auth.canViewAttendance },
       { label: 'الإدارات',           icon: Building2,       path: '/admin/departments',  roles: ['admin'] },
       { label: 'الأقسام',            icon: Layers,          path: '/admin/sections',     roles: ['admin'] },
       { label: 'قوالب المستندات',    icon: LayoutTemplate,  path: '/admin/templates',    roles: ['admin'] },
