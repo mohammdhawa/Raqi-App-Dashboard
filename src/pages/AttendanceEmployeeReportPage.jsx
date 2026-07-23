@@ -4,8 +4,10 @@ import api from '../services/api'
 import {
   UserCheck, LogIn, AlertTriangle, Plane, CalendarOff, UserX,
   Clock, Building2, Layers, ChevronRight, Loader2,
+  ShieldPlus,
 } from 'lucide-react'
 import { leaveTypeLabel } from '../utils/leave'
+import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
 import { ExportButton, SortableTh, ToggleChip } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
 
@@ -102,7 +104,7 @@ function TimeCell({ time }) {
   )
 }
 
-function DayRow({ day, last }) {
+function DayRow({ day, last, onExcuse }) {
   const [hov, setHov] = useState(false)
   const dim = day.status === 'off'
   return (
@@ -131,6 +133,9 @@ function DayRow({ day, last }) {
           : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
       </td>
       <td style={{ padding: '11px 16px' }}>
+        {day.status === 'absent' ? <button onClick={() => onExcuse(day)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><ShieldPlus size={13} /> تسجيل عذر</button> : <span style={{ color: 'var(--c-text-3)' }}>—</span>}
+      </td>
+      <td style={{ padding: '11px 16px' }}>
         {day.status === 'on_leave' && day.leave_type
           ? <span style={{
               display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
@@ -146,7 +151,7 @@ function SkeletonRow() {
   const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)' }
   return (
     <tr>
-      {Array.from({ length: 6 }, (_, i) => (
+      {Array.from({ length: 7 }, (_, i) => (
         <td key={i} style={{ padding: '11px 16px' }}>
           <div style={{ ...pulse, height: 16, width: i === 0 ? 110 : 70, borderRadius: 7, animationDelay: `${i * 0.08}s` }} />
         </td>
@@ -162,6 +167,7 @@ const COLS = [
   { label: 'الدخول' },
   { label: 'الخروج' },
   { label: 'ساعات العمل', field: 'work_hours' },
+  { label: '—' },
   { label: 'نوع الإجازة' },
 ]
 
@@ -183,6 +189,7 @@ export default function AttendanceEmployeeReportPage() {
   const [dayStatus, setDayStatus] = useState('')
   const [workingDaysOnly, setWorkingDaysOnly] = useState(false)
   const [sort, setSort] = useState(null)
+  const [excuseDay, setExcuseDay] = useState(null)
   const reqRef = useRef(0)
 
   // Shared by the fetch and the XLSX export so the file mirrors the view.
@@ -352,7 +359,7 @@ export default function AttendanceEmployeeReportPage() {
             <tbody>
               {loading
                 ? [0, 1, 2, 3, 4, 5, 6].map(i => <SkeletonRow key={i} />)
-                : days.map((d, idx) => <DayRow key={d.date ?? idx} day={d} last={idx === days.length - 1} />)
+                : days.map((d, idx) => <DayRow key={d.date ?? idx} day={d} last={idx === days.length - 1} onExcuse={setExcuseDay} />)
               }
             </tbody>
           </table>
@@ -365,6 +372,7 @@ export default function AttendanceEmployeeReportPage() {
           </div>
         )}
       </div>
+      {excuseDay && <ExcuseLeaveModal employee={{ id: u?.id ?? Number(userId), name: u?.name, email: u?.email }} date={excuseDay.date} onClose={() => setExcuseDay(null)} onSubmitted={fetchReport} />}
     </div>
   )
 }

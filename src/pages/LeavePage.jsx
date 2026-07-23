@@ -8,6 +8,7 @@ import {
   CalendarPlus,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
+import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
 import SubmitLeaveModal from '../components/leave/SubmitLeaveModal'
 import {
   getLeaveUser, getLeaveType, getLeaveReason, getLeaveStart, getLeaveEnd,
@@ -23,7 +24,7 @@ function formatDate(value) {
   if (!value) return '—'
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })
+  return d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Damascus' })
 }
 
 // Laravel paginators arrive under different wrapper keys depending on the
@@ -160,7 +161,8 @@ function BalanceWidget({ balance, loading }) {
     )
   }
   return (
-    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 22 }}>
+    <div style={{ marginBottom: 22 }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
       <BalanceTile
         icon={Wallet} label="الرصيد السنوي المخصص" value={balance?.allocated}
         accent={{ bg: 'var(--c-primary-light)', color: 'var(--c-primary)' }}
@@ -173,8 +175,24 @@ function BalanceWidget({ balance, loading }) {
         icon={CalendarCheck} label="الأيام المتبقية" value={balance?.remaining}
         accent={{ bg: 'var(--c-approved-bg)', color: 'var(--c-approved)' }}
       />
+      </div>
+      {Number(balance?.overBalance ?? 0) > 0 && (
+        <div style={{ marginTop: 10, padding: '10px 13px', borderRadius: 10, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 800 }}>
+          تجاوز الرصيد بـ {balance.overBalance} يوم
+        </div>
+      )}
     </div>
   )
+}
+
+function LeaveOriginCell({ item }) {
+  const name = item.is_excuse
+    ? (item.creator?.name ?? 'الموارد البشرية')
+    : (item.manager?.name ?? '—')
+  return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+    {item.is_excuse ? <LeaveExcuseBadge compact /> : <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>طلب موظف</span>}
+    <span style={{ fontSize: 10.5, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>{name}</span>
+  </div>
 }
 
 // ── Review (approve / reject) modal ──────────────────────────────────────────
@@ -297,7 +315,7 @@ function ApprovalRow({ item, last, onReview }) {
   const [hov, setHov] = useState(false)
   const u = getLeaveUser(item)
   const reason = getLeaveReason(item)
-  const isPending = item.status === 'pending'
+  const isPending = item.status === 'pending' && !item.is_excuse
   return (
     <tr
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
@@ -316,6 +334,7 @@ function ApprovalRow({ item, last, onReview }) {
         </div>
       </td>
       <td style={{ padding: '12px 16px' }}><LeaveTypePill type={getLeaveType(item)} /></td>
+      <td style={{ padding: '12px 16px' }}><LeaveOriginCell item={item} /></td>
       <td style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
           {formatDate(getLeaveStart(item))} — {formatDate(getLeaveEnd(item))}
@@ -370,6 +389,7 @@ function MineRow({ item, last }) {
       }}
     >
       <td style={{ padding: '12px 16px' }}><LeaveTypePill type={getLeaveType(item)} /></td>
+      <td style={{ padding: '12px 16px' }}><LeaveOriginCell item={item} /></td>
       <td style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
           {formatDate(getLeaveStart(item))} — {formatDate(getLeaveEnd(item))}
@@ -406,6 +426,7 @@ function SkeletonRow({ count }) {
 const APPROVAL_COLS = [
   { label: 'الموظف', field: 'employee_name' },
   { label: 'نوع الإجازة', field: 'leave_type' },
+  { label: 'المصدر', field: 'is_excuse' },
   { label: 'الفترة', field: 'start_date' },
   { label: 'الأيام المحتسبة', field: 'requested_days' },
   { label: 'السبب' },
@@ -414,6 +435,7 @@ const APPROVAL_COLS = [
 ]
 const MINE_COLS = [
   { label: 'نوع الإجازة', field: 'leave_type' },
+  { label: 'المصدر', field: 'is_excuse' },
   { label: 'الفترة', field: 'start_date' },
   { label: 'الأيام المحتسبة', field: 'requested_days' },
   { label: 'السبب' },
@@ -469,6 +491,7 @@ export default function LeavePage() {
   // Filters shared by both tabs (both endpoints accept them)
   const [statuses, setStatuses] = useState([])       // pending/approved/rejected
   const [leaveType, setLeaveType] = useState('')
+  const [excuseFilter, setExcuseFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')       // overlap semantics
   const [dateTo, setDateTo] = useState('')
   const [reviewed, setReviewed] = useState(false)
@@ -517,6 +540,7 @@ export default function LeavePage() {
     const params = {}
     if (statuses.length) params.statuses  = statuses.join(',')
     if (leaveType)       params.leave_type = leaveType
+    if (excuseFilter !== '') params.is_excuse = excuseFilter
     if (dateFrom)        params.date_from  = dateFrom
     if (dateTo)          params.date_to    = dateTo
     if (reviewed)        params.reviewed   = 1
@@ -526,7 +550,7 @@ export default function LeavePage() {
       if (sectionId)     params.section_id    = sectionId
     }
     return { ...params, ...sortParams(isApprovals ? approvalsSort : mineSort) }
-  }, [statuses, leaveType, dateFrom, dateTo, reviewed, isApprovals,
+  }, [statuses, leaveType, excuseFilter, dateFrom, dateTo, reviewed, isApprovals,
       search, departmentId, sectionId, approvalsSort, mineSort])
 
   const fetchList = useCallback(async (targetPage) => {
@@ -556,7 +580,7 @@ export default function LeavePage() {
     setPage(1)
     fetchList(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, statuses, leaveType, dateFrom, dateTo, reviewed,
+  }, [tab, statuses, leaveType, excuseFilter, dateFrom, dateTo, reviewed,
       search, departmentId, sectionId, mineSort, approvalsSort])
 
   // Fetch on page change (without resetting)
@@ -601,11 +625,11 @@ export default function LeavePage() {
 
   const cols = isApprovals ? APPROVAL_COLS : MINE_COLS
   const hasFilters = Boolean(
-    statuses.length || leaveType || dateFrom || dateTo || reviewed ||
+    statuses.length || leaveType || excuseFilter !== '' || dateFrom || dateTo || reviewed ||
     (isApprovals && (search || departmentId || sectionId))
   )
   const clearFilters = () => {
-    setStatuses([]); setLeaveType(''); setDateFrom(''); setDateTo(''); setReviewed(false)
+    setStatuses([]); setLeaveType(''); setExcuseFilter(''); setDateFrom(''); setDateTo(''); setReviewed(false)
     setSearch(''); setDepartmentId(''); setSectionId('')
   }
   const emptyMessage = hasFilters
@@ -734,6 +758,15 @@ export default function LeavePage() {
               {Object.entries(LEAVE_TYPE_LABELS).map(([key, label]) => (
                 <option key={key} value={key}>{label}</option>
               ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <select value={excuseFilter} onChange={event => setExcuseFilter(event.target.value)}
+              style={{ ...filterSelectStyle, color: excuseFilter !== '' ? 'var(--c-text)' : 'var(--c-text-2)' }}>
+              <option value=''>المصدر: الكل</option>
+              <option value='0'>طلبات الموظفين</option>
+              <option value='1'>أعذار إدارية</option>
             </select>
           </div>
 

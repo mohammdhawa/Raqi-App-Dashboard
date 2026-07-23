@@ -2,12 +2,15 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import {
-  Fingerprint, Search, ChevronDown, Calendar, LogIn, LogOut,
+  Fingerprint, Calendar, LogIn, LogOut,
   MapPin, Camera, X, User as UserIcon, UserX, Building2,
   Loader2, ImageOff, ExternalLink, Plane, CalendarOff,
   Layers, AlertTriangle, ShieldCheck, Clock,
+  ShieldPlus,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
+import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
+import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
 import { getLeaveUser, getLeaveType, getLeaveStart, getLeaveEnd, getLeaveDays, leaveTypeLabel } from '../utils/leave'
 import { SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh, PerPageSelect, ToggleChip, MultiSelect } from '../components/attendance/controls'
@@ -72,6 +75,7 @@ const TABLE_COLS_ABSENT = [
   { label: 'الدور', field: 'role' },
   { label: 'الإدارة', field: 'department' },
   { label: 'الحالة' },
+  { label: '—' },
 ]
 const TABLE_COLS_LEAVE = [
   { label: 'الموظف', field: 'employee_name' },
@@ -80,6 +84,7 @@ const TABLE_COLS_LEAVE = [
   { label: 'الفترة', field: 'start_date' },
   { label: 'الأيام', field: 'requested_days' },
   { label: 'الحالة' },
+  { label: 'مسجّل بواسطة' },
 ]
 
 const dateInputStyle = {
@@ -319,8 +324,8 @@ function SelfiePreviewModal({ record, onClose }) {
 // ── Skeleton row ──────────────────────────────────────────────────────────────
 
 const SKELETON_CELLS = [[170, 34, 17], [80, 22, 7], [100, 26, 7], [90, 16, 7], [110, 16, 7], [90, 22, 7]]
-const SKELETON_CELLS_ABSENT = [[170, 34, 17], [80, 22, 7], [120, 16, 7], [70, 26, 7]]
-const SKELETON_CELLS_LEAVE = [[170, 34, 17], [120, 16, 7], [70, 22, 7], [140, 16, 7], [50, 16, 7], [90, 22, 7]]
+const SKELETON_CELLS_ABSENT = [[170, 34, 17], [80, 22, 7], [120, 16, 7], [70, 26, 7], [110, 30, 8]]
+const SKELETON_CELLS_LEAVE = [[170, 34, 17], [120, 16, 7], [70, 22, 7], [140, 16, 7], [50, 16, 7], [90, 22, 7], [110, 16, 7]]
 
 function SkeletonRow({ cells = SKELETON_CELLS }) {
   const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)' }
@@ -380,7 +385,7 @@ function RecordRow({ record, last, onViewSelfie }) {
 
 // ── Absent row ────────────────────────────────────────────────────────────────
 
-function AbsentRow({ user, last }) {
+function AbsentRow({ user, last, onExcuse }) {
   const [hov, setHov] = useState(false)
   return (
     <tr
@@ -415,6 +420,11 @@ function AbsentRow({ user, last }) {
       </td>
       <td style={{ padding: '12px 16px' }}>
         <AbsentBadge />
+      </td>
+      <td style={{ padding: '12px 16px' }}>
+        <button onClick={() => onExcuse(user)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}>
+          <ShieldPlus size={13} /> تسجيل عذر / إجازة
+        </button>
       </td>
     </tr>
   )
@@ -506,7 +516,15 @@ function LeaveRow({ item, last }) {
         </span>
       </td>
       <td style={{ padding: '12px 16px' }}>
-        <LeaveStatusBadge status="approved_leave" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <LeaveStatusBadge status='approved_leave' />
+          {item.is_excuse && <LeaveExcuseBadge compact />}
+        </div>
+      </td>
+      <td style={{ padding: '12px 16px' }}>
+        <div style={{ fontSize: 12, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>
+          {item.is_excuse ? (item.creator?.name ?? 'الموارد البشرية') : (item.manager?.name ?? '—')}
+        </div>
       </td>
     </tr>
   )
@@ -646,6 +664,7 @@ export default function AttendancePage() {
   const sections = useDeptsSections(sectionDeptIds, departments, { canFetch: user?.role === 'admin' })
 
   const [selfiePreview, setSelfiePreview] = useState(null)
+  const [excuseTarget, setExcuseTarget] = useState(null)
 
   // Absent-today tab — single date (empty = today, resolved by the backend).
   const [absentRows, setAbsentRows]   = useState([])
@@ -1187,7 +1206,7 @@ export default function AttendancePage() {
                         <SkeletonRow key={i} cells={isAbsent ? SKELETON_CELLS_ABSENT : isLeave ? SKELETON_CELLS_LEAVE : SKELETON_CELLS} />
                       ))
                     : isAbsent
-                      ? activeRows.map((u, idx) => <AbsentRow key={u.id} user={u} last={idx === activeRows.length - 1} />)
+                      ? activeRows.map((u, idx) => <AbsentRow key={u.id} user={u} last={idx === activeRows.length - 1} onExcuse={employee => setExcuseTarget({ employee, date: resolvedDate || absentDate })} />)
                       : isLeave
                         ? activeRows.map((item, idx) => <LeaveRow key={item.id ?? idx} item={item} last={idx === activeRows.length - 1} />)
                         : activeRows.map((r, idx) => <RecordRow key={r.id} record={r} last={idx === activeRows.length - 1} onViewSelfie={setSelfiePreview} />)
@@ -1229,6 +1248,10 @@ export default function AttendancePage() {
 
       {selfiePreview && (
         <SelfiePreviewModal record={selfiePreview} onClose={() => setSelfiePreview(null)} />
+      )}
+      {excuseTarget && (
+        <ExcuseLeaveModal employee={excuseTarget.employee} date={excuseTarget.date}
+          onClose={() => setExcuseTarget(null)} onSubmitted={() => fetchAbsent(absentPage)} />
       )}
     </div>
   )

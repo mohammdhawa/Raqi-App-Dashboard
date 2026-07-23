@@ -15,6 +15,7 @@ import AttendanceReportPage from './pages/AttendanceReportPage'
 import AttendanceMonthlyReportPage from './pages/AttendanceMonthlyReportPage'
 import AttendanceEmployeeReportPage from './pages/AttendanceEmployeeReportPage'
 import LeavePage from './pages/LeavePage'
+import LeaveBalancesPage from './pages/LeaveBalancesPage'
 import BroadcastPage from './pages/BroadcastPage'
 import DocumentInboxPage from './pages/DocumentInboxPage'
 import DocumentSentPage from './pages/DocumentSentPage'
@@ -37,6 +38,7 @@ export default function App() {
                 <Route path="/admin/attendance/monthly" element={<RequireAttendanceAccess><AttendanceMonthlyReportPage /></RequireAttendanceAccess>} />
                 <Route path="/admin/attendance/employee" element={<RequireAttendanceAccess><AttendanceEmployeeReportPage /></RequireAttendanceAccess>} />
                 <Route path="/admin/leave" element={<RequireRole roles={['admin', 'manager', 'chief', 'employee']}><LeavePage /></RequireRole>} />
+                <Route path="/admin/leave-balances" element={<RequireAttendanceAccess><LeaveBalancesPage /></RequireAttendanceAccess>} />
 
                 <Route element={<RequireRole roles="admin"><Outlet /></RequireRole>}>
                   <Route path="/admin/documents" element={<DocumentsPage />} />
