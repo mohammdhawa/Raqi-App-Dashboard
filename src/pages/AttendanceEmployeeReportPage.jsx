@@ -11,15 +11,35 @@ import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
 import { ExportButton, SortableTh, ToggleChip } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
 
+const TIME_ZONE = 'Europe/Istanbul'
+
 function fmtDate(value) {
   if (!value) return '—'
+
   const d = new Date(String(value).replace(' ', 'T'))
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })
+
+  return Number.isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleDateString('ar-EG', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        timeZone: TIME_ZONE,
+      })
 }
+
 function fmtTime(value) {
   if (!value) return null
+
   const d = new Date(String(value).replace(' ', 'T'))
-  return Number.isNaN(d.getTime()) ? null : d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+
+  return Number.isNaN(d.getTime())
+    ? null
+    : d.toLocaleTimeString('ar-EG', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: TIME_ZONE,
+      })
 }
 function fmtHours(value) {
   if (value == null) return '—'
