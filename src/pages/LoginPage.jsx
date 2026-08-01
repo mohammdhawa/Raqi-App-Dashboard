@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [error, setError]       = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const from = location.state?.from?.pathname || '/dashboard'
+  const requestedPath = location.state?.from?.pathname
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -28,7 +28,10 @@ export default function LoginPage() {
     const result = await login(email, password)
     setSubmitting(false)
     if (result.ok) {
-      navigate(from, { replace: true })
+      const defaultPath = result.user?.role === 'employee' && result.user?.attendance_check
+        ? '/attendance'
+        : '/dashboard'
+      navigate(requestedPath || defaultPath, { replace: true })
     } else {
       setError(result.message)
     }

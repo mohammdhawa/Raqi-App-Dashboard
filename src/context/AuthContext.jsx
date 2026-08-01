@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import api from '../services/api'
 
@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem('auth_user', JSON.stringify(u))
       setToken(t)
       setUser(u)
-      return { ok: true }
+      return { ok: true, user: u }
     } catch (err) {
       const data = err.response?.data
       const msg = data?.errors
@@ -43,9 +43,14 @@ export function AuthProvider({ children }) {
 
   const isAuthenticated = Boolean(token)
   const canViewAttendance = ['admin', 'manager', 'chief'].includes(user?.role) || !!user?.can_view_attendance
+  // `attendance_check` is the backend permission behind every /api/attendance/*
+  // write, so it gates the self-service pages verbatim — no role shortcut, or an
+  // admin without the flag would reach a page that can only 403. Independent of
+  // canViewAttendance, which is about seeing *other people's* records.
+  const canCheckAttendance = !!user?.attendance_check
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, loading, canViewAttendance, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, loading, canViewAttendance, canCheckAttendance, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
@@ -69,6 +74,14 @@ export function RequireAuth({ children }) {
 export function RequireAttendanceAccess({ children }) {
   const { canViewAttendance } = useAuth()
   if (!canViewAttendance) {
+    return <Navigate to="/dashboard" replace />
+  }
+  return children
+}
+
+export function RequireAttendanceCheck({ children }) {
+  const { canCheckAttendance } = useAuth()
+  if (!canCheckAttendance) {
     return <Navigate to="/dashboard" replace />
   }
   return children

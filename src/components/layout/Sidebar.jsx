@@ -14,6 +14,7 @@ const NAV = [
     label: 'الرئيسية',
     items: [
       { label: 'لوحة المعلومات', icon: LayoutDashboard, path: '/dashboard' },
+      { label: 'تسجيل الحضور', icon: Fingerprint, path: '/attendance', show: (auth) => auth.canCheckAttendance },
     ],
   },
   {

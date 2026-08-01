@@ -7,6 +7,8 @@ import { useToast } from '../ui/Toast'
 
 const PAGE_META = {
   '/dashboard':         { name: 'لوحة المعلومات',     section: 'الرئيسية' },
+  '/attendance':        { name: 'تسجيل الحضور والانصراف', section: 'الرئيسية' },
+  '/attendance/history': { name: 'سجل حضوري', section: 'الرئيسية' },
   '/documents/inbox':   { name: 'الوارد',             section: 'المستندات' },
   '/documents/sent':    { name: 'الصادر',             section: 'المستندات' },
   '/documents/new':     { name: 'مستند جديد',         section: 'المستندات' },
