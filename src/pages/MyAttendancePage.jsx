@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  LogIn, LogOut, MapPin, Clock, History, Loader2, CalendarOff,
+  LogIn, LogOut, MapPin, MapPinOff, RotateCw, Clock, History, Loader2, CalendarOff,
   CheckCircle2, AlertTriangle, Fingerprint, ShieldAlert, Camera,
 } from 'lucide-react'
 import api from '../services/api'
@@ -10,7 +10,7 @@ import { useToast } from '../components/ui/Toast'
 import SelfieCaptureModal from '../components/attendance/SelfieCaptureModal'
 import {
   damascusToday, formatTime, readDayStatus, checkoutWaitMs, formatCountdown,
-  getPosition, submitAttendance, readAttendanceError,
+  getPosition, submitAttendance, readAttendanceError, watchGeoPermission,
   MIN_CHECKOUT_GAP_MINUTES, isSecureContextOk,
 } from '../utils/attendanceCapture'
 import { getLeaveStart, getLeaveEnd, leaveTypeLabel, getLeaveType } from '../utils/leave'
@@ -107,6 +107,81 @@ function Notice({ icon: Icon, tone = 'warn', children }) {
   )
 }
 
+// ── Location permission recovery ────────────────────────────────────────────
+
+// Once an origin is blocked the browser never prompts again, and there is no
+// API that can re-open the dialog — the only route back is the site-settings
+// panel. Telling someone to "enable it in settings" is useless on a phone, so
+// spell out the exact taps per browser family and detect which one they're on.
+function detectBrowserFamily() {
+  const ua = navigator.userAgent
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  // Every iOS browser is WebKit underneath, so the recovery path is Safari's
+  // regardless of which one is installed.
+  if (isIOS) return 'ios'
+  if (/Android/.test(ua)) return 'android'
+  return 'desktop'
+}
+
+const PERMISSION_STEPS = {
+  android: [
+    'اضغط على الأيقونة يسار عنوان الموقع في شريط المتصفح.',
+    'اختر «الأذونات» أو «إعدادات الموقع».',
+    'اضبط «الموقع الجغرافي» على «السماح».',
+    'تأكد أيضاً من تفعيل خدمة الموقع (GPS) في إعدادات الهاتف، ومن السماح للمتصفح باستخدام الموقع.',
+  ],
+  ios: [
+    'اضغط على أيقونة «ﺃﺍ» يسار شريط العنوان.',
+    'اختر «إعدادات الموقع الإلكتروني».',
+    'اضبط «الموقع الجغرافي» على «السماح».',
+    'تأكد أيضاً من تفعيل خدمات الموقع للمتصفح من: الإعدادات ← الخصوصية ← خدمات الموقع.',
+  ],
+  desktop: [
+    'اضغط على أيقونة القفل بجانب عنوان الموقع.',
+    'اختر «إعدادات الموقع» أو «الأذونات».',
+    'اضبط «الموقع الجغرافي» على «السماح».',
+    'أعد تحميل الصفحة بعد التغيير.',
+  ],
+}
+
+function LocationBlockedPanel({ onRetry }) {
+  const steps = PERMISSION_STEPS[detectBrowserFamily()]
+  return (
+    <div style={{
+      marginBottom: 16, padding: '16px 18px', borderRadius: 14,
+      background: 'var(--c-rejected-bg)', border: '1px solid rgba(192,57,43,0.22)',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10,
+        color: 'var(--c-rejected)', fontSize: 14, fontWeight: 800,
+      }}>
+        <MapPinOff size={17} style={{ flexShrink: 0 }} />
+        إذن الموقع محظور لهذا الموقع
+      </div>
+      <p style={{ margin: '0 0 12px', fontSize: 12.5, color: 'var(--c-text-2)', lineHeight: 1.8 }}>
+        لهذا لم يظهر لك طلب السماح بالموقع. لتفعيله:
+      </p>
+      <ol style={{ margin: '0 0 14px', paddingInlineStart: 20, display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {steps.map((step, i) => (
+          <li key={i} style={{ fontSize: 12.5, color: 'var(--c-text)', lineHeight: 1.7 }}>{step}</li>
+        ))}
+      </ol>
+      <button
+        onClick={onRetry}
+        style={{
+          height: 38, padding: '0 16px', borderRadius: 10, border: 'none',
+          background: 'var(--c-rejected)', color: '#fff',
+          fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700,
+          display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
+        }}
+      >
+        <RotateCw size={14} />
+        تحققت من الإعداد — أعد المحاولة
+      </button>
+    </div>
+  )
+}
+
 // ── Today's record tile ─────────────────────────────────────────────────────
 
 function RecordTile({ record, last }) {
@@ -174,6 +249,16 @@ export default function MyAttendancePage() {
 
   const [now, setNow] = useState(() => Date.now())
 
+  // 'granted' | 'prompt' | 'denied' | 'unknown' — read without prompting, so a
+  // blocked origin is surfaced before the employee taps and hits a silent
+  // rejection. `retryKey` re-runs the probe after they say they fixed it,
+  // covering browsers that don't fire the permission `change` event.
+  const [geoPermission, setGeoPermission] = useState('unknown')
+  const [retryKey, setRetryKey] = useState(0)
+  // Set when getCurrentPosition itself reports PERMISSION_DENIED — the only
+  // signal available on browsers that don't implement navigator.permissions.
+  const [geoDeniedByError, setGeoDeniedByError] = useState(false)
+
   const reqRef = useRef(0)
 
   const status = readDayStatus(records)
@@ -223,6 +308,8 @@ export default function MyAttendancePage() {
     return () => window.clearTimeout(initialFetch)
   }, [fetchToday, fetchLeave])
 
+  useEffect(() => watchGeoPermission(setGeoPermission), [retryKey])
+
   // Tick only while a countdown is actually on screen.
   useEffect(() => {
     if (waitMs <= 0) return undefined
@@ -252,6 +339,11 @@ export default function MyAttendancePage() {
     blockedReason = `يمكنك تسجيل الانصراف بعد ${formatCountdown(waitMs)} (الحد الأدنى ${MIN_CHECKOUT_GAP_MINUTES} دقيقة من وقت الحضور).`
   }
 
+  // A blocked origin can't be un-blocked from JS, so this drives the recovery
+  // panel rather than disabling the button — tapping it again is how the user
+  // confirms they fixed the setting on browsers with no `change` event.
+  const geoBlocked = geoPermission === 'denied' || geoDeniedByError
+
   const disabled = loading || Boolean(blockedReason) || phase !== 'idle'
 
   // ── Capture flow ──────────────────────────────────────────────────────────
@@ -263,8 +355,11 @@ export default function MyAttendancePage() {
     setPhase('locating')
     try {
       const position = await getPosition()
+      setGeoDeniedByError(false)
       setPending({ type: nextType, position })
     } catch (err) {
+      // code 1 = PERMISSION_DENIED → the recovery panel, not a toast-style error.
+      if (err?.code === 1) setGeoDeniedByError(true)
       setActionError(err?.message ?? 'تعذّر تحديد موقعك الحالي.')
     } finally {
       setPhase('idle')
@@ -341,7 +436,20 @@ export default function MyAttendancePage() {
         <Notice icon={ShieldAlert} tone="warn">{blockedReason}</Notice>
       )}
       {loadError && <Notice icon={AlertTriangle} tone="error">{loadError}</Notice>}
-      {actionError && <Notice icon={AlertTriangle} tone="error">{actionError}</Notice>}
+
+      {/* A blocked origin never prompts again, so the recovery steps replace the
+          one-line error rather than sitting next to it. */}
+      {geoBlocked ? (
+        <LocationBlockedPanel
+          onRetry={() => {
+            setActionError('')
+            setGeoDeniedByError(false)
+            setRetryKey(k => k + 1) // re-probe navigator.permissions
+          }}
+        />
+      ) : (
+        actionError && <Notice icon={AlertTriangle} tone="error">{actionError}</Notice>
+      )}
 
       {/* Action button */}
       <button
@@ -377,19 +485,29 @@ export default function MyAttendancePage() {
         )}
       </button>
 
-      {/* What the flow will ask for — set expectations before the prompts fire */}
-      {!disabled && (
+      {/* Set expectations before the prompts fire. Dismissing the dialog is what
+          gets an origin permanently blocked, so when we know a prompt is coming
+          the copy asks for «السماح» outright instead of just listing needs. */}
+      {!disabled && !geoBlocked && (
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
-          marginTop: -12, marginBottom: 22, flexWrap: 'wrap',
-          fontSize: 11.5, color: 'var(--c-text-3)', fontWeight: 600,
+          marginTop: -12, marginBottom: 22, textAlign: 'center',
+          fontSize: 11.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1.8,
         }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-            <MapPin size={12} /> يتطلب إذن الموقع
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-            <Camera size={12} /> يتطلب إذن الكاميرا
-          </span>
+          {geoPermission === 'prompt' ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, flexWrap: 'wrap' }}>
+              <MapPin size={12} />
+              سيطلب المتصفح إذن الموقع ثم الكاميرا — اضغط «السماح» في كل مرة
+            </span>
+          ) : (
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <MapPin size={12} /> يتطلب إذن الموقع
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <Camera size={12} /> يتطلب إذن الكاميرا
+              </span>
+            </span>
+          )}
         </div>
       )}
 
