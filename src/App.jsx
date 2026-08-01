@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import { AuthProvider, RequireAuth, RequireAttendanceAccess, RequireNotEmployee, RequireRole } from './context/AuthContext'
+import { AuthProvider, RequireAuth, RequireAttendanceAccess, RequireAttendanceCheck, RequireNotEmployee, RequireRole, useAuth } from './context/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/LoginPage'
@@ -21,6 +21,13 @@ import DocumentInboxPage from './pages/DocumentInboxPage'
 import DocumentSentPage from './pages/DocumentSentPage'
 import DocumentSubmitPage from './pages/DocumentSubmitPage'
 import DocumentDetailPage from './pages/DocumentDetailPage'
+import MyAttendancePage from './pages/MyAttendancePage'
+import MyAttendanceHistoryPage from './pages/MyAttendanceHistoryPage'
+
+function HomeRedirect() {
+  const { user } = useAuth()
+  return <Navigate to={user?.role === 'employee' && user?.attendance_check ? '/attendance' : '/dashboard'} replace />
+}
 
 export default function App() {
   return (
@@ -30,9 +37,11 @@ export default function App() {
           <ToastProvider>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<HomeRedirect />} />
               <Route element={<RequireAuth><AdminLayout /></RequireAuth>}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/attendance" element={<RequireAttendanceCheck><MyAttendancePage /></RequireAttendanceCheck>} />
+                <Route path="/attendance/history" element={<RequireAttendanceCheck><MyAttendanceHistoryPage /></RequireAttendanceCheck>} />
                 <Route path="/admin/attendance" element={<RequireAttendanceAccess><AttendancePage /></RequireAttendanceAccess>} />
                 <Route path="/admin/attendance/report" element={<RequireAttendanceAccess><AttendanceReportPage /></RequireAttendanceAccess>} />
                 <Route path="/admin/attendance/monthly" element={<RequireAttendanceAccess><AttendanceMonthlyReportPage /></RequireAttendanceAccess>} />
