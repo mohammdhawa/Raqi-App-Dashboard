@@ -70,9 +70,49 @@ export function formatDate(value) {
 // ── Geolocation ─────────────────────────────────────────────────────────────
 
 const GEO_ERRORS = {
-  1: 'تم رفض إذن الوصول إلى الموقع. فعّل إذن الموقع لهذا الموقع من إعدادات المتصفح ثم أعد المحاولة.',
-  2: 'تعذّر تحديد موقعك الحالي. تأكد من تفعيل خدمة الموقع في الجهاز ثم أعد المحاولة.',
+  // Code 1 deliberately says nothing about *how* to fix it — once the origin is
+  // blocked the browser stops prompting entirely, and the page shows a proper
+  // step-by-step recovery panel instead of a one-line "go to settings".
+  1: 'تم حظر إذن الموقع لهذا الموقع، لذلك لم يظهر طلب الإذن.',
+  2: 'تعذّر تحديد موقعك الحالي. تأكد من تفعيل خدمة الموقع (GPS) في الجهاز ثم أعد المحاولة.',
   3: 'انتهت مهلة تحديد الموقع. تأكد من إشارة الموقع وأعد المحاولة.',
+}
+
+/**
+ * Watch the geolocation permission without triggering a prompt, reporting
+ * 'granted' | 'prompt' | 'denied' | 'unknown' immediately and on every change.
+ *
+ * This is what makes the page able to warn *before* the button is tapped: a
+ * blocked origin makes getCurrentPosition reject instantly with no dialog, so
+ * without this the first sign of trouble is a failure the user can't explain.
+ * The change event also lets the page recover on its own the moment the
+ * permission is granted in another tab or in the browser's site settings.
+ *
+ * Permissions.query is missing on some older WebKit builds — 'unknown' there
+ * means "just try it", which is the pre-existing behaviour.
+ */
+export function watchGeoPermission(onChange) {
+  if (!navigator.permissions?.query) {
+    onChange('unknown')
+    return () => {}
+  }
+  let status = null
+  let cancelled = false
+  const handler = () => { if (!cancelled && status) onChange(status.state) }
+
+  navigator.permissions.query({ name: 'geolocation' })
+    .then(st => {
+      if (cancelled) return
+      status = st
+      onChange(st.state)
+      st.addEventListener('change', handler)
+    })
+    .catch(() => { if (!cancelled) onChange('unknown') })
+
+  return () => {
+    cancelled = true
+    status?.removeEventListener('change', handler)
+  }
 }
 
 /**
@@ -93,7 +133,14 @@ export function getPosition({ timeout = 20000 } = {}) {
         longitude: pos.coords.longitude,
         accuracy: pos.coords.accuracy,
       }),
-      err => reject(new Error(GEO_ERRORS[err?.code] ?? 'تعذّر تحديد موقعك الحالي، حاول مرة أخرى.')),
+      err => {
+        const wrapped = new Error(GEO_ERRORS[err?.code] ?? 'تعذّر تحديد موقعك الحالي، حاول مرة أخرى.', { cause: err })
+        // Carry the numeric code through: code 1 (PERMISSION_DENIED) is the one
+        // the page turns into the recovery panel, and it's also the only way to
+        // detect a block on browsers without navigator.permissions.
+        wrapped.code = err?.code
+        reject(wrapped)
+      },
       { enableHighAccuracy: true, timeout, maximumAge: 0 },
     )
   })
