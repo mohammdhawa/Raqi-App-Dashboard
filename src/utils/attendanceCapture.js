@@ -19,8 +19,26 @@ export const ATT_TZ = 'Asia/Damascus'
 // attendance_window.dart. Client-side only — the server still has final say.
 export const MIN_CHECKOUT_GAP_MINUTES = 60
 
-const MAX_SELFIE_EDGE = 1600 // matches the app's image_picker maxWidth/maxHeight
-const SELFIE_QUALITY = 0.85  // matches imageQuality: 85
+// ── Selfie compression — must stay identical to the mobile app ──────────────
+// The app runs image_picker with maxWidth/maxHeight 1600 and imageQuality 85,
+// then uploads the result without recompressing. Matching those numbers here
+// keeps a web-recorded selfie indistinguishable from an app-recorded one:
+//
+//   • max 1600 × 1600 — the image is scaled to *fit inside* that box
+//   • JPEG quality 85%
+//   • aspect ratio preserved, never cropped, never upscaled
+//   • no second encode pass between here and the upload
+//
+// There is no target file size; the output depends on image content.
+export const MAX_SELFIE_EDGE = 1600
+export const SELFIE_QUALITY = 0.85
+
+// What we ask the camera for. It must exceed MAX_SELFIE_EDGE, otherwise the
+// 1600 cap never binds and the selfie ends up smaller than the app's — the
+// resize is where nearly all the size reduction comes from, so capturing below
+// the cap loses facial detail without saving anything. Browsers treat this as
+// ideal, so a camera that can't reach it just returns its best mode.
+export const CAPTURE_REQUEST_EDGE = 1920
 
 // ── Environment probes ──────────────────────────────────────────────────────
 
@@ -173,13 +191,23 @@ export function getPosition({ timeout = 20000 } = {}) {
 // ── Selfie encoding ─────────────────────────────────────────────────────────
 
 function drawScaled(source, sourceWidth, sourceHeight) {
+  // min(1, 1600/max(w,h)) === min(1, 1600/w, 1600/h): the whole frame fits
+  // inside 1600×1600 with its aspect ratio intact. Clamping at 1 means a
+  // camera below the cap is left alone rather than upscaled into fake detail.
   const scale = Math.min(1, MAX_SELFIE_EDGE / Math.max(sourceWidth, sourceHeight))
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(1, Math.round(sourceWidth * scale))
   canvas.height = Math.max(1, Math.round(sourceHeight * scale))
+
   const ctx = canvas.getContext('2d')
-  // The live preview is mirrored for comfort (CSS), but the stored frame must
-  // not be — it's a verification photo that a reviewer compares to a face.
+  // Canvas defaults to a cheap filter that leaves downscaled faces noticeably
+  // softer than the app's native resize; this costs nothing at these sizes.
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+
+  // Drawn at full frame — no crop, matching the app. The live preview is
+  // mirrored for comfort (CSS only); the stored frame must not be, since a
+  // reviewer compares it against a real face.
   ctx.drawImage(source, 0, 0, canvas.width, canvas.height)
   return canvas
 }
