@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   LogIn, LogOut, MapPin, MapPinOff, RotateCw, Clock, History, Loader2, CalendarOff,
-  CheckCircle2, AlertTriangle, Fingerprint, ShieldAlert, Camera,
+  CheckCircle2, AlertTriangle, Fingerprint, ShieldAlert, Camera, ServerCrash,
 } from 'lucide-react'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -11,7 +11,7 @@ import SelfieCaptureModal from '../components/attendance/SelfieCaptureModal'
 import {
   damascusToday, formatTime, readDayStatus, checkoutWaitMs, formatCountdown,
   getPosition, submitAttendance, readAttendanceError, watchGeoPermission,
-  MIN_CHECKOUT_GAP_MINUTES, isSecureContextOk,
+  isBlockedByPermissionsPolicy, MIN_CHECKOUT_GAP_MINUTES, isSecureContextOk,
 } from '../utils/attendanceCapture'
 import { getLeaveStart, getLeaveEnd, leaveTypeLabel, getLeaveType } from '../utils/leave'
 
@@ -142,6 +142,36 @@ const PERMISSION_STEPS = {
     'اضبط «الموقع الجغرافي» على «السماح».',
     'أعد تحميل الصفحة بعد التغيير.',
   ],
+}
+
+// Disabled by a `Permissions-Policy` response header. Nothing the employee can
+// do — so this says so plainly and gives IT the exact header to change, rather
+// than sending people into settings that will never help.
+function ServerPolicyPanel({ features }) {
+  return (
+    <div style={{
+      marginBottom: 16, padding: '16px 18px', borderRadius: 14,
+      background: 'var(--c-rejected-bg)', border: '1px solid rgba(192,57,43,0.22)',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10,
+        color: 'var(--c-rejected)', fontSize: 14, fontWeight: 800,
+      }}>
+        <ServerCrash size={17} style={{ flexShrink: 0 }} />
+        {features.join(' و')} معطّل على مستوى الخادم
+      </div>
+      <p style={{ margin: 0, fontSize: 12.5, color: 'var(--c-text-2)', lineHeight: 1.9 }}>
+        إعدادات المتصفح لن تحلّ هذه المشكلة — الخادم يرسل ترويسة
+        {' '}<code style={{
+          fontFamily: 'monospace', fontSize: 11.5, direction: 'ltr', display: 'inline-block',
+          background: 'var(--c-surface-2)', borderRadius: 5, padding: '1px 5px',
+        }}>Permissions-Policy</code>{' '}
+        تمنع استخدام الموقع والكاميرا في هذه الصفحة.
+        <br />
+        يرجى إبلاغ قسم تقنية المعلومات لتعديل الترويسة والسماح لنطاق الموقع نفسه.
+      </p>
+    </div>
+  )
 }
 
 function LocationBlockedPanel({ onRetry }) {
@@ -344,6 +374,15 @@ export default function MyAttendancePage() {
   // confirms they fixed the setting on browsers with no `change` event.
   const geoBlocked = geoPermission === 'denied' || geoDeniedByError
 
+  // A Permissions-Policy header looks identical to a user denial from JS, but
+  // has the opposite fix, so it's checked first and wins. Both features are
+  // reported together: the camera is disabled by the same header and would fail
+  // one step later, and sending someone to IT twice is one time too many.
+  const policyBlocked = [
+    isBlockedByPermissionsPolicy('geolocation') && 'الموقع',
+    isBlockedByPermissionsPolicy('camera') && 'الكاميرا',
+  ].filter(Boolean)
+
   const disabled = loading || Boolean(blockedReason) || phase !== 'idle'
 
   // ── Capture flow ──────────────────────────────────────────────────────────
@@ -438,8 +477,11 @@ export default function MyAttendancePage() {
       {loadError && <Notice icon={AlertTriangle} tone="error">{loadError}</Notice>}
 
       {/* A blocked origin never prompts again, so the recovery steps replace the
-          one-line error rather than sitting next to it. */}
-      {geoBlocked ? (
+          one-line error rather than sitting next to it. Server policy wins over
+          the browser-settings panel — its instructions would be a dead end. */}
+      {policyBlocked.length > 0 ? (
+        <ServerPolicyPanel features={policyBlocked} />
+      ) : geoBlocked ? (
         <LocationBlockedPanel
           onRetry={() => {
             setActionError('')
@@ -488,7 +530,7 @@ export default function MyAttendancePage() {
       {/* Set expectations before the prompts fire. Dismissing the dialog is what
           gets an origin permanently blocked, so when we know a prompt is coming
           the copy asks for «السماح» outright instead of just listing needs. */}
-      {!disabled && !geoBlocked && (
+      {!disabled && !geoBlocked && policyBlocked.length === 0 && (
         <div style={{
           marginTop: -12, marginBottom: 22, textAlign: 'center',
           fontSize: 11.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1.8,

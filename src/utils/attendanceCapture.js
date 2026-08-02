@@ -79,6 +79,30 @@ const GEO_ERRORS = {
 }
 
 /**
+ * Whether a `Permissions-Policy` response header has disabled a feature for
+ * this document (e.g. `Permissions-Policy: geolocation=()`).
+ *
+ * This case is indistinguishable from a user-denied permission through the
+ * normal APIs — both give an instant PERMISSION_DENIED with no prompt and both
+ * report 'denied' from navigator.permissions — but the fix is the opposite:
+ * nothing the employee changes on their device can help, only the header can.
+ * Telling them to open site settings here wastes their time, so the page checks
+ * this first and points at the server instead.
+ *
+ * Returns false when the API is unavailable: "can't tell" must not masquerade
+ * as "server misconfigured".
+ */
+export function isBlockedByPermissionsPolicy(feature) {
+  const policy = document.featurePolicy ?? document.permissionsPolicy
+  if (!policy?.allowsFeature) return false
+  try {
+    return !policy.allowsFeature(feature)
+  } catch {
+    return false
+  }
+}
+
+/**
  * Watch the geolocation permission without triggering a prompt, reporting
  * 'granted' | 'prompt' | 'denied' | 'unknown' immediately and on every change.
  *
