@@ -202,39 +202,11 @@ export function captureFromVideo(video) {
   return canvasToJpeg(drawScaled(video, w, h))
 }
 
-/**
- * Same normalisation for the <input capture> fallback used when getUserMedia
- * is unavailable (older iOS in-app browsers, locked-down enterprise policies).
- * Re-encoding also strips the EXIF payload the phone camera attaches.
- */
-export async function selfieFromFile(file) {
-  if (!file) throw new Error('لم يتم اختيار صورة.')
-  if (!file.type?.startsWith('image/')) throw new Error('الملف المختار ليس صورة.')
-
-  if (typeof createImageBitmap === 'function') {
-    // imageOrientation honours EXIF rotation where supported; browsers that
-    // ignore the option simply behave as they did before.
-    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => createImageBitmap(file))
-    try {
-      return await canvasToJpeg(drawScaled(bitmap, bitmap.width, bitmap.height))
-    } finally {
-      bitmap.close?.()
-    }
-  }
-
-  const url = URL.createObjectURL(file)
-  try {
-    const img = await new Promise((resolve, reject) => {
-      const el = new Image()
-      el.onload = () => resolve(el)
-      el.onerror = () => reject(new Error('تعذّر قراءة الصورة المختارة.'))
-      el.src = url
-    })
-    return await canvasToJpeg(drawScaled(img, img.naturalWidth, img.naturalHeight))
-  } finally {
-    URL.revokeObjectURL(url)
-  }
-}
+// NOTE: there is deliberately no file-to-selfie helper here. The selfie is
+// identity evidence bound to a location and a timestamp, so it must come from
+// a live camera frame — captureFromVideo above is the only way in. Anything
+// that accepts a stored image (a file picker, drag-drop, <input capture>)
+// makes the verification decorative and must not be reintroduced.
 
 // ── Upload ──────────────────────────────────────────────────────────────────
 

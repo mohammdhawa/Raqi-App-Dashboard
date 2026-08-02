@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Camera, RefreshCw, Check, X, Loader2, CameraOff, Upload } from 'lucide-react'
-import {
-  captureFromVideo, selfieFromFile, hasCameraApi, isSecureContextOk,
-} from '../../utils/attendanceCapture'
+import { Camera, RefreshCw, Check, X, Loader2, CameraOff, SwitchCamera } from 'lucide-react'
+import { captureFromVideo, hasCameraApi, isSecureContextOk } from '../../utils/attendanceCapture'
 
 // Arabic for the getUserMedia rejection names. Each one has a different fix, so
 // they must not collapse into one generic message.
@@ -24,9 +22,23 @@ const btnBase = {
   cursor: 'pointer', border: 'none',
 }
 
+function videoConstraints(facingMode) {
+  return {
+    // A plain string is an *ideal* constraint, not an exact one, so a device
+    // that can't honour the request still returns its default camera instead
+    // of throwing. Only the deliberate switch treats a failure as meaningful.
+    video: { facingMode, width: { ideal: 1280 }, height: { ideal: 1280 } },
+    audio: false,
+  }
+}
+
 /**
- * Front-camera selfie capture, the browser counterpart of the app's
- * image_picker step. Shows a live preview, one shot, then confirm/retake.
+ * Live camera capture — the browser counterpart of the app's image_picker step.
+ *
+ * Deliberately camera-only: there is no file picker and no way to supply a
+ * stored image. The selfie is identity evidence attached to an attendance
+ * record, so it must be taken now, at the recorded location — letting someone
+ * upload a saved photo would make the whole verification decorative.
  *
  * `onConfirm(blob)` may be async — the modal stays mounted and disabled while
  * it runs so the upload can't be double-fired, and the parent unmounts on
@@ -35,43 +47,48 @@ const btnBase = {
 export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm }) {
   const videoRef = useRef(null)
   const streamRef = useRef(null)
-  const fileInputRef = useRef(null)
 
   const [ready, setReady] = useState(false)
   const [error, setError] = useState('')
-  // Camera is unusable (no API / insecure origin / permission) → offer the
-  // native file+capture fallback rather than dead-ending the employee.
+  // Camera unusable (no API / insecure origin / denied). With the upload
+  // fallback gone this is a hard stop, so it offers a retry rather than a
+  // consolation path that would have accepted an unverifiable photo.
   const [cameraBlocked, setCameraBlocked] = useState(false)
   const [shot, setShot] = useState(null)        // { blob, url }
   const [submitting, setSubmitting] = useState(false)
-  const [busy, setBusy] = useState(false)       // encoding a frame or a picked file
+  const [busy, setBusy] = useState(false)       // encoding the frame
+
+  const [facing, setFacing] = useState('user')  // 'user' | 'environment'
+  const [canSwitch, setCanSwitch] = useState(false)
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop())
     streamRef.current = null
   }, [])
 
-  // `cancelledRef` lets the unmount cleanup abort a getUserMedia promise that is
-  // still in flight — otherwise a permission prompt answered after the modal
-  // closed would leave a live camera stream (and its indicator light) behind.
+  // `cancelledRef` lets the cleanup abort a getUserMedia promise that is still
+  // in flight — otherwise a permission prompt answered after the modal closed
+  // (or after a camera switch superseded it) would leave a live stream, and its
+  // indicator light, running.
   const cancelledRef = useRef(false)
 
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (facingMode) => {
+    setReady(false)
+    setError('')
+
     if (!isSecureContextOk()) {
       setError('التقاط الصورة يتطلب اتصالاً آمناً (HTTPS). افتح النظام عبر رابط https ثم أعد المحاولة.')
       setCameraBlocked(true)
       return
     }
     if (!hasCameraApi()) {
-      setError('متصفحك لا يدعم التقاط الصور مباشرة.')
+      setError('متصفحك لا يدعم التقاط الصور من الكاميرا مباشرة. استخدم متصفحاً حديثاً أو تطبيق الهاتف.')
       setCameraBlocked(true)
       return
     }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1280 } },
-        audio: false,
-      })
+      const stream = await navigator.mediaDevices.getUserMedia(videoConstraints(facingMode))
       if (cancelledRef.current) { stream.getTracks().forEach(t => t.stop()); return }
       streamRef.current = stream
       if (videoRef.current) {
@@ -80,23 +97,43 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
         // torn down mid-await, which is harmless here.
         videoRef.current.play().catch(() => {})
       }
+      setCameraBlocked(false)
       setReady(true)
+
+      // Device labels/kinds are only trustworthy once permission is granted,
+      // so the switch button is decided here rather than on mount — no dead
+      // control on a laptop with a single webcam.
+      navigator.mediaDevices.enumerateDevices()
+        .then(devices => {
+          if (cancelledRef.current) return
+          setCanSwitch(devices.filter(d => d.kind === 'videoinput').length > 1)
+        })
+        .catch(() => {})
     } catch (err) {
       if (cancelledRef.current) return
+      // A failed *switch* shouldn't kill a working session: fall back to the
+      // front camera, which is the one we know opened a moment ago.
+      if (facingMode !== 'user') {
+        setError('تعذّر التبديل إلى هذه الكاميرا.')
+        setFacing('user')
+        return
+      }
       setError(CAMERA_ERRORS[err?.name] ?? 'تعذّر تشغيل الكاميرا، حاول مرة أخرى.')
       setCameraBlocked(true)
     }
   }, [])
 
+  // Restarts on every `facing` change — the cleanup stops the old stream first,
+  // so switching never leaves two cameras open.
   useEffect(() => {
     cancelledRef.current = false
-    const startTimer = window.setTimeout(startCamera, 0)
+    const startTimer = window.setTimeout(() => startCamera(facing), 0)
     return () => {
       window.clearTimeout(startTimer)
       cancelledRef.current = true
       stopStream()
     }
-  }, [startCamera, stopStream])
+  }, [startCamera, stopStream, facing])
 
   // Revoke the object URL of a discarded shot so retakes don't leak blobs.
   useEffect(() => {
@@ -125,28 +162,9 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
     }
   }
 
-  const pickFile = async (event) => {
-    const file = event.target.files?.[0]
-    event.target.value = '' // let the same file be re-picked after a retake
-    if (!file) return
-    setBusy(true)
-    setError('')
-    try {
-      const blob = await selfieFromFile(file)
-      setShot({ blob, url: URL.createObjectURL(blob) })
-    } catch (err) {
-      setError(err?.message ?? 'تعذّر قراءة الصورة المختارة.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
   const retake = () => {
     setShot(null)
-    setError('')
-    // The shot froze the preview and released the camera; bring it back unless
-    // this device never had one (the file fallback stays available either way).
-    if (!cameraBlocked) startCamera()
+    startCamera(facing)
   }
 
   const confirm = async () => {
@@ -161,6 +179,11 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
       setSubmitting(false)
     }
   }
+
+  // Only the front camera gets mirrored: people expect a mirror of themselves,
+  // but a mirrored rear view of a room reads as broken. The *stored* frame is
+  // never mirrored either way (see drawScaled).
+  const mirrored = facing === 'user'
 
   return (
     <div
@@ -214,12 +237,30 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
               ref={videoRef} playsInline muted autoPlay
               style={{
                 width: '100%', height: '100%', objectFit: 'cover',
-                // Mirror the *preview* only — people expect a mirror. The stored
-                // frame stays unmirrored (see drawScaled).
-                transform: 'scaleX(-1)',
+                transform: mirrored ? 'scaleX(-1)' : 'none',
                 opacity: ready ? 1 : 0, transition: 'opacity .2s',
               }}
             />
+          )}
+
+          {/* Camera switch — live preview only, and only on multi-camera devices */}
+          {!shot && canSwitch && !cameraBlocked && (
+            <button
+              onClick={() => setFacing(f => (f === 'user' ? 'environment' : 'user'))}
+              disabled={!ready || busy}
+              title={facing === 'user' ? 'التبديل إلى الكاميرا الخلفية' : 'التبديل إلى الكاميرا الأمامية'}
+              style={{
+                position: 'absolute', top: 12, insetInlineStart: 12,
+                width: 42, height: 42, borderRadius: '50%', border: 'none',
+                background: 'rgba(16,26,40,0.55)', color: '#fff',
+                backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: !ready || busy ? 'default' : 'pointer',
+                opacity: !ready || busy ? 0.5 : 1, transition: 'opacity .15s',
+              }}
+            >
+              <SwitchCamera size={19} />
+            </button>
           )}
 
           {!shot && !ready && !cameraBlocked && (
@@ -240,7 +281,7 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
             }}>
               <CameraOff size={30} />
               <span style={{ fontSize: 12.5, lineHeight: 1.7 }}>
-                يمكنك اختيار صورة من الكاميرا عبر الزر بالأسفل
+                لا يمكن تسجيل الحضور بدون التقاط صورة من الكاميرا
               </span>
             </div>
           )}
@@ -272,11 +313,6 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
         <div style={{
           padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
         }}>
-          <input
-            ref={fileInputRef} type="file" accept="image/*" capture="user"
-            onChange={pickFile} style={{ display: 'none' }}
-          />
-
           {shot ? (
             <>
               <button
@@ -304,37 +340,28 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
                 إعادة الالتقاط
               </button>
             </>
+          ) : cameraBlocked ? (
+            <button
+              onClick={() => startCamera(facing)}
+              style={{ ...btnBase, flex: 1, minWidth: 150, background: 'var(--c-primary)', color: '#fff' }}
+            >
+              <RefreshCw size={15} />
+              أعد المحاولة
+            </button>
           ) : (
-            <>
-              {!cameraBlocked && (
-                <button
-                  onClick={take} disabled={!ready || busy}
-                  style={{
-                    ...btnBase, flex: 1, minWidth: 150,
-                    background: 'var(--c-primary)', color: '#fff',
-                    cursor: !ready || busy ? 'default' : 'pointer', opacity: !ready || busy ? 0.6 : 1,
-                  }}
-                >
-                  {busy
-                    ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
-                    : <Camera size={15} />}
-                  التقاط الصورة
-                </button>
-              )}
-              <button
-                onClick={() => fileInputRef.current?.click()} disabled={busy}
-                style={{
-                  ...btnBase, flex: cameraBlocked ? 1 : undefined,
-                  background: cameraBlocked ? 'var(--c-primary)' : 'transparent',
-                  color: cameraBlocked ? '#fff' : 'var(--c-text-2)',
-                  border: cameraBlocked ? 'none' : '1px solid var(--c-border)',
-                  cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
-                }}
-              >
-                <Upload size={15} />
-                {cameraBlocked ? 'التقاط عبر كاميرا الجهاز' : 'رفع صورة'}
-              </button>
-            </>
+            <button
+              onClick={take} disabled={!ready || busy}
+              style={{
+                ...btnBase, flex: 1, minWidth: 150,
+                background: 'var(--c-primary)', color: '#fff',
+                cursor: !ready || busy ? 'default' : 'pointer', opacity: !ready || busy ? 0.6 : 1,
+              }}
+            >
+              {busy
+                ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
+                : <Camera size={15} />}
+              التقاط الصورة
+            </button>
           )}
         </div>
       </div>
