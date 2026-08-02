@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Camera, RefreshCw, Check, X, Loader2, CameraOff, SwitchCamera } from 'lucide-react'
-import { captureFromVideo, hasCameraApi, isSecureContextOk } from '../../utils/attendanceCapture'
+import {
+  captureFromVideo, hasCameraApi, isSecureContextOk, CAPTURE_REQUEST_EDGE,
+} from '../../utils/attendanceCapture'
 
 // Arabic for the getUserMedia rejection names. Each one has a different fix, so
 // they must not collapse into one generic message.
@@ -24,10 +26,17 @@ const btnBase = {
 
 function videoConstraints(facingMode) {
   return {
-    // A plain string is an *ideal* constraint, not an exact one, so a device
-    // that can't honour the request still returns its default camera instead
-    // of throwing. Only the deliberate switch treats a failure as meaningful.
-    video: { facingMode, width: { ideal: 1280 }, height: { ideal: 1280 } },
+    video: {
+      // A plain string is an *ideal* constraint, not an exact one, so a device
+      // that can't honour the request still returns its default camera instead
+      // of throwing. Only the deliberate switch treats a failure as meaningful.
+      facingMode,
+      // Requested above the 1600 compression cap so the downscale is what
+      // decides the final size — see CAPTURE_REQUEST_EDGE. Asking for less
+      // would silently produce a lower-detail selfie than the app's.
+      width: { ideal: CAPTURE_REQUEST_EDGE },
+      height: { ideal: CAPTURE_REQUEST_EDGE },
+    },
     audio: false,
   }
 }
@@ -227,16 +236,19 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
 
         {/* Viewport */}
         <div style={{ position: 'relative', aspectRatio: '1 / 1', background: '#101A28', overflow: 'hidden' }}>
+          {/* `contain`, not `cover`: the stored frame is never cropped, so a
+              cropped preview would frame the face differently from the photo
+              that actually gets saved. Letterboxing here is the honest view. */}
           {shot ? (
             <img
               src={shot.url} alt="الصورة الملتقطة"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           ) : (
             <video
               ref={videoRef} playsInline muted autoPlay
               style={{
-                width: '100%', height: '100%', objectFit: 'cover',
+                width: '100%', height: '100%', objectFit: 'contain',
                 transform: mirrored ? 'scaleX(-1)' : 'none',
                 opacity: ready ? 1 : 0, transition: 'opacity .2s',
               }}
