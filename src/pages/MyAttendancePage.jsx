@@ -174,8 +174,19 @@ function ServerPolicyPanel({ features }) {
   )
 }
 
+// Android refuses to show a permission dialog while another app draws over the
+// screen (anti-tapjacking), reporting "This site can't ask for your permission".
+// Tapping Cancel on it reaches us as an ordinary PERMISSION_DENIED, so there is
+// no way to detect it — but it's common enough on employee phones that the
+// recovery panel names it outright instead of leaving people stuck.
+const PERMISSION_NOTES = {
+  android: 'إذا ظهرت رسالة «This site can’t ask for your permission»، فالسبب تطبيق يرسم فوق الشاشة (فلتر إضاءة، مسجّل شاشة، أو فقاعات محادثة). أغلقه — أو عطّل «الظهور فوق التطبيقات الأخرى» له — ثم أعد المحاولة.',
+}
+
 function LocationBlockedPanel({ onRetry }) {
-  const steps = PERMISSION_STEPS[detectBrowserFamily()]
+  const family = detectBrowserFamily()
+  const steps = PERMISSION_STEPS[family]
+  const note = PERMISSION_NOTES[family]
   return (
     <div style={{
       marginBottom: 16, padding: '16px 18px', borderRadius: 14,
@@ -196,6 +207,15 @@ function LocationBlockedPanel({ onRetry }) {
           <li key={i} style={{ fontSize: 12.5, color: 'var(--c-text)', lineHeight: 1.7 }}>{step}</li>
         ))}
       </ol>
+      {note && (
+        <p style={{
+          margin: '0 0 14px', padding: '10px 12px', borderRadius: 10,
+          background: 'rgba(255,255,255,0.55)',
+          fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.9,
+        }}>
+          {note}
+        </p>
+      )}
       <button
         onClick={onRetry}
         style={{
