@@ -1,11 +1,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/ui/Toast'
 import {
   Users, Settings, Shield, Search, Pencil, Trash2,
   X, User, Mail, Lock, Eye, EyeOff, Star, AlertCircle, Crown,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
+import { onSectionsChanged } from '../utils/dataEvents'
+import { buildUserCreatePayload, buildUserUpdatePayload } from '../utils/adminForms'
+
+// Editing any of these on your own account changes what you are allowed to
+// reach, so the session has to be re-read from GET /me afterwards.
+const PERMISSION_KEYS = ['role', 'attendance_check', 'can_view_attendance', 'department_id', 'section_id']
 
 // ── Primitive components ──────────────────────────────────────────────────────
 
@@ -71,19 +78,21 @@ function LiveDot({ on }) {
   )
 }
 
-function RowBtn({ children, danger, onClick }) {
+function RowBtn({ children, danger, onClick, title, disabled }) {
   const [hov, setHov] = useState(false)
+  const active = danger && hov && !disabled
   return (
     <button
-      onClick={onClick}
+      onClick={onClick} title={title} disabled={disabled}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         width: 32, height: 32, borderRadius: 9,
-        border: `1px solid ${danger && hov ? '#F4C9C6' : 'var(--c-border)'}`,
-        background: danger && hov ? 'var(--c-rejected-bg)' : '#fff',
-        color: danger && hov ? 'var(--c-rejected)' : 'var(--c-text-2)',
+        border: `1px solid ${active ? '#F4C9C6' : 'var(--c-border)'}`,
+        background: active ? 'var(--c-rejected-bg)' : '#fff',
+        color: active ? 'var(--c-rejected)' : 'var(--c-text-2)',
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', transition: 'all .14s',
+        cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all .14s',
+        opacity: disabled ? 0.45 : 1,
       }}
     >
       {children}
@@ -127,13 +136,16 @@ function DrawerSection({ icon: Icon, label }) {
   )
 }
 
-function FieldWrap({ label, required, children }) {
+function FieldWrap({ label, required, error, children }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--c-text)', marginBottom: 7 }}>
         {label}{required && <span style={{ color: 'var(--c-rejected)', marginRight: 3 }}>*</span>}
       </label>
       {children}
+      {error && (
+        <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 5, lineHeight: 1.6 }}>{error}</div>
+      )}
     </div>
   )
 }
@@ -159,12 +171,12 @@ function TextInput({ icon: Icon, type = 'text', placeholder, value, onChange, su
   )
 }
 
-function SelectInput({ placeholder, value, onChange, options }) {
+function SelectInput({ placeholder, value, onChange, options, error }) {
   return (
     <select
       value={value} onChange={onChange}
       style={{
-        width: '100%', height: 42, border: '1.5px solid var(--c-border)',
+        width: '100%', height: 42, border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
         borderRadius: 10, padding: '0 12px', background: 'var(--c-surface)',
         fontFamily: 'var(--font-sans)', fontSize: 13,
         color: value ? 'var(--c-text)' : 'var(--c-text-3)',
@@ -234,30 +246,41 @@ function RoleCard({ role, selected, onSelect }) {
 
 // ── User Drawer (create + edit) ───────────────────────────────────────────────
 
-function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
-  const isEdit = mode === 'edit'
-
-  const [form, setForm] = useState(() => isEdit && user ? {
-    name: user.name ?? '',
-    email: user.email ?? '',
-    password: '',
-    password_confirmation: '',
-    role: user.role ?? 'employee',
-    department_id: user.department?.id ?? '',
-    section_id: user.section?.id ?? '',
-    attendance_check: user.attendance_check ?? false,
-    can_view_attendance: user.can_view_attendance ?? false,
-  } : {
+function buildInitialForm(mode, user) {
+  if (mode === 'edit' && user) {
+    return {
+      name: user.name ?? '',
+      email: user.email ?? '',
+      password: '',
+      password_confirmation: '',
+      role: user.role ?? 'employee',
+      department_id: user.department?.id ?? user.department_id ?? '',
+      section_id: user.section?.id ?? user.section_id ?? '',
+      attendance_check: Boolean(user.attendance_check),
+      can_view_attendance: Boolean(user.can_view_attendance),
+    }
+  }
+  return {
     name: '', email: '', password: '', password_confirmation: '',
     role: 'employee', department_id: '', section_id: '',
     attendance_check: false, can_view_attendance: false,
-  })
+  }
+}
+
+function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
+  const isEdit = mode === 'edit'
+
+  // Frozen snapshot of what the server currently holds — the PATCH diff is
+  // taken against this, so an untouched field is never resent.
+  const [initial] = useState(() => buildInitialForm(mode, user))
+  const [form, setForm] = useState(initial)
 
   const [sections, setSections]   = useState([])
   const [showPw, setShowPw]       = useState(false)
   const [showPwC, setShowPwC]     = useState(false)
   const [saving, setSaving]       = useState(false)
   const [error, setError]         = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
@@ -274,41 +297,49 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
   const chiefTaken = form.role === 'chief' &&
     users.some(u => u.role === 'chief' && (!isEdit || u.id !== user?.id))
 
-  const buildPayload = () => {
-    const p = {
-      name:             form.name,
-      email:            form.email,
-      role:                form.role,
-      attendance_check:    form.attendance_check,
-      can_view_attendance: form.can_view_attendance,
-    }
-    // Send integers, omit if empty (API accepts optional nulls)
-    if (form.department_id) p.department_id = Number(form.department_id)
-    if (form.section_id)    p.section_id    = Number(form.section_id)
-    if (!isEdit || form.password) {
-      p.password              = form.password
-      p.password_confirmation = form.password_confirmation
-    }
-    return p
-  }
-
   const handleSubmit = async () => {
+    if (saving) return
     setError('')
+    setFieldErrors({})
+
+    const payload = isEdit
+      ? buildUserUpdatePayload(initial, form)
+      : buildUserCreatePayload(form)
+    if (isEdit && Object.keys(payload).length === 0) {
+      setError('لم تقم بتغيير أي بيانات.')
+      return
+    }
+
     setSaving(true)
     try {
-      const payload = buildPayload()
       if (isEdit) {
         await api.patch(`/admin/users/${user.id}`, payload)
       } else {
         await api.post('/admin/users', payload)
       }
-      onSave()
+      onSave({ userId: user?.id, changedKeys: Object.keys(payload) })
     } catch (e) {
       const data = e.response?.data
-      const msg = data?.errors
-        ? Object.values(data.errors).flat().join(' — ')
-        : (data?.message ?? 'حدث خطأ. يرجى المحاولة مرة أخرى.')
-      setError(msg)
+      const errs = e.response?.status === 422 && data?.errors && typeof data.errors === 'object'
+        ? data.errors
+        : null
+
+      if (errs) {
+        // Both halves of the department/section invariant are reported on the
+        // field they belong to, so the caller sees which control to fix.
+        const first = key => (Array.isArray(errs[key]) ? errs[key][0] : errs[key])
+        setFieldErrors({
+          department_id: first('department_id'),
+          section_id:    first('section_id'),
+        })
+      }
+
+      // The last-administrator refusal is a 422 carrying only `message`. The
+      // backend owns that rule — it reads the roster under a lock, so it is the
+      // only place that can answer it correctly against a concurrent change.
+      setError(errs
+        ? Object.values(errs).flat().join(' — ')
+        : (data?.message ?? 'حدث خطأ. يرجى المحاولة مرة أخرى.'))
     } finally {
       setSaving(false)
     }
@@ -447,18 +478,28 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
           <DrawerSection icon={Settings} label="الإدارة والقسم" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
-            <FieldWrap label="الإدارة">
+            <FieldWrap label="الإدارة" error={fieldErrors.department_id}>
               <SelectInput
                 placeholder="اختر الإدارة" value={form.department_id}
-                onChange={e => { set('department_id', e.target.value); set('section_id', '') }}
+                error={fieldErrors.department_id}
+                onChange={e => {
+                  // Clearing or moving the department always clears the section
+                  // too: a section belongs to exactly one department, so the old
+                  // one cannot survive the move. The cleared value is then sent
+                  // as an explicit null rather than being dropped.
+                  set('department_id', e.target.value)
+                  set('section_id', '')
+                  setFieldErrors({})
+                }}
                 options={deptOptions}
               />
             </FieldWrap>
-            <FieldWrap label="القسم">
+            <FieldWrap label="القسم" error={fieldErrors.section_id}>
               <SelectInput
-                placeholder={form.department_id ? 'اختر القسم' : 'اختر الإدارة أولاً'}
+                placeholder={form.department_id ? 'اختر القسم (أو اتركه فارغاً)' : 'اختر الإدارة أولاً'}
                 value={form.section_id}
-                onChange={e => set('section_id', e.target.value)}
+                error={fieldErrors.section_id}
+                onChange={e => { set('section_id', e.target.value); setFieldErrors(f => ({ ...f, section_id: undefined })) }}
                 options={sectionOptions}
               />
             </FieldWrap>
@@ -533,12 +574,18 @@ function DeleteModal({ user, onClose, onConfirm }) {
   const [error, setError]       = useState('')
 
   const handleDelete = async () => {
+    if (deleting) return
     setError('')
     setDeleting(true)
     try {
       await api.delete(`/admin/users/${user.id}`)
       onConfirm()
     } catch (e) {
+      // 422 here is a rule the backend owns — deleting your own account, or a
+      // deletion that would empty the administrator roster. Both arrive as a
+      // plain `message`, and both are decided server-side under a lock, so the
+      // sentence is shown as sent rather than second-guessed from the page's
+      // (paginated, possibly stale) user list.
       setError(e.response?.data?.message ?? 'تعذّر حذف المستخدم.')
       setDeleting(false)
     }
@@ -619,6 +666,7 @@ const TABLE_COLS = ['المستخدم', 'الدور', 'الإدارة', 'الق�
 
 export default function UsersPage() {
   const toast = useToast()
+  const { user: authUser, refreshUser } = useAuth()
   const [users, setUsers]           = useState([])
   const [departments, setDepts]     = useState([])
   const [loading, setLoading]       = useState(true)
@@ -686,6 +734,13 @@ export default function UsersPage() {
     return () => window.removeEventListener('topbar:refresh', handler)
   }, [fetchUsers, fetchDepts, page])
 
+  // A section that moved department took its members with it, so the
+  // department column on screen is stale for everyone in that section.
+  useEffect(
+    () => onSectionsChanged(() => { fetchUsers(page); fetchDepts() }),
+    [fetchUsers, fetchDepts, page],
+  )
+
   // ── Derived — tab filter is client-side on the current page ─────────────────
   const filtered = users.filter(u => {
     if (tab === 'manager'  && !['admin', 'manager', 'chief'].includes(u.role)) return false
@@ -711,7 +766,23 @@ export default function UsersPage() {
     { key: 'employee', label: 'موظفون',   count: counts.employee },
   ]
 
-  const handleSave    = () => { toast.success(drawer?.mode === 'edit' ? 'تم تعديل المستخدم بنجاح' : 'تم إنشاء المستخدم بنجاح'); setDrawer(null); fetchUsers(page) }
+  const handleSave = async (result) => {
+    const wasEdit = drawer?.mode === 'edit'
+    toast.success(wasEdit ? 'تم تعديل المستخدم بنجاح' : 'تم إنشاء المستخدم بنجاح')
+    setDrawer(null)
+    fetchUsers(page)
+
+    // Editing your own role or flags changes what this session may reach. The
+    // permissions all derive from the context user, so re-reading it from
+    // GET /me is what recomputes the sidebar and the route guards — and the
+    // guard on this page will redirect on its own if admin was just given up.
+    const editedSelf = wasEdit && result?.userId != null && result.userId === authUser?.id
+    if (editedSelf && result.changedKeys?.some(k => PERMISSION_KEYS.includes(k))) {
+      const fresh = await refreshUser()
+      if (fresh) toast.info('تم تحديث صلاحياتك. قد تتغيّر الصفحات المتاحة لك.')
+    }
+  }
+
   const handleDeleted = () => { toast.success('تم حذف المستخدم بنجاح'); setDelete(null); fetchUsers(page) }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -884,6 +955,7 @@ export default function UsersPage() {
                   <UserRow
                     key={u.id} user={u}
                     last={idx === filtered.length - 1}
+                    isSelf={u.id === authUser?.id}
                     onEdit={() => setDrawer({ mode: 'edit', user: u })}
                     onDelete={() => setDelete(u)}
                   />
@@ -941,7 +1013,7 @@ export default function UsersPage() {
 }
 
 // ── UserRow (separated to avoid hook-in-loop) ─────────────────────────────────
-function UserRow({ user: u, last, onEdit, onDelete }) {
+function UserRow({ user: u, last, isSelf, onEdit, onDelete }) {
   const [hov, setHov] = useState(false)
   return (
     <tr
@@ -978,8 +1050,15 @@ function UserRow({ user: u, last, onEdit, onDelete }) {
       </td>
       <td style={{ padding: '12px 16px' }}>
         <div style={{ display: 'inline-flex', gap: 6 }}>
-          <RowBtn onClick={onEdit}><Pencil size={14} /></RowBtn>
-          <RowBtn danger onClick={onDelete}><Trash2 size={14} /></RowBtn>
+          <RowBtn onClick={onEdit} title="تعديل المستخدم"><Pencil size={14} /></RowBtn>
+          {/* The API refuses self-deletion with a 422; don't offer the action. */}
+          <RowBtn
+            danger disabled={isSelf}
+            onClick={isSelf ? undefined : onDelete}
+            title={isSelf ? 'لا يمكنك حذف حسابك الخاص' : 'حذف المستخدم'}
+          >
+            <Trash2 size={14} />
+          </RowBtn>
         </div>
       </td>
     </tr>

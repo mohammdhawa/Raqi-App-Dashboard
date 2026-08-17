@@ -13,8 +13,22 @@ import { extractErrorMessage } from '../components/documents/shared'
 
 const UPLOAD_EXTS = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp']
 const ATTACHMENT_EXTS = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp', 'xlsx', 'xls']
-const MAX_FILE_SIZE = 50 * 1024 * 1024
+
+// The two limits are different, and were the same here until now: the primary
+// document is capped at 20 MB (`file` → max:20480) while each attachment gets
+// 50 MB (`attachments.*` → max:51200). A 30 MB PDF used to reach the server
+// and come back as a validation error.
+const MAX_DOCUMENT_MB = 20
+const MAX_ATTACHMENT_MB = 50
+const MAX_DOCUMENT_SIZE = MAX_DOCUMENT_MB * 1024 * 1024
+const MAX_ATTACHMENT_SIZE = MAX_ATTACHMENT_MB * 1024 * 1024
 const MAX_ATTACHMENTS = 10
+
+// Stable machine-readable codes the backend promises not to change. Branching
+// on these rather than on the Arabic message or the status.
+const ERR_GENERATION_DISABLED = 'document_generation_disabled'
+const ERR_DUPLICATE_EXPORT    = 'duplicate_export_number'
+const ERR_COUNTER_UNINIT      = 'counter_not_initialized'
 
 const WORKFLOW_MODES = [
   { key: 'sequential', label: 'متسلسل', desc: 'يعتمد المعتمدون المستند بالترتيب المحدد، كل واحد بعد الآخر.' },
@@ -39,13 +53,13 @@ function formatFileSize(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(2)} م.ب`
 }
 
-function validateFile(file, allowedExts) {
+function validateFile(file, allowedExts, maxBytes, maxMb) {
   const ext = file.name.split('.').pop()?.toLowerCase()
   if (!ext || !allowedExts.includes(ext)) {
     return `صيغة الملف غير مدعومة (الصيغ المسموحة: ${allowedExts.join('، ')})`
   }
-  if (file.size > MAX_FILE_SIZE) {
-    return 'حجم الملف يتجاوز الحد الأقصى المسموح به (50 ميجابايت)'
+  if (file.size > maxBytes) {
+    return `حجم الملف يتجاوز الحد الأقصى المسموح به (${maxMb} ميجابايت)`
   }
   return null
 }
@@ -124,16 +138,18 @@ function TextareaInput({ value, onChange, placeholder, rows = 4, maxLength, erro
 
 // ── Tab switch ────────────────────────────────────────────────────────────────
 
-function TabButton({ active, icon: Icon, label, onClick }) {
+function TabButton({ active, icon: Icon, label, onClick, disabled, title }) {
   return (
     <button
-      type="button" onClick={onClick}
+      type="button" onClick={onClick} disabled={disabled} title={title}
       style={{
         display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 10,
         border: `1.5px solid ${active ? 'var(--c-primary)' : 'var(--c-border)'}`,
         background: active ? 'var(--c-primary)' : '#fff',
         color: active ? '#fff' : 'var(--c-text-2)',
-        fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all .14s',
+        fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
+        cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
+        transition: 'all .14s',
       }}
     >
       <Icon size={15} />
@@ -306,6 +322,19 @@ export default function DocumentSubmitPage() {
   const [submitError, setSubmitError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // Template-based generation is behind a server killswitch
+  // (config/document.php → generation_enabled, default off) that this client
+  // cannot read: there is no capability endpoint, and with the switch off
+  // GET /document-templates simply serves an empty list — identical to a
+  // deployment that has no active templates. So generation is never assumed to
+  // work; it is only ever discovered to be off, by the 403 the POST returns.
+  const [generationDisabled, setGenerationDisabled] = useState(false)
+
+  // A rejected approver has to be re-picked and re-confirmed rather than
+  // silently resubmitted, so a stale selection can't be sent twice.
+  const [approverRefreshKey, setApproverRefreshKey] = useState(0)
+  const [staleApproverIds, setStaleApproverIds] = useState([])
+
   // Upload tab
   const [file, setFile] = useState(null)
 
@@ -378,13 +407,14 @@ export default function DocumentSubmitPage() {
   const exportRequired = showCounters && counters?.export?.is_initialized === false
 
   function handleTabChange(next) {
+    if (next === 'generate' && generationDisabled) return
     setTab(next)
     setErrors({})
     setSubmitError('')
   }
 
   function handleSelectFile(f) {
-    const err = validateFile(f, UPLOAD_EXTS)
+    const err = validateFile(f, UPLOAD_EXTS, MAX_DOCUMENT_SIZE, MAX_DOCUMENT_MB)
     setFile(f)
     setErrors(prev => ({ ...prev, file: err || undefined }))
   }
@@ -394,7 +424,7 @@ export default function DocumentSubmitPage() {
     let attachError = ''
     const valid = []
     for (const f of incoming) {
-      const err = validateFile(f, ATTACHMENT_EXTS)
+      const err = validateFile(f, ATTACHMENT_EXTS, MAX_ATTACHMENT_SIZE, MAX_ATTACHMENT_MB)
       if (err) { attachError = `${f.name}: ${err}`; continue }
       valid.push(f)
     }
@@ -420,11 +450,44 @@ export default function DocumentSubmitPage() {
     return errs
   }
 
+  /** Drops the template selection and returns the form to the upload flow. */
+  function resetTemplateState() {
+    setSelectedTemplateId(null)
+    setTemplate(null)
+    setFieldValues({})
+    setTemplates([])
+    setErrors(prev => ({ ...prev, field_values: {}, template: undefined }))
+  }
+
   function applySubmitError(e) {
     const data = e.response?.data
+    const code = data?.error
+
+    // The killswitch. 403 and permanent for as long as the switch is off, with
+    // no Retry-After — so the request is not retried and the flow is moved off
+    // generation entirely rather than left on a form that cannot submit.
+    if (e.response?.status === 403 && code === ERR_GENERATION_DISABLED) {
+      const message = data?.message ?? 'إنشاء المستندات من القوالب متوقف حالياً.'
+      setGenerationDisabled(true)
+      resetTemplateState()
+      setTab('upload')
+      setSubmitError(message)
+      return
+    }
+
+    // Counter rules arrive as a bare { message, error } with no `errors` map,
+    // so without this they would only ever reach the banner.
+    if (code === ERR_DUPLICATE_EXPORT || code === ERR_COUNTER_UNINIT) {
+      const message = data?.message ?? 'تعذّر تحديد رقم الصادر.'
+      setErrors(prev => ({ ...prev, export_number: message }))
+      setSubmitError(message)
+      return
+    }
+
     if (e.response?.status === 422 && data?.errors && typeof data.errors === 'object') {
       const flat = {}
       const fieldErrs = {}
+      const staleApproverIdx = []
       for (const [key, msgs] of Object.entries(data.errors)) {
         const msg = Array.isArray(msgs) ? msgs[0] : msgs
         if (key.startsWith('field_values.')) {
@@ -433,13 +496,31 @@ export default function DocumentSubmitPage() {
         } else if (key === 'template_id') {
           flat.template = msg
         } else {
+          if (key.startsWith('approver_ids.')) {
+            const idx = Number(key.split('.')[1])
+            if (Number.isInteger(idx)) staleApproverIdx.push(idx)
+          }
           flat[key.split('.')[0]] = msg
         }
       }
+
+      // An approver the API refuses — deleted, or no longer a manager/chief —
+      // is dropped from the selection and the manager list is re-read, because
+      // resending the same id would fail identically.
+      if (staleApproverIdx.length) {
+        const stale = staleApproverIdx.map(i => approverIds[i]).filter(id => id != null)
+        if (stale.length) {
+          setStaleApproverIds(stale)
+          setApproverIds(prev => prev.filter(id => !stale.includes(id)))
+          setApproverRefreshKey(k => k + 1)
+        }
+      }
+
       setErrors(prev => ({ ...prev, ...flat, field_values: { ...prev.field_values, ...fieldErrs } }))
       setSubmitError(Object.values(data.errors).flat()[0] ?? 'يرجى مراجعة الحقول المظللة')
       return
     }
+
     setSubmitError(extractErrorMessage(e, 'حدث خطأ أثناء إرسال المستند.'))
   }
 
@@ -471,6 +552,9 @@ export default function DocumentSubmitPage() {
   }
 
   async function handleSubmitGenerate() {
+    // Discovered to be off — never retried.
+    if (generationDisabled) return
+
     const errs = validateCommon()
     if (!template) errs.template = 'يرجى اختيار قالب'
     if (exportRequired && !exportNumber.trim()) errs.export_number = 'رقم الصادر مطلوب لهذه الإدارة'
@@ -516,10 +600,23 @@ export default function DocumentSubmitPage() {
   }
 
   function handleSubmit() {
-    if (submitting) return
+    if (submitDisabled) return
     if (tab === 'upload') handleSubmitUpload()
     else handleSubmitGenerate()
   }
+
+  // Generation can only be submitted with a template actually in hand: with the
+  // killswitch on, or with no active templates, there is nothing to generate
+  // from and the request would be refused server-side.
+  const generateBlocked = tab === 'generate' && (generationDisabled || !template)
+  const submitDisabled = submitting || generateBlocked || staleApproverIds.length > 0
+  const submitDisabledReason = generationDisabled
+    ? 'إنشاء المستندات من القوالب متوقف حالياً من الخادم'
+    : generateBlocked
+      ? 'اختر قالباً أولاً'
+      : staleApproverIds.length > 0
+        ? 'يرجى إعادة اختيار المعتمدين بعد إزالة معتمد غير مؤهل'
+        : undefined
 
   return (
     <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 880, margin: '0 auto' }}>
@@ -544,7 +641,12 @@ export default function DocumentSubmitPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
         <TabButton active={tab === 'upload'} icon={Upload} label="رفع ملف" onClick={() => handleTabChange('upload')} />
-        <TabButton active={tab === 'generate'} icon={LayoutTemplate} label="إنشاء من قالب" onClick={() => handleTabChange('generate')} />
+        <TabButton
+          active={tab === 'generate'} icon={LayoutTemplate} label="إنشاء من قالب"
+          onClick={() => handleTabChange('generate')}
+          disabled={generationDisabled}
+          title={generationDisabled ? 'إنشاء المستندات من القوالب متوقف حالياً من الخادم' : undefined}
+        />
       </div>
 
       {/* Document info */}
@@ -578,7 +680,7 @@ export default function DocumentSubmitPage() {
               onSelect={handleSelectFile}
               onRemove={() => { setFile(null); setErrors(prev => ({ ...prev, file: undefined })) }}
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
-              hint="الصيغ المدعومة: PDF, Word, JPG, PNG, WEBP — الحد الأقصى 50 ميجابايت"
+              hint={`الصيغ المدعومة: PDF, Word, JPG, PNG, WEBP — الحد الأقصى ${MAX_DOCUMENT_MB} ميجابايت`}
               error={errors.file}
             />
           </div>
@@ -635,8 +737,15 @@ export default function DocumentSubmitPage() {
                       ...جارِ التحميل
                     </div>
                   ) : templates.length === 0 ? (
-                    <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--c-text-3)', fontSize: 12.5 }}>
-                      لا توجد قوالب متاحة
+                    /* An empty list is ambiguous by contract: the generation
+                       killswitch empties this endpoint, and so does having no
+                       active templates. The API exposes nothing that tells the
+                       two apart, so the copy covers both and submission stays
+                       blocked either way. */
+                    <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--c-text-3)', fontSize: 12.5, lineHeight: 1.8 }}>
+                      لا توجد قوالب متاحة.
+                      <br />
+                      قد تكون ميزة الإنشاء من قالب موقوفة من الخادم، أو لا توجد قوالب مفعّلة حالياً.
                     </div>
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
@@ -728,7 +837,7 @@ export default function DocumentSubmitPage() {
             <FileUp size={22} style={{ color: 'var(--c-text-3)', marginBottom: 6 }} />
             <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>انقر لإضافة مرفقات</div>
             <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 4 }}>
-              حتى {MAX_ATTACHMENTS} ملفات — PDF, Word, Excel, صور — 50 ميجابايت لكل ملف
+              حتى {MAX_ATTACHMENTS} ملفات — PDF, Word, Excel, صور — {MAX_ATTACHMENT_MB} ميجابايت لكل ملف
             </div>
           </div>
 
@@ -790,7 +899,39 @@ export default function DocumentSubmitPage() {
 
           <div style={{ marginBottom: 0 }}>
             <FieldWrap label="المعتمدون" required error={errors.approver_ids}>
-              <ApproverPicker value={approverIds} onChange={setApproverIds} workflowMode={workflowMode} />
+              {staleApproverIds.length > 0 && (
+                <div style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10,
+                  padding: '10px 12px', borderRadius: 10,
+                  background: 'var(--c-pending-bg)', color: 'var(--c-text-2)',
+                  fontSize: 11.5, lineHeight: 1.7,
+                }}>
+                  <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--c-pending)' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    تمت إزالة معتمد لم يعد مؤهلاً (لم يعد مديراً أو رئيساً، أو حُذف حسابه).
+                    تم تحديث قائمة المعتمدين — راجع القائمة وأكّدها قبل الإرسال.
+                    <div style={{ marginTop: 7 }}>
+                      <button
+                        type="button" onClick={() => setStaleApproverIds([])}
+                        style={{
+                          height: 30, padding: '0 12px', borderRadius: 8,
+                          border: '1px solid var(--c-border)', background: '#fff',
+                          fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 700,
+                          color: 'var(--c-text)', cursor: 'pointer',
+                        }}
+                      >
+                        تأكيد قائمة المعتمدين الحالية
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <ApproverPicker
+                value={approverIds}
+                onChange={next => { setApproverIds(next); setStaleApproverIds([]) }}
+                workflowMode={workflowMode}
+                refreshKey={approverRefreshKey}
+              />
             </FieldWrap>
           </div>
         </div>
@@ -812,7 +953,10 @@ export default function DocumentSubmitPage() {
         <Button variant="ghost" onClick={() => navigate('/documents/sent')} disabled={submitting}>
           إلغاء
         </Button>
-        <Button onClick={handleSubmit} disabled={submitting}>
+        <Button
+          onClick={handleSubmit} disabled={submitDisabled} title={submitDisabledReason}
+          style={submitDisabled ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
+        >
           {submitting ? '...جارِ الإرسال' : 'إرسال المستند'}
         </Button>
       </div>

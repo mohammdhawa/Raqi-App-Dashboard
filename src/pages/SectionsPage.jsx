@@ -7,6 +7,8 @@ import {
   X, AlertCircle, Building2, Eye, ImageOff, ChevronDown, AlertTriangle,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
+import { emitSectionsChanged } from '../utils/dataEvents'
+import { movedUsersMessage } from '../utils/adminForms'
 
 // ── Primitive components ──────────────────────────────────────────────────────
 
@@ -260,8 +262,9 @@ function StampUpload({ file, existingUrl, onChange }) {
 function SectionDrawer({ mode, section, departments, onClose, onSave }) {
   const isEdit = mode === 'edit'
 
+  const initialDepartmentId = section?.department?.id ?? ''
   const [form, setForm] = useState({
-    department_id: section?.department?.id ?? '',
+    department_id: initialDepartmentId,
     name:          section?.name ?? '',
     stamp:         null,
   })
@@ -270,7 +273,19 @@ function SectionDrawer({ mode, section, departments, onClose, onSave }) {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  // Moving a section carries its members: PATCH /admin/sections/{section}
+  // rewrites `users.department_id` for everyone in it, in one transaction, and
+  // reports how many rows it touched. It cascades rather than refusing because
+  // the members of a section are by definition in that section's department —
+  // but that is not obvious from a department dropdown, so it is spelled out
+  // before the save rather than explained afterwards.
+  const departmentMoved = isEdit
+    && String(form.department_id) !== String(initialDepartmentId)
+    && form.department_id !== ''
+  const memberCount = section?.users_count ?? 0
+
   const handleSubmit = async () => {
+    if (saving) return
     setError('')
     setSaving(true)
     try {
@@ -279,15 +294,18 @@ function SectionDrawer({ mode, section, departments, onClose, onSave }) {
       fd.append('name', form.name)
       if (form.stamp instanceof File) fd.append('stamp', form.stamp)
 
+      let res
       if (isEdit) {
         // Laravel doesn't parse multipart bodies on PATCH/PUT requests, so the
         // stamp file would be silently dropped — spoof the method via POST instead.
         fd.append('_method', 'PATCH')
-        await api.post(`/admin/sections/${section.id}`, fd)
+        res = await api.post(`/admin/sections/${section.id}`, fd)
       } else {
-        await api.post('/admin/sections', fd)
+        res = await api.post('/admin/sections', fd)
       }
-      onSave()
+      // `moved_users` is 0 for a rename or an unchanged department, which is
+      // what keeps a plain edit from reporting itself as a move.
+      onSave({ movedUsers: Number(res?.data?.moved_users ?? 0) })
     } catch (e) {
       const errs = e.response?.data?.errors
       setError(errs
@@ -356,6 +374,20 @@ function SectionDrawer({ mode, section, departments, onClose, onSave }) {
               options={deptOptions}
             />
           </FieldWrap>
+
+          {departmentMoved && (
+            <div style={{
+              display: 'flex', gap: 10, alignItems: 'flex-start',
+              padding: '12px 14px', borderRadius: 12, marginTop: -4, marginBottom: 14,
+              background: 'var(--c-accent-tint)', fontSize: 12, lineHeight: 1.7, color: '#8A6A23',
+            }}>
+              <AlertTriangle size={15} style={{ color: 'var(--c-accent)', flexShrink: 0, marginTop: 1 }} />
+              <span>
+                سيتم نقل القسم إلى الإدارة الجديدة، وسيُنقل معه <strong>جميع الموظفين المرتبطين به</strong>
+                {memberCount > 0 && <> (<strong>{memberCount}</strong> موظفاً حالياً)</>} إلى الإدارة نفسها.
+              </span>
+            </div>
+          )}
 
           <FieldWrap label="اسم القسم" required>
             <TextInput
@@ -725,8 +757,28 @@ export default function SectionsPage() {
     { Icon: Layers, label: 'قسماً',          value: total },
   ]
 
-  const handleSave    = () => { toast.success(drawer?.mode === 'edit' ? 'تم تعديل القسم بنجاح' : 'تم إنشاء القسم بنجاح'); setDrawer(null); fetchSections(page) }
-  const handleDeleted = () => { toast.success('تم حذف القسم بنجاح'); setDel(null); fetchSections(page) }
+  const handleSave = (result) => {
+    const wasEdit = drawer?.mode === 'edit'
+    const moved   = Number(result?.movedUsers ?? 0)
+
+    toast.success(moved > 0
+      ? movedUsersMessage(moved)
+      : wasEdit ? 'تم تعديل القسم بنجاح' : 'تم إنشاء القسم بنجاح')
+
+    setDrawer(null)
+    fetchSections(page)
+    fetchDepts()
+    // Anything derived from a department is now stale: the users listing, and
+    // the department → sections mappings behind the attendance/leave filters.
+    emitSectionsChanged({ movedUsers: moved })
+  }
+
+  const handleDeleted = () => {
+    toast.success('تم حذف القسم بنجاح')
+    setDel(null)
+    fetchSections(page)
+    emitSectionsChanged({ movedUsers: 0 })
+  }
 
   const handleRowEdit = section => setDrawer({ mode: 'edit', section })
 
