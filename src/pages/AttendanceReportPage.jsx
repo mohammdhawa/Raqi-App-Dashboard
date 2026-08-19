@@ -419,10 +419,22 @@ function CorrectionDialog({ row, reportDate, onClose, onDone }) {
       onClose()
     } catch (err) {
       const data = err.response?.data
-      const msg = data?.errors
-        ? Object.values(data.errors).flat().join('، ')
-        : (data?.message ?? 'تعذّر تصحيح السجل، حاول مرة أخرى')
-      setError(msg)
+
+      // 403 covers both "you may not touch this record" and "this record does
+      // not exist": the route pins its missing-model handler to the same 403 as
+      // the authorization middleware, so the two are indistinguishable by
+      // design and neither may be reported as a missing record. The row that
+      // opened this dialog may simply be stale, so the report is pulled again.
+      if (err.response?.status === 403) {
+        setError('ليس لديك صلاحية لتصحيح هذا السجل، أو لم يعد السجل متاحاً. تم تحديث التقرير.')
+        onDone()
+      } else {
+        // 422 keeps carrying the field validation and the business rules
+        // (wrong record type, nothing to correct, checkout before check-in).
+        setError(data?.errors
+          ? Object.values(data.errors).flat().join('، ')
+          : (data?.message ?? 'تعذّر تصحيح السجل، حاول مرة أخرى'))
+      }
     } finally {
       setSubmitting(false)
     }

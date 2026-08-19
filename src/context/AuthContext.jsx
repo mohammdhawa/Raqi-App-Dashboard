@@ -1,41 +1,88 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useCallback } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import api from '../services/api'
+import { readToken, readUser, persistSession, persistUser, clearSession } from '../services/authStorage'
 
 const AuthContext = createContext(null)
 
+// Identifies this client on the Sanctum token, so a web session is
+// distinguishable from a phone in GET /devices. Kept stable — the backend
+// stores it verbatim as the token name.
+const WEB_DEVICE_NAME = 'Al-Raqi Web Dashboard'
+
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(() => {
-    try { return JSON.parse(localStorage.getItem('auth_user')) } catch { return null }
-  })
-  const [token, setToken]     = useState(() => localStorage.getItem('auth_token'))
+  const [user, setUser]       = useState(() => readUser())
+  const [token, setToken]     = useState(() => readToken())
   const [loading, setLoading] = useState(false)
 
-  async function login(email, password) {
+  async function login(email, password, { remember = true } = {}) {
     setLoading(true)
     try {
-      const res = await api.post('/login', { email, password })
+      const res = await api.post('/login', {
+        email,
+        password,
+        platform: 'web',
+        device_name: WEB_DEVICE_NAME,
+      })
       const { token: t, user: u } = res.data
-      localStorage.setItem('auth_token', t)
-      localStorage.setItem('auth_user', JSON.stringify(u))
+      persistSession({ token: t, user: u, remember })
       setToken(t)
       setUser(u)
       return { ok: true, user: u }
     } catch (err) {
       const data = err.response?.data
+
+      // The login throttle short-circuits the middleware, so its body is
+      // assembled by LoginThrottle rather than the exception handler: `error`
+      // is the stable code to branch on, `message` a ready-to-display Arabic
+      // sentence, and `retry_after` the seconds still to wait (counting down,
+      // not the full lockout).
+      if (err.response?.status === 429) {
+        const header = Number(err.response.headers?.['retry-after'])
+        const body   = Number(data?.retry_after)
+        const wait   = [body, header].find(v => Number.isFinite(v) && v > 0) ?? 60
+        return {
+          ok: false,
+          code: data?.error ?? 'too_many_attempts',
+          retryAfter: Math.ceil(wait),
+          message: data?.message ?? 'تم تجاوز عدد محاولات تسجيل الدخول المسموح بها. يرجى المحاولة لاحقاً.',
+        }
+      }
+
+      // Unknown email and wrong password answer identically by design — this
+      // renders whatever the backend said without adding a second signal.
       const msg = data?.errors
         ? Object.values(data.errors).flat().join('، ')
         : (data?.message ?? 'حدث خطأ، حاول مرة أخرى')
-      return { ok: false, message: msg }
+      return { ok: false, code: data?.error, message: msg }
     } finally {
       setLoading(false)
     }
   }
 
+  /**
+   * Re-reads the authenticated user from GET /me and replaces the cached copy.
+   *
+   * Every permission below is derived from this object, and the route guards
+   * read them through context, so refreshing it is what makes an admin who has
+   * just edited their own role lose the pages they can no longer reach.
+   */
+  const refreshUser = useCallback(async () => {
+    try {
+      const res = await api.get('/me')
+      const fresh = res.data?.user ?? res.data
+      if (!fresh || typeof fresh !== 'object' || fresh.id == null) return null
+      persistUser(fresh)
+      setUser(fresh)
+      return fresh
+    } catch {
+      return null
+    }
+  }, [])
+
   async function logout() {
     try { await api.post('/logout') } catch { /* ignore */ }
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
+    clearSession()
     setToken(null)
     setUser(null)
     window.location.href = '/login'
@@ -50,7 +97,7 @@ export function AuthProvider({ children }) {
   const canCheckAttendance = !!user?.attendance_check
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, loading, canViewAttendance, canCheckAttendance, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, loading, canViewAttendance, canCheckAttendance, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

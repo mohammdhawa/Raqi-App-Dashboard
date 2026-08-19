@@ -1,7 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Mail, Eye, EyeOff, Lock, AlertCircle, Shield } from 'lucide-react'
+import { Mail, Eye, EyeOff, Lock, AlertCircle, Shield, Timer } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { readRemember } from '../services/authStorage'
+
+/** mm:ss for the lockout countdown. */
+function formatCountdown(seconds) {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
 
 export default function LoginPage() {
   const { login, loading } = useAuth()
@@ -10,29 +18,43 @@ export default function LoginPage() {
 
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
+  const [remember, setRemember] = useState(() => readRemember())
   const [showPw, setShowPw]     = useState(false)
   const [error, setError]       = useState('')
   const [submitting, setSubmitting] = useState(false)
+  // Seconds left on a login-throttle lockout (429 `retry_after`). While this
+  // is above zero the endpoint refuses the request before the credentials are
+  // ever checked, so submitting is pointless — the form stays disabled.
+  const [lockout, setLockout]   = useState(0)
 
   const requestedPath = location.state?.from?.pathname
+  const locked = lockout > 0
+
+  useEffect(() => {
+    if (!locked) return
+    const id = setInterval(() => setLockout(s => (s <= 1 ? 0 : s - 1)), 1000)
+    return () => clearInterval(id)
+  }, [locked])
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (locked) return
     if (!email || !password) {
       setError('يرجى إدخال البريد الإلكتروني وكلمة المرور')
       return
     }
     setError('')
     setSubmitting(true)
-    const result = await login(email, password)
+    const result = await login(email, password, { remember })
     setSubmitting(false)
     if (result.ok) {
+      setLockout(0)
       const defaultPath = result.user?.role === 'employee' && result.user?.attendance_check
         ? '/attendance'
         : '/dashboard'
       navigate(requestedPath || defaultPath, { replace: true })
     } else {
+      if (result.code === 'too_many_attempts') setLockout(result.retryAfter ?? 60)
       setError(result.message)
     }
   }
@@ -148,7 +170,18 @@ export default function LoginPage() {
               marginBottom: 20,
             }}>
               <AlertCircle size={16} style={{ color: 'var(--c-rejected)', flexShrink: 0, marginTop: 1 }} />
-              <span style={{ fontSize: 13, color: 'var(--c-rejected)', lineHeight: 1.5 }}>{error}</span>
+              <div style={{ fontSize: 13, color: 'var(--c-rejected)', lineHeight: 1.5 }}>
+                {error}
+                {locked && (
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6,
+                    fontWeight: 800, fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    <Timer size={14} />
+                    يمكنك المحاولة بعد {formatCountdown(lockout)}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -172,7 +205,7 @@ export default function LoginPage() {
                   type="email"
                   placeholder="example@company.com"
                   value={email}
-                  onChange={e => { setEmail(e.target.value); setError('') }}
+                  onChange={e => { setEmail(e.target.value); if (!locked) setError('') }}
                   autoComplete="email"
                   style={{
                     flex: 1, border: 0, outline: 0, background: 'transparent',
@@ -202,7 +235,7 @@ export default function LoginPage() {
                   type={showPw ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
-                  onChange={e => { setPassword(e.target.value); setError('') }}
+                  onChange={e => { setPassword(e.target.value); if (!locked) setError('') }}
                   autoComplete="current-password"
                   style={{
                     flex: 1, border: 0, outline: 0, background: 'transparent',
@@ -240,25 +273,33 @@ export default function LoginPage() {
                 htmlFor="remember"
                 style={{ fontSize: 13, color: 'var(--c-text-2)', cursor: 'pointer' }}
               >
-                تذكرني
+                تذكرني على هذا الجهاز
               </label>
             </div>
 
             {/* Submit */}
             <button
               type="submit"
-              disabled={submitting || loading}
+              disabled={submitting || loading || locked}
               style={{
                 width: '100%', height: 46, borderRadius: 12, border: 0,
-                background: submitting ? 'rgba(34,65,103,0.7)' : 'var(--c-primary)',
+                background: (submitting || locked) ? 'rgba(34,65,103,0.7)' : 'var(--c-primary)',
                 color: '#fff', fontSize: 14, fontWeight: 800,
-                fontFamily: 'var(--font-sans)', cursor: submitting ? 'wait' : 'pointer',
+                fontFamily: 'var(--font-sans)',
+                cursor: locked ? 'not-allowed' : submitting ? 'wait' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 transition: 'background .15s, transform .1s',
                 boxShadow: '0 4px 14px rgba(34,65,103,0.28)',
               }}
             >
-              {submitting ? (
+              {locked ? (
+                <>
+                  <Timer size={16} />
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    المحاولة متاحة بعد {formatCountdown(lockout)}
+                  </span>
+                </>
+              ) : submitting ? (
                 <>
                   <span style={{
                     width: 16, height: 16, borderRadius: '50%',

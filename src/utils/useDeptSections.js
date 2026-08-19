@@ -1,5 +1,15 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import api from '../services/api'
+import { onSectionsChanged } from './dataEvents'
+
+// Bumped whenever a section moves department, so every cached department →
+// sections mapping below is re-resolved instead of answering from a list the
+// move invalidated.
+function useSectionsVersion() {
+  const [version, setVersion] = useState(0)
+  useEffect(() => onSectionsChanged(() => setVersion(v => v + 1)), [])
+  return version
+}
 
 // Resolve the sections of the selected department for the attendance filters.
 // Prefer sections nested in the department payload (permission-free for any
@@ -9,6 +19,7 @@ import api from '../services/api'
 export function useDeptSections(departmentId, departments, { canFetch = false } = {}) {
   const [sections, setSections] = useState([])
   const reqRef = useRef(0)
+  const version = useSectionsVersion()
 
   useEffect(() => {
     const reqId = ++reqRef.current
@@ -26,7 +37,7 @@ export function useDeptSections(departmentId, departments, { canFetch = false } 
         setSections(pag?.data ?? (Array.isArray(pag) ? pag : []))
       })
       .catch(() => { if (reqId === reqRef.current) setSections([]) })
-  }, [departmentId, departments, canFetch])
+  }, [departmentId, departments, canFetch, version])
 
   return sections
 }
@@ -36,40 +47,43 @@ export function useDeptSections(departmentId, departments, { canFetch = false } 
 // sourcing rules as useDeptSections — nested payload first, /admin/sections
 // fallback per department for admins only.
 export function useDeptsSections(departmentIds, departments, { canFetch = false } = {}) {
-  const [fetched, setFetched] = useState({}) // deptId -> sections[]
+  const [fetched, setFetched] = useState({}) // "version:deptId" -> sections[]
   const reqRef = useRef(0)
+  const version = useSectionsVersion()
 
+  // The cache is keyed by version as well as department, so a section move
+  // retires every entry it invalidated without clearing state from an effect.
   useEffect(() => {
     if (!canFetch) return
     const reqId = ++reqRef.current
     const missing = departmentIds.filter(id => {
       const dept = departments.find(d => String(d.id) === String(id))
-      return !Array.isArray(dept?.sections) && !fetched[id]
+      return !Array.isArray(dept?.sections) && !fetched[`${version}:${id}`]
     })
     if (!missing.length) return
     Promise.all(missing.map(id =>
       api.get('/admin/sections', { params: { department_id: id, per_page: 100 } })
         .then(res => {
           const pag = res.data?.sections
-          return [id, pag?.data ?? (Array.isArray(pag) ? pag : [])]
+          return [`${version}:${id}`, pag?.data ?? (Array.isArray(pag) ? pag : [])]
         })
-        .catch(() => [id, []])
+        .catch(() => [`${version}:${id}`, []])
     )).then(entries => {
       if (reqId !== reqRef.current) return
       setFetched(prev => ({ ...prev, ...Object.fromEntries(entries) }))
     })
-  }, [departmentIds, departments, canFetch, fetched])
+  }, [departmentIds, departments, canFetch, fetched, version])
 
   return useMemo(() => {
     const seen = new Set()
     const out = []
     for (const id of departmentIds) {
       const dept = departments.find(d => String(d.id) === String(id))
-      const list = Array.isArray(dept?.sections) ? dept.sections : (fetched[id] ?? [])
+      const list = Array.isArray(dept?.sections) ? dept.sections : (fetched[`${version}:${id}`] ?? [])
       for (const s of list) {
         if (!seen.has(s.id)) { seen.add(s.id); out.push(s) }
       }
     }
     return out
-  }, [departmentIds, departments, fetched])
+  }, [departmentIds, departments, fetched, version])
 }

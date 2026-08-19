@@ -149,8 +149,12 @@ function SortableApproverChip({ id, manager, index, onRemove }) {
  * Approver picker for document submission.
  * `value` is an ordered array of manager ids (`approver_ids`); the chief is
  * appended automatically by the server and is excluded from this picker.
+ *
+ * `refreshKey` re-reads GET /managers when the caller bumps it — used after
+ * the API rejects an approver, so the list on screen reflects who is still
+ * eligible rather than the roster that produced the rejected selection.
  */
-export default function ApproverPicker({ value, onChange, workflowMode }) {
+export default function ApproverPicker({ value, onChange, workflowMode, refreshKey = 0 }) {
   const [search, setSearch] = useState('')
   const [managers, setManagers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -171,7 +175,7 @@ export default function ApproverPicker({ value, onChange, workflowMode }) {
         .finally(() => { if (active) setLoading(false) })
     }, 300)
     return () => { active = false; clearTimeout(t) }
-  }, [search])
+  }, [search, refreshKey])
 
   // Cache full manager objects for selected ids so chips survive search changes
   useEffect(() => {

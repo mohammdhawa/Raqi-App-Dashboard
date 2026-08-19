@@ -5,7 +5,7 @@ import { useToast } from '../components/ui/Toast'
 import {
   CalendarCheck, CalendarDays, CalendarClock, Wallet, Check, X,
   Inbox, Loader2, Building2, MessageSquare, Calendar, ClipboardCheck, Tags,
-  CalendarPlus,
+  CalendarPlus, AlertTriangle,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
@@ -306,9 +306,23 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
 
 // ── Table rows ───────────────────────────────────────────────────────────────
 
+const SELF_APPROVAL_BLOCKED =
+  'لا يمكن اعتماد طلب يظهر فيه مقدّم الطلب نفسه معتمِداً. يمكن رفض الطلب فقط.'
+
 const REASON_CELL_STYLE = {
   fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.5, maxWidth: 240,
   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+}
+
+// A request naming its own author as approver. v10 refuses to APPROVE these
+// whenever they were created (ReviewLeaveRequest's rule on `status`), which is
+// what closes rows stored before submission-side enforcement existed.
+// Rejection stays open on purpose — it is the only way such a row can be
+// closed out at all.
+function isSelfAssigned(item) {
+  const userId = item?.user_id ?? getLeaveUser(item)?.id
+  const managerId = item?.manager_id ?? item?.manager?.id
+  return userId != null && managerId != null && String(userId) === String(managerId)
 }
 
 function ApprovalRow({ item, last, onReview }) {
@@ -316,6 +330,7 @@ function ApprovalRow({ item, last, onReview }) {
   const u = getLeaveUser(item)
   const reason = getLeaveReason(item)
   const isPending = item.status === 'pending' && !item.is_excuse
+  const selfAssigned = isSelfAssigned(item)
   return (
     <tr
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
@@ -347,27 +362,41 @@ function ApprovalRow({ item, last, onReview }) {
       <td style={{ padding: '12px 16px' }}><LeaveStatusBadge status={item.status} /></td>
       <td style={{ padding: '12px 16px' }}>
         {isPending ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button
-              onClick={() => onReview(item, 'approve')} title="موافقة"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px',
-                borderRadius: 9, border: 'none', background: 'var(--c-approved-bg)', color: 'var(--c-approved)',
-                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
-              }}
-            >
-              <Check size={13} /> موافقة
-            </button>
-            <button
-              onClick={() => onReview(item, 'reject')} title="رفض"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px',
-                borderRadius: 9, border: 'none', background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
-                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
-              }}
-            >
-              <X size={13} /> رفض
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button
+                onClick={() => { if (!selfAssigned) onReview(item, 'approve') }}
+                disabled={selfAssigned}
+                title={selfAssigned ? SELF_APPROVAL_BLOCKED : 'موافقة'}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px',
+                  borderRadius: 9, border: 'none', background: 'var(--c-approved-bg)', color: 'var(--c-approved)',
+                  fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+                  cursor: selfAssigned ? 'not-allowed' : 'pointer', opacity: selfAssigned ? 0.45 : 1,
+                }}
+              >
+                <Check size={13} /> موافقة
+              </button>
+              <button
+                onClick={() => onReview(item, 'reject')} title="رفض"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px',
+                  borderRadius: 9, border: 'none', background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
+                  fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >
+                <X size={13} /> رفض
+              </button>
+            </div>
+            {selfAssigned && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'flex-start', gap: 5,
+                fontSize: 10.5, lineHeight: 1.5, color: 'var(--c-text-3)', maxWidth: 210,
+              }}>
+                <AlertTriangle size={11} style={{ flexShrink: 0, marginTop: 2, color: 'var(--c-pending)' }} />
+                {SELF_APPROVAL_BLOCKED}
+              </span>
+            )}
           </div>
         ) : (
           <span style={{ color: 'var(--c-text-3)', fontSize: 12 }}>—</span>

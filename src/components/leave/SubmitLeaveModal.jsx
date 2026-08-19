@@ -7,9 +7,16 @@ import {
   CalendarPlus, Loader2, Search, ChevronDown, Check, AlertTriangle, UserCheck,
 } from 'lucide-react'
 import api from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 import { LEAVE_TYPE_LABELS, leaveApiMessage, readLeaveBalance } from '../../utils/leave'
 
 const MAX_REASON = 2000
+
+// Segregation of duties: v10 refuses a request whose approver is its own
+// author, for every role, because the review gate only asks whether the caller
+// IS the named approver — so a self-assigned request would be a complete
+// approval with no second party. Mirrored here so the choice is never offered.
+const SELF_APPROVAL_MESSAGE = 'لا يمكنك اعتماد إجازتك بنفسك. اختر مديراً أو رئيساً آخر.'
 
 const ROLE_LABELS = { manager: 'مدير', chief: 'الرئيس الأعلى' }
 
@@ -42,7 +49,7 @@ function Field({ label, required, error, hint, children }) {
  * fetches once and filters client-side; `search` is only re-issued when the
  * result was truncated.
  */
-function ManagerPicker({ value, onChange, error }) {
+function ManagerPicker({ value, onChange, error, excludeId }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [managers, setManagers] = useState([])
@@ -74,7 +81,13 @@ function ManagerPicker({ value, onChange, error }) {
           if (!active) return
           const pag = res.data?.managers ?? res.data
           const list = pag?.data ?? (Array.isArray(pag) ? pag : [])
-          setManagers(list)
+          // The endpoint lists every manager and chief company-wide, the
+          // caller included when they hold one of those roles. Drop them here
+          // so an approver the API would reject is never on the menu.
+          const selectable = excludeId == null
+            ? list
+            : list.filter(m => String(m.id) !== String(excludeId))
+          setManagers(selectable)
           if (!trimmedSearch) {
             setServerSearchEnabled((pag?.total ?? list.length) > list.length)
           }
@@ -83,7 +96,7 @@ function ManagerPicker({ value, onChange, error }) {
         .finally(() => { if (active) setLoading(false) })
     }, serverSearch ? 280 : 0)
     return () => { active = false; clearTimeout(t) }
-  }, [serverSearch])
+  }, [serverSearch, excludeId])
 
   const selected = managers.find(m => String(m.id) === String(value))
     ?? (String(selectedManager?.id) === String(value) ? selectedManager : null)
@@ -200,6 +213,7 @@ function calendarDays(start, end) {
  * refreshed balance, so the parent can update without a second request.
  */
 export default function SubmitLeaveModal({ onClose, onSubmitted }) {
+  const { user } = useAuth()
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [managerId, setManagerId] = useState(null)
@@ -228,6 +242,9 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
       next.endDate = 'يجب أن يكون تاريخ النهاية مساوياً أو بعد تاريخ البداية.'
     }
     if (!managerId) next.managerId = 'المسؤول المراجع مطلوب.'
+    // Belt and braces: the picker already hides the caller, but a stale
+    // selection must not be submitted either.
+    else if (user?.id != null && String(managerId) === String(user.id)) next.managerId = SELF_APPROVAL_MESSAGE
     if (reason.length > MAX_REASON) next.reason = `السبب يجب ألا يتجاوز ${MAX_REASON} حرفاً.`
     setErrors(next)
     return Object.keys(next).length === 0
@@ -250,6 +267,13 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
       // The three business-rule rejections all land here as 422 + message; the
       // over-balance one also returns the caller's current balance.
       setFormError(leaveApiMessage(err, 'تعذّر إرسال طلب الإجازة، حاول مرة أخرى'))
+      // `manager_id` carries the self-approval refusal among others, so it is
+      // shown under the approver selector rather than only in the banner.
+      const fieldErrors = err?.response?.data?.errors
+      if (fieldErrors?.manager_id) {
+        const msg = Array.isArray(fieldErrors.manager_id) ? fieldErrors.manager_id[0] : fieldErrors.manager_id
+        setErrors(x => ({ ...x, managerId: msg }))
+      }
       if (err?.response?.data?.balance) setErrorBalance(readLeaveBalance(err.response.data))
       setSubmitting(false)
     }
@@ -337,9 +361,12 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
             </div>
           )}
 
-          <Field label="المسؤول المراجع" required error={errors.managerId}>
+          <Field
+            label="المسؤول المراجع" required error={errors.managerId}
+            hint="لا يمكنك اختيار نفسك — يجب أن يراجع الطلب مسؤول آخر."
+          >
             <ManagerPicker
-              value={managerId} error={errors.managerId}
+              value={managerId} error={errors.managerId} excludeId={user?.id}
               onChange={id => { setManagerId(id); setErrors(x => ({ ...x, managerId: undefined })) }}
             />
           </Field>

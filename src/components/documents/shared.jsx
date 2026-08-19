@@ -8,11 +8,18 @@ import api from '../../services/api'
 
 /**
  * Fetches a file through the authenticated API client and returns an object
- * URL for it. These endpoints require `auth:sanctum` (and aren't reachable
- * via /storage on the production proxy), so a plain <a href>/<iframe src>
- * pointing at the storage path won't work — this pulls the file as a blob
- * with the Bearer token attached instead. Caller must release the URL with
- * URL.revokeObjectURL once it's no longer needed.
+ * URL for it. A plain <a href>/<iframe src> would carry no Authorization
+ * header, so the file is pulled as a blob with the Bearer token attached
+ * instead. Caller must release the URL with URL.revokeObjectURL once it's no
+ * longer needed.
+ *
+ * These routes are the *authorizing* path, and that is the whole reason to use
+ * them. An earlier version of this comment claimed the equivalent /storage
+ * URLs "aren't reachable on the production proxy" — that is false: nginx serves
+ * the public symlink directly and unauthenticated
+ * (docs/STORAGE_EXPOSURE_FINDINGS.md in the backend repo). Linking straight to
+ * /storage would therefore appear to work while bypassing every access check,
+ * which is exactly why it must not be done.
  */
 async function fetchFileBlobUrl(path) {
   const res = await api.get(path, { responseType: 'blob' })
