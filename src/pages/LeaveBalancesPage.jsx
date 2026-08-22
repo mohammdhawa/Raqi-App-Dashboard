@@ -11,13 +11,16 @@ import EditLeaveBalanceModal from '../components/leave/EditLeaveBalanceModal'
 
 const currentYear = Number(new Intl.DateTimeFormat('en-US', { year: 'numeric', timeZone: 'Asia/Damascus' }).format(new Date()))
 const years = Array.from({ length: 101 }, (_, index) => 2000 + index)
-// `excused_days` are approved days taken under a non-deducting type. They are
-// excluded from `used_days` by design, so the label and its tooltip have to say
-// plainly that they are not part of the allocation.
+// `non_deducting_days` are approved days taken under a non-deducting type. They
+// are excluded from `used_days` by design, so the label and its tooltip have to
+// say plainly that they are not part of the allocation.
+//
+// Distinct from the reports' `excused`, which counts HR-filed excuses whether or
+// not they deducted — the API keeps the two names apart deliberately.
 const columns = [
   { label: 'الموظف', field: 'name' }, { label: 'القسم / الشعبة' },
   { label: 'الرصيد السنوي' }, { label: 'التسوية' }, { label: 'المستخدم' },
-  { label: LEAVE_COPY.excusedDays, title: LEAVE_COPY.excusedDaysHint },
+  { label: LEAVE_COPY.nonDeductingDays, title: LEAVE_COPY.nonDeductingDaysHint },
   { label: 'المتبقي' }, { label: 'ملاحظة' }, { label: '—' },
 ]
 
@@ -52,8 +55,8 @@ function BalanceRow({ row, defaultDays, last, onEdit }) {
     <td style={{ padding: '12px 16px', fontWeight: 800 }}>{row.allocated_days}</td>
     <td style={{ padding: '12px 16px', color: adjustment < 0 ? 'var(--c-rejected)' : 'var(--c-approved)', fontWeight: 700 }}>{adjustment === 0 ? '—' : adjustment > 0 ? `+${adjustment}` : `−${Math.abs(adjustment)}`}</td>
     <td style={{ padding: '12px 16px', fontWeight: 700 }}>{row.used_days}</td>
-    <td title={LEAVE_COPY.excusedDaysHint} style={{ padding: '12px 16px', fontWeight: 700, cursor: 'help', color: Number(row.excused_days ?? 0) > 0 ? EXCUSED_META.color : 'var(--c-text-3)' }}>
-      {row.excused_days ?? 0}
+    <td title={LEAVE_COPY.nonDeductingDaysHint} style={{ padding: '12px 16px', fontWeight: 700, cursor: 'help', color: Number(row.non_deducting_days ?? 0) > 0 ? EXCUSED_META.color : 'var(--c-text-3)' }}>
+      {row.non_deducting_days ?? 0}
     </td>
     <td style={{ padding: '12px 16px', fontWeight: 800, color: remainingColor }}>{row.remaining_days}</td>
     <td style={{ padding: '12px 16px', maxWidth: 220 }}><div title={row.note ?? undefined} style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', color: row.note ? 'var(--c-text-2)' : 'var(--c-text-3)', fontSize: 12 }}>{row.note || '—'}</div></td>
@@ -135,7 +138,7 @@ export default function LeaveBalancesPage() {
         <h1 style={{ margin: '0 0 5px', fontSize: 26, fontWeight: 800, color: 'var(--c-text)' }}>أرصدة الإجازات</h1>
         <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
           إدارة الاستحقاق السنوي والتسويات ومتابعة الرصيد المستخدم والمتبقي لكل موظف.
-          عمود «{LEAVE_COPY.excusedDays}» يعرض الإجازات المعتمدة التي لا تُخصم من الاستحقاق.
+          عمود «{LEAVE_COPY.nonDeductingDays}» يعرض الإجازات المعتمدة التي لا تُخصم من الاستحقاق.
         </p>
       </div>
       <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>

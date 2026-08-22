@@ -85,8 +85,8 @@ export default function EditLeaveBalanceModal({ row, defaultDays, selectedYear, 
               السنة {selectedYear} · مستخدم {row.used_days} يوم · متبقي {row.remaining_days} يوم
               {/* Approved days under a non-deducting type — never part of
                   used_days, so they are named apart from it. */}
-              {Number(row.excused_days ?? 0) > 0 && (
-                <span title={LEAVE_COPY.excusedDaysHint}> · {LEAVE_COPY.excusedDays} {row.excused_days} يوم</span>
+              {Number(row.non_deducting_days ?? 0) > 0 && (
+                <span title={LEAVE_COPY.nonDeductingDaysHint}> · {LEAVE_COPY.nonDeductingDays} {row.non_deducting_days} يوم</span>
               )}
             </div>
           </div>

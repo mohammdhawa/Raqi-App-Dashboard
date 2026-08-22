@@ -75,8 +75,8 @@ export const LEAVE_COPY = {
   notDeducts:         'لا تُخصم من الرصيد',
   deductsShort:       'تُخصم',
   notDeductsShort:    'لا تُخصم',
-  excusedDays:        'أيام لم تُخصم',
-  excusedDaysHint:    'أيام إجازة معتمدة لا تُخصم من الرصيد السنوي (مرضية، مأمورية، وفاة…)',
+  nonDeductingDays:     'أيام لم تُخصم',
+  nonDeductingDaysHint: 'أيام إجازة معتمدة لا تُخصم من الرصيد السنوي (مرضية، مأمورية، وفاة…)',
   deductedFromBalance:'منها مخصومة من الرصيد',
   notDeductedFromBalance: 'منها غير مخصومة',
 
@@ -265,6 +265,11 @@ export function readLeaveBalance(data) {
     // Approved days taken under a non-deducting type. Excluded from `used` by
     // design — reported separately so HR can see where the days went instead of
     // reading them as part of the allocation.
-    excused:   num('excused_days', 'excusedDays') ?? 0,
+    //
+    // NOT the same as the reports' `excused`, which counts HR-filed excuses
+    // (`is_excuse`) whether or not they deducted. The API renamed this field
+    // from `excused_days` for exactly that reason; the old key is still read so
+    // the dashboard survives being deployed ahead of the API.
+    nonDeducting: num('non_deducting_days', 'nonDeductingDays', 'excused_days') ?? 0,
   }
 }

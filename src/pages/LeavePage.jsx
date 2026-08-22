@@ -189,8 +189,8 @@ function BalanceWidget({ balance, loading }) {
           excluded from used_days by design, and reading it as part of the
           allocation is exactly the mistake to prevent. */}
       <BalanceTile
-        icon={CalendarCheck} label={LEAVE_COPY.excusedDays} value={balance?.excused}
-        title={LEAVE_COPY.excusedDaysHint}
+        icon={CalendarCheck} label={LEAVE_COPY.nonDeductingDays} value={balance?.nonDeducting}
+        title={LEAVE_COPY.nonDeductingDaysHint}
         accent={{ bg: EXCUSED_META.bg, color: EXCUSED_META.color }}
       />
       <BalanceTile

@@ -18,7 +18,7 @@ export default function DeductsBalanceBadge({ deducts, compact = false, short = 
 
   return (
     <span
-      title={deducts ? LEAVE_COPY.deducts : LEAVE_COPY.excusedDaysHint}
+      title={deducts ? LEAVE_COPY.deducts : LEAVE_COPY.nonDeductingDaysHint}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 5,
         padding: compact ? '2px 8px' : '4px 10px', borderRadius: 999,
