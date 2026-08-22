@@ -1,13 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   LogIn, LogOut, MapPin, Calendar, X, Fingerprint, ArrowRight,
-  ImageOff, AlertTriangle, ShieldAlert,
+  ImageOff, AlertTriangle, ShieldAlert, ShieldX, Clock,
 } from 'lucide-react'
 import api from '../services/api'
 import {
-  damascusToday, formatTime, formatDate, parseApiDate, readAttendanceError, ATT_TZ,
+  damascusToday, formatTime, formatDate, parseApiDate, readAttendanceError,
+  readRejectionMessage, ATT_TZ,
 } from '../utils/attendanceCapture'
+import { isRejected, readRejection, REJECTION_COPY } from '../utils/attendanceRejection'
+import { ToggleChip } from '../components/attendance/controls'
+
+/** A `Y-m-d` query param, or '' — never trust a URL into a date input. */
+function isoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value ?? '') ? value : ''
+}
 
 function pickPage(data, keys) {
   for (const k of keys) {
@@ -61,6 +69,22 @@ function dayHeading(key, today, yesterday) {
   return formatDate(key)
 }
 
+/**
+ * The day's counted work hours, refused rows excluded.
+ *
+ * The backend counts none of a refused event — refusing a check-in refuses that
+ * day's check-out with it — so summing every row here would show the employee
+ * hours no report will ever agree with.
+ */
+function countedHours(records) {
+  const total = records
+    .filter(r => !isRejected(r) && r.type === 'check_out' && r.work_hours != null)
+    .reduce((sum, r) => sum + Number(r.work_hours), 0)
+  if (!total) return null
+  const mins = Math.round(total * 60)
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`
+}
+
 // ── Selfie thumbnail ────────────────────────────────────────────────────────
 
 function SelfieThumb({ url }) {
@@ -85,41 +109,75 @@ function SelfieThumb({ url }) {
 
 function RecordRow({ record, last }) {
   const meta = TYPE_META[record.type]
-  const Icon = meta?.icon ?? Fingerprint
+  // A refused attempt still belongs in the history — the employee was notified
+  // about it and has to be able to find it — but it must never look like a
+  // record that stands, so it loses the type's colour and is struck through.
+  const rejected = isRejected(record)
+  const rejection = rejected ? readRejection(record) : null
+  const Icon = rejected ? ShieldX : (meta?.icon ?? Fingerprint)
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px',
+      display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 18px',
       borderBottom: last ? 'none' : '1px solid var(--c-border)',
+      background: rejected ? 'rgba(192,57,43,0.04)' : 'transparent',
     }}>
       <SelfieThumb url={record.selfie_url} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          fontSize: 13, fontWeight: 700, color: meta?.color ?? 'var(--c-text)',
-        }}>
-          <Icon size={13} />
-          {meta?.label ?? record.type}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            fontSize: 13, fontWeight: 700,
+            color: rejected ? 'var(--c-text-3)' : (meta?.color ?? 'var(--c-text)'),
+            textDecoration: rejected ? 'line-through' : 'none',
+          }}>
+            <Icon size={13} />
+            {meta?.label ?? record.type}
+          </span>
+          {rejected && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              padding: '2px 8px', borderRadius: 999,
+              fontSize: 10.5, fontWeight: 800, lineHeight: 1.5, whiteSpace: 'nowrap',
+              color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)',
+              border: '1px solid rgba(192,57,43,0.22)',
+            }}>
+              {REJECTION_COPY.badge}
+            </span>
+          )}
         </div>
-        <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 3 }}>
-          {record.type === 'check_out' && record.work_hours != null
-            ? `ساعات العمل: ${record.work_hours}`
-            : record.type === 'check_in' && record.missing_checkout
-              ? 'بدون انصراف'
-              : formatDate(record.recorded_at)}
-        </div>
+        {rejected ? (
+          <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 3, lineHeight: 1.6 }}>
+            {readRejectionMessage(record)}
+            {rejection?.at && (
+              <span style={{ display: 'block', fontSize: 10.5, color: 'var(--c-text-3)', marginTop: 2 }}>
+                {REJECTION_COPY.badge} — {formatDate(rejection.at)}
+              </span>
+            )}
+          </div>
+        ) : (
+          <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 3 }}>
+            {record.type === 'check_out' && record.work_hours != null
+              ? `ساعات العمل: ${record.work_hours_formatted ?? record.work_hours}`
+              : record.type === 'check_in' && record.missing_checkout
+                ? 'بدون انصراف'
+                : formatDate(record.recorded_at)}
+          </div>
+        )}
       </div>
       {record.latitude != null && record.longitude != null && (
         <a
           href={`https://www.google.com/maps?q=${record.latitude},${record.longitude}`}
           target="_blank" rel="noopener noreferrer" title="عرض الموقع"
-          style={{ color: 'var(--c-text-3)', display: 'inline-flex', flexShrink: 0 }}
+          style={{ color: 'var(--c-text-3)', display: 'inline-flex', flexShrink: 0, marginTop: 4 }}
         >
           <MapPin size={14} />
         </a>
       )}
       <div style={{
-        fontSize: 13, fontWeight: 800, color: 'var(--c-text)',
-        fontVariantNumeric: 'tabular-nums', flexShrink: 0,
+        fontSize: 13, fontWeight: 800, flexShrink: 0, marginTop: 2,
+        color: rejected ? 'var(--c-text-3)' : 'var(--c-text)',
+        textDecoration: rejected ? 'line-through' : 'none',
+        fontVariantNumeric: 'tabular-nums',
       }}>
         {formatTime(record.recorded_at)}
       </div>
@@ -132,14 +190,40 @@ function RecordRow({ record, last }) {
 export default function MyAttendanceHistoryPage() {
   const [records, setRecords] = useState([])
   const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
   const [lastPage, setLastPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [error, setError] = useState('')
   const [forbidden, setForbidden] = useState(false)
 
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
+  // The query string is the single source of truth for every filter, not just
+  // the initial one. An `attendance_rejected` notification deep-links here with
+  // ?from=&to= set to the refused day, and React Router keeps this page mounted
+  // when only the query changes — so reading these into state once would leave a
+  // second notification showing the first one's date. Deriving them also means
+  // clearing the filters clears the URL instead of stranding a stale query.
+  const [urlParams, setUrlParams] = useSearchParams()
+  const from = isoDate(urlParams.get('from'))
+  const to = isoDate(urlParams.get('to'))
+  // /my-records takes `rejected` only — narrowing by ground is an HR filter.
+  const rejectedOnly = urlParams.get('rejected') === '1'
+  // Paginating with the filters keeps the whole view in one place; a deep link
+  // carries no `page`, so it always lands on the first page of its day.
+  const page = Math.max(1, Number(urlParams.get('page')) || 1)
+
+  // Filters are replaced rather than pushed: `back` should leave the history,
+  // not walk every filter the employee tried. Any change but paging returns to
+  // page 1, since the old page number rarely exists in the new result set.
+  const updateQuery = (changes, { resetPage = true } = {}) => {
+    const next = new URLSearchParams(urlParams)
+    for (const [key, value] of Object.entries(changes)) {
+      if (value) next.set(key, value)
+      else next.delete(key)
+    }
+    if (resetPage) next.delete('page')
+    setUrlParams(next, { replace: true })
+  }
+
+  const setPage = p => updateQuery({ page: p > 1 ? String(p) : '' }, { resetPage: false })
 
   const reqRef = useRef(0)
 
@@ -160,6 +244,7 @@ export default function MyAttendanceHistoryPage() {
       const params = { page: targetPage }
       if (from) params.from = from
       if (to) params.to = to
+      if (rejectedOnly) params.rejected = 1
       const res = await api.get('/attendance/my-records', { params })
       if (reqId !== reqRef.current) return
       const pag = pickPage(res.data, ['records'])
@@ -174,10 +259,12 @@ export default function MyAttendanceHistoryPage() {
     } finally {
       if (reqId === reqRef.current) setLoading(false)
     }
-  }, [from, to])
+  }, [from, to, rejectedOnly])
 
-  // Fetch whenever the page or range changes. Input handlers reset the page,
-  // which keeps this effect single-purpose and avoids duplicate requests.
+  // Fetch whenever the page or the filters change — both now live in the query
+  // string, so an in-app deep link to a different day re-runs this the same way
+  // a filter edit does. `updateQuery` resets the page, which keeps this effect
+  // single-purpose and avoids duplicate requests.
   useEffect(() => {
     const fetchTimer = window.setTimeout(() => {
       if (rangeInvalid) {
@@ -198,6 +285,7 @@ export default function MyAttendanceHistoryPage() {
 
   const groups = groupByDay(records)
   const hasRange = Boolean(from || to)
+  const hasFilters = hasRange || rejectedOnly
 
   return (
     <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 620, margin: '0 auto' }}>
@@ -212,7 +300,7 @@ export default function MyAttendanceHistoryPage() {
             سجل حضوري
           </h1>
           <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
-            جميع عمليات تسجيل الحضور والانصراف الخاصة بك.
+            جميع عمليات تسجيل الحضور والانصراف الخاصة بك، بما فيها ما لم تُقبل تسجيله وسبب الرفض.
           </p>
         </div>
         <Link
@@ -247,21 +335,26 @@ export default function MyAttendanceHistoryPage() {
             {total} سجلاً
           </span>
           <div style={{ flex: 1 }} />
+          <ToggleChip
+            label={REJECTION_COPY.onlyRejected} icon={ShieldX}
+            active={rejectedOnly} onChange={v => updateQuery({ rejected: v ? '1' : '' })}
+            title="التسجيلات التي لم تُقبل — راجع سبب الرفض ثم أعد تسجيل يومها"
+          />
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Calendar size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-            <input type="date" value={from} max={today} onChange={e => { setPage(1); setFrom(e.target.value) }} style={dateInputStyle} />
+            <input type="date" value={from} max={today} onChange={e => updateQuery({ from: e.target.value })} style={dateInputStyle} />
             <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>—</span>
             <input
-              type="date" value={to} max={today} onChange={e => { setPage(1); setTo(e.target.value) }}
+              type="date" value={to} max={today} onChange={e => updateQuery({ to: e.target.value })}
               style={{
                 ...dateInputStyle,
                 ...(rangeInvalid ? { border: '1px solid var(--c-rejected)', color: 'var(--c-rejected)' } : {}),
               }}
             />
           </div>
-          {hasRange && (
+          {hasFilters && (
             <button
-              onClick={() => { setPage(1); setFrom(''); setTo('') }}
+              onClick={() => updateQuery({ from: '', to: '', rejected: '' })}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 height: 38, padding: '0 12px', borderRadius: 10,
@@ -312,24 +405,41 @@ export default function MyAttendanceHistoryPage() {
           <div style={{ padding: '48px 20px', textAlign: 'center' }}>
             <Fingerprint size={30} style={{ color: 'var(--c-text-3)', marginBottom: 10 }} />
             <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: 'var(--c-text-2)' }}>
-              {hasRange ? 'لا توجد سجلات في هذه الفترة' : 'لا توجد سجلات حضور بعد'}
+              {rejectedOnly
+                ? 'لا توجد تسجيلات مرفوضة'
+                : hasRange ? 'لا توجد سجلات في هذه الفترة' : 'لا توجد سجلات حضور بعد'}
             </p>
           </div>
         ) : (
-          groups.map(group => (
+          groups.map(group => {
+            const hours = countedHours(group.records)
+            return (
             <div key={group.key}>
               <div style={{
                 padding: '9px 18px', background: 'var(--c-surface)',
                 borderBottom: '1px solid var(--c-border)',
+                display: 'flex', alignItems: 'center', gap: 8,
                 fontSize: 11.5, fontWeight: 800, color: 'var(--c-text-2)',
               }}>
                 {dayHeading(group.key, today, yesterday)}
+                {/* Refused rows are excluded — the server counts none of them,
+                    so a total that included them would agree with no report. */}
+                {hours && (
+                  <span style={{
+                    marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5,
+                    fontSize: 11, fontWeight: 700, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    <Clock size={11} />
+                    {hours}
+                  </span>
+                )}
               </div>
               {group.records.map((r, idx) => (
                 <RecordRow key={r.id ?? idx} record={r} last={idx === group.records.length - 1} />
               ))}
             </div>
-          ))
+            )
+          })
         )}
 
         {/* Pagination */}
@@ -339,7 +449,7 @@ export default function MyAttendanceHistoryPage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           }}>
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+              onClick={() => setPage(Math.max(1, page - 1))} disabled={page <= 1}
               style={{
                 height: 34, padding: '0 14px', borderRadius: 9,
                 border: '1px solid var(--c-border)', background: '#fff',
@@ -354,7 +464,7 @@ export default function MyAttendanceHistoryPage() {
               {page} / {lastPage}
             </span>
             <button
-              onClick={() => setPage(p => Math.min(lastPage, p + 1))} disabled={page >= lastPage}
+              onClick={() => setPage(Math.min(lastPage, page + 1))} disabled={page >= lastPage}
               style={{
                 height: 34, padding: '0 14px', borderRadius: 9,
                 border: '1px solid var(--c-border)', background: '#fff',

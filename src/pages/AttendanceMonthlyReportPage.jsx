@@ -7,6 +7,7 @@ import {
   Clock, Building2, Layers, ChevronLeft, ShieldCheck,
 } from 'lucide-react'
 import { EXCUSED_META, LEAVE_COPY } from '../utils/leave'
+import { REJECTION_COPY } from '../utils/attendanceRejection'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh, ToggleChip } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
@@ -206,6 +207,12 @@ function EmployeeRow({ row, last, onOpen }) {
       <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={row.excused_deducted_days} muted /></td>
       <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={row.excused_not_deducted_days} muted /></td>
       <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={row.absent_days} muted /></td>
+      {/* Part of the absence count on its right, never an addition to it. */}
+      <td style={{ padding: '12px 16px', textAlign: 'center' }} title={REJECTION_COPY.rejectedDaysHint}>
+        {Number(row.rejected_days ?? 0) > 0
+          ? <span style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--c-rejected)', fontVariantNumeric: 'tabular-nums' }}>{row.rejected_days}</span>
+          : <Num value={0} muted />}
+      </td>
       <td style={{ padding: '12px 16px', textAlign: 'center' }}>
         {row.missing_checkouts > 0
           ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, color: 'var(--c-pending)', fontVariantNumeric: 'tabular-nums' }}>
@@ -245,16 +252,23 @@ function SkeletonRow({ count }) {
 
 // `field` = sortable (monthly whitelist: name, email, department, section,
 // expected_days, present_days, on_leave_days, absent_days, excused_days,
-// excused_deducted_days, excused_not_deducted_days, missing_checkouts,
-// total_work_hours, attendance_rate). Last column is the row-open chevron.
+// excused_deducted_days, excused_not_deducted_days, rejected_days,
+// missing_checkouts, total_work_hours, attendance_rate). Last column is the
+// row-open chevron.
 //
 // Column order mirrors the XLSX headers so the file and the screen read the
 // same way: … أيام الإجازة، أيام الغياب بعذر، منها مخصومة من الرصيد،
-// منها غير مخصومة، أيام الغياب بدون عذر، …
+// منها غير مخصومة، أيام الغياب بدون عذر، منها تسجيلات مرفوضة، …
 //
 // `absent_days` no longer contains excused absences, so it is labelled for what
 // it now is: غياب بدون عذر. The reconciliation is
 // expected = present + on_leave + excused + absent.
+//
+// `rejected_days` is NOT another slice of the month: it annotates `absent_days`,
+// which already contains those days, so it sits right after it and is never
+// added into any total. It counts what a refusal actually cost — a refused
+// check-in with no accepted one in its place; a day re-recorded correctly after
+// a refusal is a present day and is not counted here.
 const COLS = [
   { label: 'الموظف', field: 'name' },
   { label: 'القسم', field: 'department' },
@@ -265,6 +279,10 @@ const COLS = [
   { label: LEAVE_COPY.deductedFromBalance, field: 'excused_deducted_days', center: true },
   { label: LEAVE_COPY.notDeductedFromBalance, field: 'excused_not_deducted_days', center: true },
   { label: LEAVE_COPY.absentNoExcuse, field: 'absent_days', center: true },
+  {
+    label: REJECTION_COPY.rejectedDays, field: 'rejected_days', center: true,
+    title: REJECTION_COPY.rejectedDaysHint,
+  },
   { label: 'انصراف ناقص', field: 'missing_checkouts', center: true },
   { label: 'إجمالي الساعات', field: 'total_work_hours' },
   { label: 'نسبة الحضور', field: 'attendance_rate' },
@@ -405,6 +423,10 @@ export default function AttendanceMonthlyReportPage() {
           active={hasMissingCheckouts} onChange={setHasMissingCheckouts}
           title="عرض الموظفين الذين لديهم انصراف غير مسجّل فقط — تُعاد الإجماليات على الصفوف الظاهرة"
         />
+        {/* The monthly workbook gained an inserted «منها تسجيلات مرفوضة» column
+            right after «أيام الغياب بدون عذر», shifting every later column by
+            one — the same order as COLS above. Nothing here reads the file
+            back, so there is no fixed index to update. */}
         <ExportButton
           url="/attendance/report/monthly" params={buildParams()}
           filename="attendance-monthly-report.xlsx" disabled={Boolean(rangeError)}
@@ -436,8 +458,11 @@ export default function AttendanceMonthlyReportPage() {
             accent={{ bg: EXCUSED_META.bg, color: EXCUSED_META.color }}
             hint={`${totals.excused_deducted_days ?? 0} ${LEAVE_COPY.deductedFromBalance}`}
           />
+          {/* The hint names the refused days *inside* this figure — they are
+              already counted here, so the tile total is never their sum. */}
           <SummaryTile icon={UserX} label={LEAVE_COPY.absentNoExcuse} value={totals.absent_days ?? 0}
-            accent={{ bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)' }} />
+            accent={{ bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)' }}
+            hint={`${totals.rejected_days ?? 0} ${REJECTION_COPY.rejectedDays}`} />
           <SummaryTile icon={Clock} label="إجمالي الساعات" value={fmtHours(totals.total_work_hours)}
             accent={{ bg: 'var(--c-surface-2)', color: 'var(--c-text-2)' }} />
         </div>
@@ -459,7 +484,7 @@ export default function AttendanceMonthlyReportPage() {
                   {COLS.map((c, i) => (
                     <SortableTh
                       key={i} label={c.label} field={c.field} sort={sort} onSort={setSort}
-                      align={c.center ? 'center' : 'right'}
+                      align={c.center ? 'center' : 'right'} title={c.title}
                     />
                   ))}
                 </tr>
@@ -486,6 +511,9 @@ export default function AttendanceMonthlyReportPage() {
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.excused_deducted_days} bold /></td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.excused_not_deducted_days} bold /></td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.absent_days} bold /></td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }} title={REJECTION_COPY.rejectedDaysHint}>
+                      <Num value={totals.rejected_days} bold />
+                    </td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.missing_checkouts} bold /></td>
                     <td style={{ padding: '12px 16px', fontSize: 12.5, fontWeight: 800, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
                       {fmtHours(totals.total_work_hours)}

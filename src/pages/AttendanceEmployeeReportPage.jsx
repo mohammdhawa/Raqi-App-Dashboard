@@ -4,9 +4,12 @@ import api from '../services/api'
 import {
   UserCheck, LogIn, AlertTriangle, Plane, CalendarOff, UserX,
   Clock, Building2, Layers, ChevronRight, Loader2,
-  ShieldPlus, ShieldCheck,
+  ShieldPlus, ShieldCheck, ShieldX,
 } from 'lucide-react'
 import { leaveTypeLabel, EXCUSED_META, LEAVE_COPY } from '../utils/leave'
+import {
+  readRejection, rejectionTooltip, REJECTION_COPY,
+} from '../utils/attendanceRejection'
 import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
 import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
 import { ExportButton, SortableTh, ToggleChip } from '../components/attendance/controls'
@@ -51,15 +54,20 @@ function fmtHours(value) {
 const WEEKDAY_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
 
 // One status per day, by the precedence the backend already resolved:
-// check-in → off → excused → on_leave → absent.
+// accepted check-in → off → excused → on_leave → rejected → absent.
 //
 // `off` outranking leave is deliberate: leave and excuses are counted in
 // working days everywhere (the balance, the monthly report), so a non-working
 // day *inside* a span resolves to `off` instead of being charged, and all three
 // agree on what a span is worth. Which days are non-working is server config
-// (and may be the full week), so nothing here assumes a particular calendar.
-// The day still carries `leave_type` whatever its status, which is what the
-// calendar shades the full span from.
+// (currently Saturday–Thursday, with Friday the only weekly day off), so
+// nothing here assumes a particular calendar — `weekday`/`status` come from the
+// API. The day still carries `leave_type` whatever its status, which is what
+// the calendar shades the full span from.
+//
+// `rejected` sits second-to-last: a refused check-in is not attendance, so
+// anything that legitimately explains the day (a day off, an excuse, approved
+// leave) outranks it — and a `rejected` day is itself counted in `absent_days`.
 const STATUS_META = {
   present:          { label: 'حاضر',         color: 'var(--c-approved)', bg: 'var(--c-approved-bg)', icon: UserCheck },
   checked_in:       { label: 'بالداخل',      color: '#2563EB',           bg: '#EAF1FE',              icon: LogIn },
@@ -69,8 +77,15 @@ const STATUS_META = {
   excused:          { label: EXCUSED_META.label, color: EXCUSED_META.color, bg: EXCUSED_META.bg,     icon: ShieldCheck },
   on_leave:         { label: 'إجازة',        color: 'var(--c-primary)',  bg: 'var(--c-accent-tint)', icon: Plane },
   off:              { label: 'عطلة',         color: 'var(--c-text-3)',   bg: 'var(--c-surface-2)',   icon: CalendarOff },
+  // A day whose only check-in HR refused, with nothing accepted in its place.
+  // Counted inside `absent_days`, never alongside it.
+  rejected:         { label: REJECTION_COPY.dayStatus, color: '#8E2C20', bg: '#F7DEDA', icon: ShieldX },
   absent:           { label: LEAVE_COPY.absentNoExcuseShort, color: 'var(--c-rejected)', bg: 'var(--c-rejected-bg)', icon: UserX },
 }
+
+// Day statuses that mean "absent with nothing accounting for it", so HR can
+// still file an excuse. Both are counted in `absent_days`.
+const EXCUSABLE_STATUSES = ['absent', 'rejected']
 
 function readApiError(err) {
   const data = err?.response?.data
@@ -170,13 +185,19 @@ function DayRow({ day, last, onExcuse }) {
   // the middle of it, which resolves to `off`.
   const inSpan = day.leave_type != null
   const excuse = day.excuse ?? null
+  // Present on **any** day carrying a refused check-in, even when leave or a
+  // later accepted check-in outranks it in `status`. It is what the employee was
+  // notified about and what HR will be asked about, so it is always shown.
+  const rejection = readRejection(day)
   const background = hov
     ? 'rgba(34,65,103,0.015)'
-    : day.status === 'excused'
-      ? EXCUSED_META.bg
-      : inSpan
-        ? 'var(--c-accent-tint)'
-        : dim ? 'var(--c-surface)' : 'transparent'
+    : day.status === 'rejected'
+      ? 'rgba(192,57,43,0.05)'
+      : day.status === 'excused'
+        ? EXCUSED_META.bg
+        : inSpan
+          ? 'var(--c-accent-tint)'
+          : dim ? 'var(--c-surface)' : 'transparent'
   return (
     <tr
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
@@ -191,7 +212,29 @@ function DayRow({ day, last, onExcuse }) {
         </div>
         <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{WEEKDAY_AR[day.weekday] ?? ''}</div>
       </td>
-      <td style={{ padding: '11px 16px' }}><StatusBadge status={day.status} /></td>
+      <td style={{ padding: '11px 16px' }}>
+        <StatusBadge status={day.status} />
+        {rejection && (
+          <div
+            title={rejectionTooltip(day)}
+            style={{
+              display: 'flex', alignItems: 'flex-start', gap: 5, marginTop: 6,
+              maxWidth: 220, cursor: 'help',
+            }}
+          >
+            <ShieldX size={11} style={{ color: 'var(--c-rejected)', flexShrink: 0, marginTop: 2 }} />
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--c-rejected)', lineHeight: 1.6 }}>
+              {rejection.recordedAt ? `${fmtTime(rejection.recordedAt)} · ` : ''}
+              {rejection.short}
+              {rejection.note && (
+                <span style={{ display: 'block', fontWeight: 600, color: 'var(--c-text-2)' }}>
+                  {rejection.note}
+                </span>
+              )}
+            </span>
+          </div>
+        )}
+      </td>
       <td style={{ padding: '11px 16px' }}><TimeCell time={day.check_in_time} /></td>
       <td style={{ padding: '11px 16px' }}><TimeCell time={day.check_out_time} /></td>
       <td style={{ padding: '11px 16px' }}>
@@ -201,8 +244,14 @@ function DayRow({ day, last, onExcuse }) {
             </span>
           : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
       </td>
+      {/* `rejected` is an absence too — it outranks `absent` in the day's
+          status only because it explains *why* the day is empty, and it is
+          counted inside `absent_days`. Excluding it here would quietly remove
+          HR's excuse action from exactly the days a refusal created. Anything
+          the day is already answered for (`off` / `excused` / `on_leave`)
+          outranks both, so this stays the "unanswered absence" test. */}
       <td style={{ padding: '11px 16px' }}>
-        {day.status === 'absent' ? <button onClick={() => onExcuse(day)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><ShieldPlus size={13} /> تسجيل عذر</button> : <span style={{ color: 'var(--c-text-3)' }}>—</span>}
+        {EXCUSABLE_STATUSES.includes(day.status) ? <button onClick={() => onExcuse(day)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><ShieldPlus size={13} /> تسجيل عذر</button> : <span style={{ color: 'var(--c-text-3)' }}>—</span>}
       </td>
       {/* Shown for every day inside a span, not only `on_leave` ones — a
           non-working day in the middle of a leave is `off` but still part
@@ -261,8 +310,9 @@ const COLS = [
 ]
 
 // Day-status filter options (status=…) — labels reuse STATUS_META, and the
-// order matches the backend's precedence.
-const DAY_STATUSES = ['present', 'checked_in', 'missing_checkout', 'excused', 'on_leave', 'off', 'absent']
+// order matches the backend's precedence (accepted check-in → off → excuse →
+// approved leave → rejected → absent), so the legend reads as the rule.
+const DAY_STATUSES = ['present', 'checked_in', 'missing_checkout', 'off', 'excused', 'on_leave', 'rejected', 'absent']
 
 export default function AttendanceEmployeeReportPage() {
   const [params] = useSearchParams()
@@ -393,7 +443,13 @@ export default function AttendanceEmployeeReportPage() {
           <StatCard icon={UserCheck} label="أيام الحضور" value={summary.present_days ?? 0}
             accent={{ bg: 'var(--c-approved-bg)', color: 'var(--c-approved)' }} />
           <StatCard icon={UserX} label={LEAVE_COPY.absentNoExcuse} value={summary.absent_days ?? 0}
-            accent={{ bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)' }} />
+            accent={{ bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)' }}
+            hint={`${summary.rejected_days ?? 0} ${REJECTION_COPY.rejectedDays}`} />
+          {/* A subset of the absence count on its right, never an addition to
+              it: a refused check-in with no accepted one in its place. */}
+          <StatCard icon={ShieldX} label={REJECTION_COPY.rejectedDays} value={summary.rejected_days ?? 0}
+            accent={{ bg: '#F7DEDA', color: '#8E2C20' }}
+            hint={`ضمن ${LEAVE_COPY.absentNoExcuse}`} />
           <StatCard
             icon={ShieldCheck} label={`أيام ${LEAVE_COPY.excusedStatus}`} value={summary.excused_days ?? 0}
             accent={{ bg: EXCUSED_META.bg, color: EXCUSED_META.color }}
@@ -434,6 +490,10 @@ export default function AttendanceEmployeeReportPage() {
           title="إخفاء أيام العطلة من الجدول"
         />
         <div style={{ flex: 1 }} />
+        {/* The employee workbook gained three appended day-grid columns —
+            سبب رفض التسجيل، ملاحظة الرفض، مرفوض بواسطة — plus a
+            «منها تسجيلات مرفوضة» row in the summary sheet. Nothing here reads
+            the file back, so there is no fixed index to update. */}
         <ExportButton
           url="/attendance/report/employee" params={buildParams()}
           filename="attendance-employee-report.xlsx" disabled={!userId || !from || !to}

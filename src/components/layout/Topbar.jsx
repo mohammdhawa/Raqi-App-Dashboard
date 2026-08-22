@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useLocation, useMatch } from 'react-router-dom'
-import { Bell, BellOff, CheckCheck, RefreshCw, Menu, Check } from 'lucide-react'
+import { useLocation, useMatch, useNavigate } from 'react-router-dom'
+import { Bell, BellOff, CheckCheck, RefreshCw, Menu, Check, ShieldX } from 'lucide-react'
 import api from '../../services/api'
 import Button from '../ui/Button'
 import { useToast } from '../ui/Toast'
+import { REJECTION_REASONS } from '../../utils/attendanceRejection'
 
 const PAGE_META = {
   '/dashboard':         { name: 'لوحة المعلومات',     section: 'الرئيسية' },
@@ -71,17 +72,56 @@ function timeAgo(iso) {
   return d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+// `type` arrives either as the short key the API documents
+// (`attendance_rejected`) or as a Laravel notification class name — normalize
+// both to the short key so one comparison covers every backend shape.
+function notifKind(n) {
+  const raw = String(n?.type ?? n?.data?.type ?? '').toLowerCase()
+  if (raw.includes('attendance_rejected') || raw.includes('attendancerejected')) {
+    return 'attendance_rejected'
+  }
+  return null
+}
+
+// Per-type presentation and where a click should land. `attendance_rejected`
+// carries `{ record_id, date, reason }`, so it deep-links to the employee's own
+// history filtered to the refused day — the one screen that shows the record
+// and the reason together, whatever day it was.
+const NOTIF_META = {
+  attendance_rejected: {
+    icon: ShieldX,
+    color: 'var(--c-rejected)',
+    bg: 'var(--c-rejected-bg)',
+    title: 'لم يُقبل تسجيل الحضور',
+    href: d => (d?.date
+      ? `/attendance/history?from=${d.date}&to=${d.date}`
+      : '/attendance/history?rejected=1'),
+    body: d => (REJECTION_REASONS[d?.reason] ?? ''),
+  },
+}
+
 // Laravel notification `data` payloads aren't documented per-type, so this
-// reads the common field-name variants and falls back to a generic label.
+// reads the common field-name variants and falls back to the type's own copy,
+// then to a generic label.
 function notifText(n) {
   const d = (n && typeof n.data === 'object' && n.data) || {}
-  const title = n?.title ?? d.title ?? d.subject ?? d.heading ?? 'إشعار جديد'
-  const body = n?.body ?? d.message ?? d.body ?? d.text ?? d.description ?? ''
+  const meta = NOTIF_META[notifKind(n)]
+  const title = n?.title ?? d.title ?? d.subject ?? d.heading ?? meta?.title ?? 'إشعار جديد'
+  const body = n?.body ?? d.message ?? d.body ?? d.text ?? d.description
+    ?? meta?.body?.(d) ?? ''
   return { title, body }
+}
+
+function notifLink(n) {
+  const meta = NOTIF_META[notifKind(n)]
+  if (!meta) return null
+  const d = (n && typeof n.data === 'object' && n.data) || {}
+  return meta.href(d)
 }
 
 function NotificationsPanel() {
   const toast = useToast()
+  const navigate = useNavigate()
   const toastRef = useRef(toast)
   toastRef.current = toast
 
@@ -167,6 +207,14 @@ function NotificationsPanel() {
     api.post(`/notifications/${n.id}/read`).catch(() => { fetchNotifications(); fetchUnreadCount() })
   }
 
+  // Marking read is the fallback behaviour; a notification that names a screen
+  // opens it, because "what do I do about this?" is the whole reason it was sent.
+  const openNotification = n => {
+    markRead(n)
+    const href = notifLink(n)
+    if (href) { setOpen(false); navigate(href) }
+  }
+
   const markAllRead = () => {
     if (!unreadCount || markingAll) return
     setMarkingAll(true)
@@ -238,27 +286,39 @@ function NotificationsPanel() {
             )}
             {!loading && items.map(n => {
               const { title, body } = notifText(n)
+              const meta = NOTIF_META[notifKind(n)]
+              const Icon = meta?.icon
               const unread = !n.read_at
+              const clickable = unread || Boolean(meta)
               return (
                 <div
                   key={n.id}
-                  onClick={() => markRead(n)}
+                  onClick={() => openNotification(n)}
                   style={{
                     display: 'flex', gap: 10, padding: '12px 14px',
                     borderBottom: '1px solid var(--c-border)',
                     background: unread ? 'var(--c-accent-tint)' : 'transparent',
-                    cursor: unread ? 'pointer' : 'default',
+                    cursor: clickable ? 'pointer' : 'default',
                     transition: 'background .12s',
                   }}
-                  onMouseEnter={e => { if (unread) e.currentTarget.style.background = 'var(--c-accent-soft)' }}
+                  onMouseEnter={e => { if (clickable) e.currentTarget.style.background = 'var(--c-accent-soft)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = unread ? 'var(--c-accent-tint)' : 'transparent' }}
                 >
                   <span style={{
                     flexShrink: 0, marginTop: 5, width: 7, height: 7, borderRadius: '50%',
                     background: unread ? 'var(--c-accent)' : 'transparent',
                   }} />
+                  {Icon && (
+                    <span style={{
+                      flexShrink: 0, width: 26, height: 26, borderRadius: 8,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      background: meta.bg, color: meta.color,
+                    }}>
+                      <Icon size={14} />
+                    </span>
+                  )}
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>{title}</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: meta?.color ?? 'var(--c-text)' }}>{title}</div>
                     {body && (
                       <div style={{
                         fontSize: 11.5, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5,
