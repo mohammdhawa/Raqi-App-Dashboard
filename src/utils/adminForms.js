@@ -26,8 +26,15 @@ export function buildUserCreatePayload(form) {
 }
 
 /**
- * PATCH /admin/users/{user} carries only what actually changed — every rule on
- * the endpoint is `sometimes`, so an unsent field is left alone.
+ * What actually changed between the frozen server snapshot and the form.
+ *
+ * This is the *diff*, not the request body — see userUpdateBody for what is
+ * sent. It stays a pure diff because it answers a second question too: which
+ * fields the user genuinely touched, which is what decides whether editing
+ * your own account has to re-read the session.
+ *
+ * Nearly every rule on PATCH /admin/users/{user} is `sometimes`, so an unsent
+ * field is left alone.
  *
  * The department and the section are the exception: they travel together
  * whenever either moves. `users.department_id` and `users.section_id` are two
@@ -66,6 +73,23 @@ export function buildUserUpdatePayload(initial, form) {
   }
 
   return payload
+}
+
+/**
+ * The body of PATCH /admin/users/{user}: the diff, plus `role`.
+ *
+ * `role` is the one rule on that endpoint that is `required` rather than
+ * `sometimes` (UpdateUserRequest), so a body that diffs it out is refused with
+ * «الدور الوظيفي مطلوب.» — even when the role is exactly what it already was
+ * and the form is showing it selected. It therefore rides along with every
+ * update instead of being treated as just another changed field.
+ *
+ * Kept apart from the diff so `changedKeys` keeps meaning "what the user
+ * touched": stamping `role` into the diff would make renaming your own account
+ * look like a permission change and pointlessly re-read the session.
+ */
+export function userUpdateBody(changes, form) {
+  return { ...changes, role: form.role }
 }
 
 /**

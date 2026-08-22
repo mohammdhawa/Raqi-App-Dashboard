@@ -4,8 +4,9 @@ import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import {
   CalendarRange, Users, UserCheck, Plane, UserX, AlertTriangle,
-  Clock, Building2, Layers, ChevronLeft,
+  Clock, Building2, Layers, ChevronLeft, ShieldCheck,
 } from 'lucide-react'
+import { EXCUSED_META, LEAVE_COPY } from '../utils/leave'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh, ToggleChip } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
@@ -147,7 +148,7 @@ function Num({ value, bold, muted }) {
   )
 }
 
-function SummaryTile({ icon: Icon, label, value, accent }) {
+function SummaryTile({ icon: Icon, label, value, accent, hint }) {
   return (
     <div style={{
       flex: 1, minWidth: 150, display: 'flex', alignItems: 'center', gap: 12,
@@ -164,6 +165,9 @@ function SummaryTile({ icon: Icon, label, value, accent }) {
         <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
           {value}
         </div>
+        {hint && (
+          <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', marginTop: 2, whiteSpace: 'nowrap' }}>{hint}</div>
+        )}
       </div>
     </div>
   )
@@ -194,6 +198,13 @@ function EmployeeRow({ row, last, onOpen }) {
       <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={row.expected_days} /></td>
       <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={row.present_days} bold /></td>
       <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={row.on_leave_days} muted /></td>
+      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+        {Number(row.excused_days ?? 0) > 0
+          ? <span style={{ fontSize: 12.5, fontWeight: 800, color: EXCUSED_META.color, fontVariantNumeric: 'tabular-nums' }}>{row.excused_days}</span>
+          : <Num value={0} muted />}
+      </td>
+      <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={row.excused_deducted_days} muted /></td>
+      <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={row.excused_not_deducted_days} muted /></td>
       <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={row.absent_days} muted /></td>
       <td style={{ padding: '12px 16px', textAlign: 'center' }}>
         {row.missing_checkouts > 0
@@ -233,16 +244,28 @@ function SkeletonRow({ count }) {
 }
 
 // `field` = sortable (monthly whitelist: name, email, department, section,
-// expected_days, present_days, on_leave_days, absent_days, missing_checkouts,
+// expected_days, present_days, on_leave_days, absent_days, excused_days,
+// excused_deducted_days, excused_not_deducted_days, missing_checkouts,
 // total_work_hours, attendance_rate). Last column is the row-open chevron.
+//
+// Column order mirrors the XLSX headers so the file and the screen read the
+// same way: … أيام الإجازة، أيام الغياب بعذر، منها مخصومة من الرصيد،
+// منها غير مخصومة، أيام الغياب بدون عذر، …
+//
+// `absent_days` no longer contains excused absences, so it is labelled for what
+// it now is: غياب بدون عذر. The reconciliation is
+// expected = present + on_leave + excused + absent.
 const COLS = [
   { label: 'الموظف', field: 'name' },
   { label: 'القسم', field: 'department' },
-  { label: 'أيام العمل', field: 'expected_days' },
-  { label: 'الحضور', field: 'present_days' },
-  { label: 'الإجازات', field: 'on_leave_days' },
-  { label: 'الغياب', field: 'absent_days' },
-  { label: 'انصراف ناقص', field: 'missing_checkouts' },
+  { label: 'أيام العمل', field: 'expected_days', center: true },
+  { label: 'الحضور', field: 'present_days', center: true },
+  { label: 'الإجازات', field: 'on_leave_days', center: true },
+  { label: LEAVE_COPY.excusedStatus, field: 'excused_days', center: true },
+  { label: LEAVE_COPY.deductedFromBalance, field: 'excused_deducted_days', center: true },
+  { label: LEAVE_COPY.notDeductedFromBalance, field: 'excused_not_deducted_days', center: true },
+  { label: LEAVE_COPY.absentNoExcuse, field: 'absent_days', center: true },
+  { label: 'انصراف ناقص', field: 'missing_checkouts', center: true },
   { label: 'إجمالي الساعات', field: 'total_work_hours' },
   { label: 'نسبة الحضور', field: 'attendance_rate' },
   { label: '' },
@@ -350,8 +373,8 @@ export default function AttendanceMonthlyReportPage() {
           التقرير الشهري للحضور
         </h1>
         <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
-          ملخّص حضور كل موظف خلال فترة محددة: أيام الحضور والإجازة والغياب، وإجمالي ساعات العمل ونسبة الحضور.
-          اضغط على أي موظف لعرض تفاصيله اليومية.
+          ملخّص حضور كل موظف خلال فترة محددة: أيام الحضور والإجازة، أيام الغياب بعذر وبدون عذر،
+          وإجمالي ساعات العمل ونسبة الحضور. اضغط على أي موظف لعرض تفاصيله اليومية.
         </p>
       </div>
 
@@ -373,9 +396,9 @@ export default function AttendanceMonthlyReportPage() {
         <button onClick={() => setPreset(lastMonthRange())} style={presetBtnStyle(isLastMonth)}>الشهر الماضي</button>
         <button onClick={() => setPreset(thisMonthRange())} style={presetBtnStyle(isThisMonth)}>هذا الشهر</button>
         <ToggleChip
-          label="لديهم غياب فقط" icon={UserX}
+          label="غياب بدون عذر فقط" icon={UserX}
           active={hasAbsences} onChange={setHasAbsences}
-          title="عرض الموظفين الذين لديهم أيام غياب فقط — تُعاد الإجماليات على الصفوف الظاهرة"
+          title="عرض الموظفين الذين لديهم أيام غياب بدون عذر فقط — تُعاد الإجماليات على الصفوف الظاهرة"
         />
         <ToggleChip
           label="انصراف ناقص فقط" icon={AlertTriangle}
@@ -408,7 +431,12 @@ export default function AttendanceMonthlyReportPage() {
             accent={{ bg: 'var(--c-approved-bg)', color: 'var(--c-approved)' }} />
           <SummaryTile icon={Plane} label="أيام الإجازة" value={totals.on_leave_days ?? 0}
             accent={{ bg: 'var(--c-accent-tint)', color: 'var(--c-primary)' }} />
-          <SummaryTile icon={UserX} label="أيام الغياب" value={totals.absent_days ?? 0}
+          <SummaryTile
+            icon={ShieldCheck} label={`أيام ${LEAVE_COPY.excusedStatus}`} value={totals.excused_days ?? 0}
+            accent={{ bg: EXCUSED_META.bg, color: EXCUSED_META.color }}
+            hint={`${totals.excused_deducted_days ?? 0} ${LEAVE_COPY.deductedFromBalance}`}
+          />
+          <SummaryTile icon={UserX} label={LEAVE_COPY.absentNoExcuse} value={totals.absent_days ?? 0}
             accent={{ bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)' }} />
           <SummaryTile icon={Clock} label="إجمالي الساعات" value={fmtHours(totals.total_work_hours)}
             accent={{ bg: 'var(--c-surface-2)', color: 'var(--c-text-2)' }} />
@@ -431,7 +459,7 @@ export default function AttendanceMonthlyReportPage() {
                   {COLS.map((c, i) => (
                     <SortableTh
                       key={i} label={c.label} field={c.field} sort={sort} onSort={setSort}
-                      align={i >= 2 && i <= 6 ? 'center' : 'right'}
+                      align={c.center ? 'center' : 'right'}
                     />
                   ))}
                 </tr>
@@ -454,6 +482,9 @@ export default function AttendanceMonthlyReportPage() {
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.expected_days} bold /></td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.present_days} bold /></td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.on_leave_days} bold /></td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.excused_days} bold /></td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.excused_deducted_days} bold /></td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.excused_not_deducted_days} bold /></td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.absent_days} bold /></td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}><Num value={totals.missing_checkouts} bold /></td>
                     <td style={{ padding: '12px 16px', fontSize: 12.5, fontWeight: 800, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>

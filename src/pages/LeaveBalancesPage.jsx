@@ -6,13 +6,21 @@ import { DepartmentSelect, SearchInput, SectionSelect } from '../components/atte
 import { PerPageSelect, SortableTh } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
 import { useDeptSections } from '../utils/useDeptSections'
+import { EXCUSED_META, LEAVE_COPY } from '../utils/leave'
 import EditLeaveBalanceModal from '../components/leave/EditLeaveBalanceModal'
 
 const currentYear = Number(new Intl.DateTimeFormat('en-US', { year: 'numeric', timeZone: 'Asia/Damascus' }).format(new Date()))
 const years = Array.from({ length: 101 }, (_, index) => 2000 + index)
+// `non_deducting_days` are approved days taken under a non-deducting type. They
+// are excluded from `used_days` by design, so the label and its tooltip have to
+// say plainly that they are not part of the allocation.
+//
+// Distinct from the reports' `excused`, which counts HR-filed excuses whether or
+// not they deducted — the API keeps the two names apart deliberately.
 const columns = [
   { label: 'الموظف', field: 'name' }, { label: 'القسم / الشعبة' },
   { label: 'الرصيد السنوي' }, { label: 'التسوية' }, { label: 'المستخدم' },
+  { label: LEAVE_COPY.nonDeductingDays, title: LEAVE_COPY.nonDeductingDaysHint },
   { label: 'المتبقي' }, { label: 'ملاحظة' }, { label: '—' },
 ]
 
@@ -47,6 +55,9 @@ function BalanceRow({ row, defaultDays, last, onEdit }) {
     <td style={{ padding: '12px 16px', fontWeight: 800 }}>{row.allocated_days}</td>
     <td style={{ padding: '12px 16px', color: adjustment < 0 ? 'var(--c-rejected)' : 'var(--c-approved)', fontWeight: 700 }}>{adjustment === 0 ? '—' : adjustment > 0 ? `+${adjustment}` : `−${Math.abs(adjustment)}`}</td>
     <td style={{ padding: '12px 16px', fontWeight: 700 }}>{row.used_days}</td>
+    <td title={LEAVE_COPY.nonDeductingDaysHint} style={{ padding: '12px 16px', fontWeight: 700, cursor: 'help', color: Number(row.non_deducting_days ?? 0) > 0 ? EXCUSED_META.color : 'var(--c-text-3)' }}>
+      {row.non_deducting_days ?? 0}
+    </td>
     <td style={{ padding: '12px 16px', fontWeight: 800, color: remainingColor }}>{row.remaining_days}</td>
     <td style={{ padding: '12px 16px', maxWidth: 220 }}><div title={row.note ?? undefined} style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', color: row.note ? 'var(--c-text-2)' : 'var(--c-text-3)', fontSize: 12 }}>{row.note || '—'}</div></td>
     <td style={{ padding: '12px 16px' }}><button onClick={() => onEdit(row)} title='تعديل الرصيد' style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Edit3 size={14} /></button></td>
@@ -125,7 +136,10 @@ export default function LeaveBalancesPage() {
     <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1240, margin: '0 auto' }}>
       <div style={{ marginBottom: 22 }}>
         <h1 style={{ margin: '0 0 5px', fontSize: 26, fontWeight: 800, color: 'var(--c-text)' }}>أرصدة الإجازات</h1>
-        <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)' }}>إدارة الاستحقاق السنوي والتسويات ومتابعة الرصيد المستخدم والمتبقي لكل موظف.</p>
+        <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
+          إدارة الاستحقاق السنوي والتسويات ومتابعة الرصيد المستخدم والمتبقي لكل موظف.
+          عمود «{LEAVE_COPY.nonDeductingDays}» يعرض الإجازات المعتمدة التي لا تُخصم من الاستحقاق.
+        </p>
       </div>
       <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -146,7 +160,7 @@ export default function LeaveBalancesPage() {
           {error && <div style={{ margin: 14, padding: '10px 12px', borderRadius: 10, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 700 }}>{error}</div>}
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr style={{ background: 'var(--c-surface)' }}>
-              {columns.map(column => <SortableTh key={column.label} label={column.label} field={column.field} sort={sort} onSort={setSort} />)}
+              {columns.map(column => <SortableTh key={column.label} label={column.label} field={column.field} title={column.title} sort={sort} onSort={setSort} />)}
             </tr></thead>
             <tbody>
               {loading ? [0, 1, 2, 3, 4].map(index => <tr key={index}>{columns.map((column, cell) => <td key={column.label} style={{ padding: '12px 16px' }}><div style={{ height: 16, width: cell === 0 ? 150 : 70, borderRadius: 7, background: 'var(--c-surface-2)', animation: 'pulse 1.5s ease-in-out infinite' }} /></td>)}</tr>)

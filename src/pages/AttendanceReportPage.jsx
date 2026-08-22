@@ -11,9 +11,10 @@ import { DepartmentSelect, SectionSelect, SearchInput } from '../components/atte
 import { ExportButton, SortableTh } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
 import { useDeptSections } from '../utils/useDeptSections'
-import { leaveTypeLabel } from '../utils/leave'
+import { leaveTypeName, deductsBalance, EXCUSED_META, LEAVE_COPY } from '../utils/leave'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
+import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
 
 const ATTENDANCE_TIME_ZONE = 'Asia/Damascus'
 
@@ -72,6 +73,9 @@ const SECTIONS = [
   { key: 'checked_out',      label: 'أكملوا الدوام',   icon: LogOut,        color: 'var(--c-approved)', bg: 'var(--c-approved-bg)' },
   { key: 'missing_checkout', label: 'خروج غير مسجّل', icon: AlertTriangle, color: 'var(--c-pending)',   bg: 'var(--c-pending-bg)' },
   { key: 'on_leave',         label: 'في إجازة',        icon: Plane,         color: 'var(--c-primary)',  bg: 'var(--c-accent-tint)' },
+  // Disjoint from on_leave: an absence HR justified after the fact appears only
+  // here, never among the planned-leave rows.
+  { key: 'excused',          label: LEAVE_COPY.excusedStatus, icon: ShieldCheck, color: EXCUSED_META.color, bg: EXCUSED_META.bg },
 ]
 
 const STATUS_META = {
@@ -80,6 +84,7 @@ const STATUS_META = {
   checked_out:      { label: 'أكمل الدوام',    color: 'var(--c-approved)', bg: 'var(--c-approved-bg)',   icon: LogOut },
   missing_checkout: { label: 'خروج غير مسجّل', color: 'var(--c-pending)',  bg: 'var(--c-pending-bg)',    icon: AlertTriangle },
   on_leave:         { label: 'في إجازة',       color: 'var(--c-primary)',  bg: 'var(--c-accent-tint)',   icon: Plane },
+  excused:          { label: EXCUSED_META.label, color: EXCUSED_META.color, bg: EXCUSED_META.bg,         icon: ShieldCheck },
 }
 
 // ── Small atoms ──────────────────────────────────────────────────────────────
@@ -298,9 +303,14 @@ function AttendanceRow({ row, last, onViewSelfie, onCorrect, showActions }) {
   )
 }
 
-// ── Leave report row ─────────────────────────────────────────────────────────
-function LeaveReportRow({ row, last }) {
+// ── Leave / excuse report row ────────────────────────────────────────────────
+// Serves both leave sections. On an excused row the `excuse` block behind the
+// absence — its reason and who recorded it — is the audit trail HR needs, so it
+// gets its own columns rather than a tooltip.
+function LeaveReportRow({ row, last, showExcuse }) {
   const [hov, setHov] = useState(false)
+  const excuse = row.excuse ?? null
+  const deducts = deductsBalance(row)
   return (
     <tr
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
@@ -312,19 +322,41 @@ function LeaveReportRow({ row, last }) {
       <td style={{ padding: '12px 16px' }}><EmployeeCell name={row.name} email={row.email} /></td>
       <td style={{ padding: '12px 16px' }}><DeptSectionCell department={row.department} section={row.section} /></td>
       <td style={{ padding: '12px 16px' }}>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
-          fontSize: 11.5, fontWeight: 700, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
-        }}>
-          {leaveTypeLabel(row.leave_type)}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 5 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
+            fontSize: 11.5, fontWeight: 700, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
+          }}>
+            {leaveTypeName(row)}
+          </span>
+          {deducts === false && <DeductsBalanceBadge deducts={false} compact short />}
+        </div>
       </td>
       <td style={{ padding: '12px 16px' }}>
         <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
           {fmtDate(row.start_date)} — {fmtDate(row.end_date)}
         </span>
       </td>
-      <td style={{ padding: '12px 16px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}><LeaveStatusBadge status='approved_leave' />{row.is_excuse && <LeaveExcuseBadge compact />}</div></td>
+      <td style={{ padding: '12px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <LeaveStatusBadge status='approved_leave' />
+          {row.is_excuse && <LeaveExcuseBadge compact />}
+        </div>
+      </td>
+      {showExcuse && (
+        <>
+          <td style={{ padding: '12px 16px' }}>
+            {excuse?.reason
+              ? <div style={{ fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.5, maxWidth: 260 }} title={excuse.reason}>{excuse.reason}</div>
+              : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
+          </td>
+          <td style={{ padding: '12px 16px' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>
+              {excuse?.recorded_by ?? 'الموارد البشرية'}
+            </span>
+          </td>
+        </>
+      )}
     </tr>
   )
 }
@@ -697,7 +729,8 @@ export default function AttendanceReportPage() {
   const summary = report?.summary ?? {}
   const countFor = key => summary[key] ?? (Array.isArray(report?.[key]) ? report[key].length : 0)
 
-  const isLeaveSection = section === 'on_leave'
+  const isExcusedSection = section === 'excused'
+  const isLeaveSection = section === 'on_leave' || isExcusedSection
   const rows = report?.[section] ?? []
   const showActions = section === 'missing_checkout'
 
@@ -711,14 +744,17 @@ export default function AttendanceReportPage() {
     { label: 'ساعات العمل', field: 'work_hours' },
     { label: 'الحالة', field: 'status' },
   ]
+  const LEAVE_COLS = [
+    { label: 'الموظف', field: 'name' },
+    { label: 'القسم', field: 'department' },
+    { label: 'نوع الإجازة' },
+    { label: 'الفترة' },
+    { label: 'حالة الإجازة' },
+  ]
   const cols = isLeaveSection
-    ? [
-        { label: 'الموظف', field: 'name' },
-        { label: 'القسم', field: 'department' },
-        { label: 'نوع الإجازة' },
-        { label: 'الفترة' },
-        { label: 'حالة الإجازة' },
-      ]
+    ? (isExcusedSection
+        ? [...LEAVE_COLS, { label: 'سبب العذر' }, { label: 'مسجّل بواسطة' }]
+        : LEAVE_COLS)
     : showActions ? [...ATT_COLS, { label: 'إجراءات' }] : ATT_COLS
 
   const activeMeta = SECTIONS.find(s => s.key === section)
@@ -730,6 +766,7 @@ export default function AttendanceReportPage() {
     checked_out:      'لم يُكمل أحد الدوام بعد',
     missing_checkout: 'لا توجد سجلات خروج غير مكتملة',
     on_leave:         'لا يوجد موظفون في إجازة معتمدة',
+    excused:          'لا توجد أيام غياب مسجَّل عنها عذر في هذا اليوم',
   }[section]
 
   const hasFilters = Boolean(date || departmentId || sectionId || search)
@@ -746,7 +783,8 @@ export default function AttendanceReportPage() {
           التقرير اليومي للحضور
         </h1>
         <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
-          ملخّص حضور اليوم: الحاضرون، من أكمل الدوام، من نسي تسجيل الخروج، والموظفون في إجازة معتمدة.
+          ملخّص حضور اليوم: الحاضرون، من أكمل الدوام، من نسي تسجيل الخروج، الموظفون في إجازة معتمدة،
+          ومن سُجّل عذر عن غيابه.
         </p>
       </div>
 
@@ -775,8 +813,11 @@ export default function AttendanceReportPage() {
             مسح الفلاتر
           </button>
         )}
-        {/* report_section restricts the workbook to the active tile's sheet
-            (plus the summary) so the file matches what's on screen */}
+        {/* The unrestricted workbook has 7 sheets (الحضور، لم ينصرفوا بعد،
+            المنصرفون، انصراف مفقود، الإجازات، الغياب بعذر، الملخص);
+            report_section restricts it to the active tile's sheet plus the
+            summary, so the file matches what's on screen. `excused` is a valid
+            section as of v9.1. */}
         <ExportButton
           url="/attendance/report" params={{ ...buildParams(), report_section: section }}
           filename="attendance-daily-report.xlsx"
@@ -833,6 +874,11 @@ export default function AttendanceReportPage() {
               يُغلق اليوم تلقائياً الساعة 22:00 — صحّح الخروج لاحتساب ساعات العمل
             </span>
           )}
+          {isExcusedSection && (
+            <span style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginInlineStart: 'auto' }}>
+              {LEAVE_COPY.excusedSectionHint}
+            </span>
+          )}
         </div>
 
         <div style={{ overflowX: 'auto' }}>
@@ -848,7 +894,12 @@ export default function AttendanceReportPage() {
               {loading
                 ? [0, 1, 2, 3, 4].map(i => <SkeletonRow key={i} count={cols.length} />)
                 : isLeaveSection
-                  ? rows.map((r, idx) => <LeaveReportRow key={r.user_id ?? idx} row={r} last={idx === rows.length - 1} />)
+                  ? rows.map((r, idx) => (
+                      <LeaveReportRow
+                        key={r.excuse?.leave_request_id ?? r.user_id ?? idx} row={r}
+                        last={idx === rows.length - 1} showExcuse={isExcusedSection}
+                      />
+                    ))
                   : rows.map((r, idx) => (
                       <AttendanceRow
                         key={getRecordId(r) ?? r.user_id ?? idx} row={r} last={idx === rows.length - 1}

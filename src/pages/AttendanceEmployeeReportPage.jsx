@@ -4,9 +4,10 @@ import api from '../services/api'
 import {
   UserCheck, LogIn, AlertTriangle, Plane, CalendarOff, UserX,
   Clock, Building2, Layers, ChevronRight, Loader2,
-  ShieldPlus,
+  ShieldPlus, ShieldCheck,
 } from 'lucide-react'
-import { leaveTypeLabel } from '../utils/leave'
+import { leaveTypeLabel, EXCUSED_META, LEAVE_COPY } from '../utils/leave'
+import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
 import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
 import { ExportButton, SortableTh, ToggleChip } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
@@ -49,15 +50,26 @@ function fmtHours(value) {
 
 const WEEKDAY_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
 
-// One status per day, by the precedence the backend already resolved. A real
-// check-in overrides weekend/leave, so `off`/`on_leave` only appear with no punch.
+// One status per day, by the precedence the backend already resolved:
+// check-in → off → excused → on_leave → absent.
+//
+// `off` outranking leave is deliberate: leave and excuses are counted in
+// working days everywhere (the balance, the monthly report), so a non-working
+// day *inside* a span resolves to `off` instead of being charged, and all three
+// agree on what a span is worth. Which days are non-working is server config
+// (and may be the full week), so nothing here assumes a particular calendar.
+// The day still carries `leave_type` whatever its status, which is what the
+// calendar shades the full span from.
 const STATUS_META = {
   present:          { label: 'حاضر',         color: 'var(--c-approved)', bg: 'var(--c-approved-bg)', icon: UserCheck },
   checked_in:       { label: 'بالداخل',      color: '#2563EB',           bg: '#EAF1FE',              icon: LogIn },
   missing_checkout: { label: 'انصراف ناقص',  color: 'var(--c-pending)',  bg: 'var(--c-pending-bg)',  icon: AlertTriangle },
+  // An absence HR answered for — neither planned leave nor an unexplained
+  // absence, so it gets its own colour rather than borrowing either one's.
+  excused:          { label: EXCUSED_META.label, color: EXCUSED_META.color, bg: EXCUSED_META.bg,     icon: ShieldCheck },
   on_leave:         { label: 'إجازة',        color: 'var(--c-primary)',  bg: 'var(--c-accent-tint)', icon: Plane },
   off:              { label: 'عطلة',         color: 'var(--c-text-3)',   bg: 'var(--c-surface-2)',   icon: CalendarOff },
-  absent:           { label: 'غائب',         color: 'var(--c-rejected)', bg: 'var(--c-rejected-bg)', icon: UserX },
+  absent:           { label: LEAVE_COPY.absentNoExcuseShort, color: 'var(--c-rejected)', bg: 'var(--c-rejected-bg)', icon: UserX },
 }
 
 function readApiError(err) {
@@ -96,7 +108,7 @@ function StatusBadge({ status }) {
   )
 }
 
-function StatCard({ icon: Icon, label, value, accent }) {
+function StatCard({ icon: Icon, label, value, accent, hint }) {
   return (
     <div style={{
       flex: 1, minWidth: 120, display: 'flex', alignItems: 'center', gap: 11,
@@ -111,7 +123,33 @@ function StatCard({ icon: Icon, label, value, accent }) {
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>{label}</div>
         <div style={{ fontSize: 19, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+        {hint && <div style={{ fontSize: 10, color: 'var(--c-text-3)', marginTop: 2, whiteSpace: 'nowrap' }}>{hint}</div>}
       </div>
+    </div>
+  )
+}
+
+// Day-status legend — the grid's colours are the only thing distinguishing a
+// planned leave day from an absence that was answered for, so they are named.
+function StatusLegend() {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+      padding: '10px 16px', borderBottom: '1px solid var(--c-border)', background: 'var(--c-surface)',
+    }}>
+      <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--c-text-3)' }}>دليل الحالات</span>
+      {DAY_STATUSES.map(status => {
+        const meta = STATUS_META[status]
+        return (
+          <span key={status} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>
+            <span style={{
+              width: 10, height: 10, borderRadius: 3, flexShrink: 0,
+              background: meta.bg, border: `1.5px solid ${meta.color}`,
+            }} />
+            {meta.label}
+          </span>
+        )
+      })}
     </div>
   )
 }
@@ -127,13 +165,24 @@ function TimeCell({ time }) {
 function DayRow({ day, last, onExcuse }) {
   const [hov, setHov] = useState(false)
   const dim = day.status === 'off'
+  // A day inside a leave/excuse span names the span in `leave_type` whatever
+  // its status, so the whole range shades — including any non-working day in
+  // the middle of it, which resolves to `off`.
+  const inSpan = day.leave_type != null
+  const excuse = day.excuse ?? null
+  const background = hov
+    ? 'rgba(34,65,103,0.015)'
+    : day.status === 'excused'
+      ? EXCUSED_META.bg
+      : inSpan
+        ? 'var(--c-accent-tint)'
+        : dim ? 'var(--c-surface)' : 'transparent'
   return (
     <tr
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : dim ? 'var(--c-surface)' : 'transparent',
-        transition: 'background .1s',
+        background, transition: 'background .1s',
       }}
     >
       <td style={{ padding: '11px 16px' }}>
@@ -155,13 +204,32 @@ function DayRow({ day, last, onExcuse }) {
       <td style={{ padding: '11px 16px' }}>
         {day.status === 'absent' ? <button onClick={() => onExcuse(day)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><ShieldPlus size={13} /> تسجيل عذر</button> : <span style={{ color: 'var(--c-text-3)' }}>—</span>}
       </td>
+      {/* Shown for every day inside a span, not only `on_leave` ones — a
+          non-working day in the middle of a leave is `off` but still part
+          of it. */}
       <td style={{ padding: '11px 16px' }}>
-        {day.status === 'on_leave' && day.leave_type
+        {inSpan
           ? <span style={{
               display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
               fontSize: 11.5, fontWeight: 700, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
-            }}>{leaveTypeLabel(day.leave_type)}</span>
+            }}>{leaveTypeLabel(excuse?.leave_type_name ?? day.leave_type)}</span>
           : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
+      </td>
+      {/* The excuse behind an `excused` day — null on every other status. */}
+      <td style={{ padding: '11px 16px' }}>
+        {excuse ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, maxWidth: 260 }}>
+            <DeductsBalanceBadge deducts={excuse.deducts_balance} compact short />
+            {excuse.reason && (
+              <span style={{ fontSize: 11.5, color: 'var(--c-text-2)', lineHeight: 1.5 }} title={excuse.reason}>
+                {excuse.reason}
+              </span>
+            )}
+            <span style={{ fontSize: 10.5, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
+              سجّلها: {excuse.recorded_by ?? 'الموارد البشرية'}
+            </span>
+          </div>
+        ) : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
       </td>
     </tr>
   )
@@ -171,7 +239,7 @@ function SkeletonRow() {
   const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)' }
   return (
     <tr>
-      {Array.from({ length: 7 }, (_, i) => (
+      {Array.from({ length: COLS.length }, (_, i) => (
         <td key={i} style={{ padding: '11px 16px' }}>
           <div style={{ ...pulse, height: 16, width: i === 0 ? 110 : 70, borderRadius: 7, animationDelay: `${i * 0.08}s` }} />
         </td>
@@ -189,10 +257,12 @@ const COLS = [
   { label: 'ساعات العمل', field: 'work_hours' },
   { label: '—' },
   { label: 'نوع الإجازة' },
+  { label: 'العذر' },
 ]
 
-// Day-status filter options (status=…) — labels reuse STATUS_META.
-const DAY_STATUSES = ['present', 'checked_in', 'missing_checkout', 'on_leave', 'off', 'absent']
+// Day-status filter options (status=…) — labels reuse STATUS_META, and the
+// order matches the backend's precedence.
+const DAY_STATUSES = ['present', 'checked_in', 'missing_checkout', 'excused', 'on_leave', 'off', 'absent']
 
 export default function AttendanceEmployeeReportPage() {
   const [params] = useSearchParams()
@@ -322,8 +392,13 @@ export default function AttendanceEmployeeReportPage() {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
           <StatCard icon={UserCheck} label="أيام الحضور" value={summary.present_days ?? 0}
             accent={{ bg: 'var(--c-approved-bg)', color: 'var(--c-approved)' }} />
-          <StatCard icon={UserX} label="أيام الغياب" value={summary.absent_days ?? 0}
+          <StatCard icon={UserX} label={LEAVE_COPY.absentNoExcuse} value={summary.absent_days ?? 0}
             accent={{ bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)' }} />
+          <StatCard
+            icon={ShieldCheck} label={`أيام ${LEAVE_COPY.excusedStatus}`} value={summary.excused_days ?? 0}
+            accent={{ bg: EXCUSED_META.bg, color: EXCUSED_META.color }}
+            hint={`${summary.excused_deducted_days ?? 0} ${LEAVE_COPY.deductedFromBalance} · ${summary.excused_not_deducted_days ?? 0} ${LEAVE_COPY.notDeductedFromBalance}`}
+          />
           <StatCard icon={Plane} label="أيام الإجازة" value={summary.on_leave_days ?? 0}
             accent={{ bg: 'var(--c-accent-tint)', color: 'var(--c-primary)' }} />
           <StatCard icon={CalendarOff} label="أيام العطل" value={summary.off_days ?? 0}
@@ -367,6 +442,7 @@ export default function AttendanceEmployeeReportPage() {
 
       {/* Day-by-day table */}
       <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
+        <StatusLegend />
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>

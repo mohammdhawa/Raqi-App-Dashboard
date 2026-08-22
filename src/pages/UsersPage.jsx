@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import Button from '../components/ui/Button'
 import { onSectionsChanged } from '../utils/dataEvents'
-import { buildUserCreatePayload, buildUserUpdatePayload } from '../utils/adminForms'
+import { buildUserCreatePayload, buildUserUpdatePayload, userUpdateBody } from '../utils/adminForms'
 
 // Editing any of these on your own account changes what you are allowed to
 // reach, so the session has to be re-read from GET /me afterwards.
@@ -302,10 +302,11 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
     setError('')
     setFieldErrors({})
 
-    const payload = isEdit
-      ? buildUserUpdatePayload(initial, form)
-      : buildUserCreatePayload(form)
-    if (isEdit && Object.keys(payload).length === 0) {
+    // `changes` is what the user actually touched — it answers the "nothing to
+    // save" check and feeds changedKeys. The request body adds `role`, which
+    // the endpoint requires on every update.
+    const changes = isEdit ? buildUserUpdatePayload(initial, form) : null
+    if (isEdit && Object.keys(changes).length === 0) {
       setError('لم تقم بتغيير أي بيانات.')
       return
     }
@@ -313,11 +314,11 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
     setSaving(true)
     try {
       if (isEdit) {
-        await api.patch(`/admin/users/${user.id}`, payload)
+        await api.patch(`/admin/users/${user.id}`, userUpdateBody(changes, form))
       } else {
-        await api.post('/admin/users', payload)
+        await api.post('/admin/users', buildUserCreatePayload(form))
       }
-      onSave({ userId: user?.id, changedKeys: Object.keys(payload) })
+      onSave({ userId: user?.id, changedKeys: Object.keys(changes ?? {}) })
     } catch (e) {
       const data = e.response?.data
       const errs = e.response?.status === 422 && data?.errors && typeof data.errors === 'object'
