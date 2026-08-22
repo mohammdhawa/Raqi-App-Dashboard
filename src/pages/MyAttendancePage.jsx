@@ -12,6 +12,7 @@ import {
   damascusToday, formatTime, readDayStatus, checkoutWaitMs, formatCountdown,
   getPosition, submitAttendance, readAttendanceError, watchGeoPermission,
   isBlockedByPermissionsPolicy, MIN_CHECKOUT_GAP_MINUTES, isSecureContextOk,
+  readRejectionMessage,
 } from '../utils/attendanceCapture'
 import { getLeaveStart, getLeaveEnd, leaveTypeLabel, getLeaveType } from '../utils/leave'
 
@@ -236,25 +237,39 @@ function LocationBlockedPanel({ onRetry }) {
 
 function RecordTile({ record, last }) {
   const meta = TYPE_META[record.type]
-  const Icon = meta?.icon ?? Fingerprint
+  const rejected = Boolean(record.is_rejected)
+  // A refused row is still shown — the employee needs to see the attempt they
+  // made and why it didn't count — but it must never look like a record that
+  // stands, so it loses the type's colour and gains a struck-through label.
+  const Icon = rejected ? ShieldAlert : (meta?.icon ?? Fingerprint)
   const hours = record.work_hours
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px',
       borderBottom: last ? 'none' : '1px solid var(--c-border)',
+      opacity: rejected ? 0.75 : 1,
     }}>
       <div style={{
         width: 36, height: 36, borderRadius: 11, flexShrink: 0,
-        background: meta?.bg ?? 'var(--c-surface-2)', color: meta?.color ?? 'var(--c-text-2)',
+        background: rejected ? 'var(--c-rejected-bg)' : (meta?.bg ?? 'var(--c-surface-2)'),
+        color: rejected ? 'var(--c-rejected)' : (meta?.color ?? 'var(--c-text-2)'),
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <Icon size={17} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>
+        <div style={{
+          fontSize: 13.5, fontWeight: 700,
+          color: rejected ? 'var(--c-text-3)' : 'var(--c-text)',
+          textDecoration: rejected ? 'line-through' : 'none',
+        }}>
           {meta?.label ?? record.type}
         </div>
-        {hours != null && record.type === 'check_out' && (
+        {rejected ? (
+          <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 2, lineHeight: 1.6 }}>
+            {readRejectionMessage(record)}
+          </div>
+        ) : hours != null && record.type === 'check_out' && (
           <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>
             ساعات العمل: {hours}
           </div>
@@ -490,6 +505,16 @@ export default function MyAttendancePage() {
         </Notice>
       )}
 
+      {/* A refusal the employee has not yet put right. Sits above the blocked
+          notice because it is the reason the button says «تسجيل الحضور» again
+          on a day they believe they already recorded. */}
+      {!loading && status.lastRejected && (
+        <Notice icon={ShieldAlert} tone="error">
+          {readRejectionMessage(status.lastRejected)}
+          {nextType === 'check_in' && ' يرجى إعادة تسجيل حضورك بشكل صحيح.'}
+        </Notice>
+      )}
+
       {/* Blocked / errors */}
       {!loading && blockedReason && (
         <Notice icon={ShieldAlert} tone="warn">{blockedReason}</Notice>
@@ -599,7 +624,7 @@ export default function MyAttendancePage() {
               }} />
             ))}
           </div>
-        ) : status.ordered.length === 0 ? (
+        ) : status.all.length === 0 ? (
           <div style={{ padding: '42px 20px', textAlign: 'center' }}>
             <Fingerprint size={30} style={{ color: 'var(--c-text-3)', marginBottom: 10 }} />
             <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: 'var(--c-text-2)' }}>
@@ -607,8 +632,11 @@ export default function MyAttendancePage() {
             </p>
           </div>
         ) : (
-          status.ordered.map((r, idx) => (
-            <RecordTile key={r.id ?? idx} record={r} last={idx === status.ordered.length - 1} />
+          // `all`, not `ordered`: a refused attempt still belongs in the day's
+          // history — hiding it would leave the employee with a notification
+          // about a record they cannot find.
+          status.all.map((r, idx) => (
+            <RecordTile key={r.id ?? idx} record={r} last={idx === status.all.length - 1} />
           ))
         )}
       </div>

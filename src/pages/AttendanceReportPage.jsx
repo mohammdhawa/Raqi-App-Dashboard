@@ -1,17 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/ui/Toast'
 import {
   Calendar, CalendarOff, X, MapPin, LogIn, LogOut, UserCheck,
   AlertTriangle, Plane, Clock, ImageOff, ExternalLink, Loader2,
-  ShieldCheck, Building2, Layers,
+  ShieldCheck, ShieldX, Building2, Layers, ArrowLeft,
 } from 'lucide-react'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh } from '../components/attendance/controls'
+import RejectRecordModal from '../components/attendance/RejectRecordModal'
 import { sortParams } from '../utils/attendanceQuery'
 import { useDeptSections } from '../utils/useDeptSections'
 import { leaveTypeName, deductsBalance, EXCUSED_META, LEAVE_COPY } from '../utils/leave'
+import {
+  readRejection, canRejectRecord, formatRejectedAt, REJECTION_COPY,
+} from '../utils/attendanceRejection'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
 import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
@@ -76,6 +81,13 @@ const SECTIONS = [
   // Disjoint from on_leave: an absence HR justified after the fact appears only
   // here, never among the planned-leave rows.
   { key: 'excused',          label: LEAVE_COPY.excusedStatus, icon: ShieldCheck, color: EXCUSED_META.color, bg: EXCUSED_META.bg },
+  // Days whose check-in HR refused and the employee has not re-recorded. They
+  // appear in no other section and count as absent everywhere else.
+  {
+    key: 'rejected', label: REJECTION_COPY.section, icon: ShieldX,
+    color: 'var(--c-rejected)', bg: 'var(--c-rejected-bg)',
+    title: REJECTION_COPY.sectionHint,
+  },
 ]
 
 const STATUS_META = {
@@ -85,6 +97,8 @@ const STATUS_META = {
   missing_checkout: { label: 'خروج غير مسجّل', color: 'var(--c-pending)',  bg: 'var(--c-pending-bg)',    icon: AlertTriangle },
   on_leave:         { label: 'في إجازة',       color: 'var(--c-primary)',  bg: 'var(--c-accent-tint)',   icon: Plane },
   excused:          { label: EXCUSED_META.label, color: EXCUSED_META.color, bg: EXCUSED_META.bg,         icon: ShieldCheck },
+  // Derived, never a raw record's `status` — a refusal lives in `rejected_at`.
+  rejected:         { label: REJECTION_COPY.dayStatus, color: 'var(--c-rejected)', bg: 'var(--c-rejected-bg)', icon: ShieldX },
 }
 
 // ── Small atoms ──────────────────────────────────────────────────────────────
@@ -241,17 +255,57 @@ function WorkHoursCell({ formatted }) {
   )
 }
 
+// The `rejection` block of a refused row: the grounds (rendered from the
+// payload's own `reason_label`, never re-derived), the note, and who refused it
+// when. This is the audit trail HR will be asked about.
+function RejectionCell({ rejection }) {
+  if (!rejection) return <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 280 }}>
+      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-rejected)', lineHeight: 1.5 }}>
+        {rejection.label}
+      </span>
+      {rejection.note && (
+        <span style={{ fontSize: 11.5, color: 'var(--c-text-2)', lineHeight: 1.5 }} title={rejection.note}>
+          {REJECTION_COPY.note}: {rejection.note}
+        </span>
+      )}
+      <span style={{ fontSize: 10.5, color: 'var(--c-text-3)', lineHeight: 1.5 }}>
+        {rejection.by ? `${REJECTION_COPY.by}: ${rejection.by}` : ''}
+        {rejection.by && rejection.at ? ' · ' : ''}
+        {rejection.at ? formatRejectedAt(rejection.at) : ''}
+      </span>
+    </div>
+  )
+}
+
+const rowActionStyle = (bg, color) => ({
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  height: 32, padding: '0 12px', borderRadius: 9, border: 'none',
+  background: bg, color, fontFamily: 'var(--font-sans)',
+  fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+})
+
 // ── Attendance report row ────────────────────────────────────────────────────
-function AttendanceRow({ row, last, onViewSelfie, onCorrect, showActions }) {
+function AttendanceRow({
+  row, last, onViewSelfie, onCorrect, onReject, onUndoReject,
+  showActions, showCorrection, showRejection, canReject,
+}) {
   const [hov, setHov] = useState(false)
   const correction = getCorrection(row)
-  const isMissing = row.status === 'missing_checkout' || (row.check_in_time && !row.check_out_time)
+  const rejection = readRejection(row)
+  // A refused day has no check-out to be missing — it has no attendance at all,
+  // so it must not borrow the "forgot to check out" warning.
+  const isMissing = !rejection
+    && (row.status === 'missing_checkout' || (row.check_in_time && !row.check_out_time))
   return (
     <tr
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: isMissing ? 'rgba(200,163,107,0.05)' : hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+        background: rejection
+          ? 'rgba(192,57,43,0.045)'
+          : isMissing ? 'rgba(200,163,107,0.05)' : hov ? 'rgba(34,65,103,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
@@ -276,27 +330,49 @@ function AttendanceRow({ row, last, onViewSelfie, onCorrect, showActions }) {
       </td>
       <td style={{ padding: '12px 16px' }}><WorkHoursCell formatted={row.work_hours_formatted} /></td>
       <td style={{ padding: '12px 16px' }}><StatusBadge status={row.status} /></td>
+      {showRejection && (
+        <td style={{ padding: '12px 16px' }}><RejectionCell rejection={rejection} /></td>
+      )}
       {showActions && (
         <td style={{ padding: '12px 16px' }}>
-          {isMissing && !correction && (
-            <button
-              onClick={() => onCorrect(row)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 32, padding: '0 12px', borderRadius: 9,
-                background: 'var(--c-primary)', color: '#fff', border: 'none',
-                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-              className="hover:opacity-90"
-            >
-              <Clock size={12} />
-              تصحيح الخروج
-            </button>
-          )}
-          {correction && (
-            <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>{fmtDateTime(correction.at)}</span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {showCorrection && isMissing && !correction && (
+              <button
+                onClick={() => onCorrect(row)}
+                style={rowActionStyle('var(--c-primary)', '#fff')}
+                className="hover:opacity-90"
+              >
+                <Clock size={12} />
+                تصحيح الخروج
+              </button>
+            )}
+            {/* A refusal is offered on rows that still stand, undo on the ones
+                already refused — never both, and neither on a row this viewer
+                cannot reach (it could only come back 403). */}
+            {canReject && (rejection ? (
+              <button
+                onClick={() => onUndoReject(row)}
+                style={rowActionStyle('var(--c-surface-2)', 'var(--c-text-2)')}
+                className="hover:opacity-90"
+              >
+                <ShieldCheck size={12} />
+                {REJECTION_COPY.undo}
+              </button>
+            ) : (
+              <button
+                onClick={() => onReject(row)}
+                title="رفض تسجيل غير مطابق — الموقع أو الصورة"
+                style={rowActionStyle('var(--c-rejected-bg)', 'var(--c-rejected)')}
+                className="hover:opacity-90"
+              >
+                <ShieldX size={12} />
+                {REJECTION_COPY.reject}
+              </button>
+            ))}
+            {showCorrection && correction && (
+              <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>{fmtDateTime(correction.at)}</span>
+            )}
+          </div>
         </td>
       )}
     </tr>
@@ -380,7 +456,7 @@ function SummaryTile({ meta, count, active, onClick }) {
   const Icon = meta.icon
   return (
     <button
-      onClick={onClick}
+      onClick={onClick} title={meta.title}
       style={{
         flex: 1, minWidth: 150, display: 'flex', alignItems: 'center', gap: 12,
         padding: '13px 15px', borderRadius: 12, cursor: 'pointer', textAlign: 'right',
@@ -660,6 +736,7 @@ const dateInputStyle = {
 
 export default function AttendanceReportPage() {
   const { user } = useAuth()
+  const toast = useToast()
   const hasFullAccess = user?.role === 'admin' || !!user?.can_view_attendance
 
   const [date, setDate]           = useState('')
@@ -673,6 +750,8 @@ export default function AttendanceReportPage() {
   const [section, setSection] = useState('present')
   const [selfie, setSelfie]   = useState(null)
   const [correcting, setCorrecting] = useState(null)
+  // { row, mode } — one dialog for both directions of a refusal.
+  const [rejecting, setRejecting]   = useState(null)
   // Applied to the rows of every report section; null keeps the documented
   // per-section default order.
   const [sort, setSort] = useState(null)
@@ -731,8 +810,13 @@ export default function AttendanceReportPage() {
 
   const isExcusedSection = section === 'excused'
   const isLeaveSection = section === 'on_leave' || isExcusedSection
+  const isRejectedSection = section === 'rejected'
   const rows = report?.[section] ?? []
-  const showActions = section === 'missing_checkout'
+  const showCorrection = section === 'missing_checkout'
+  // Refusing is offered on every attendance section, not just one: the row is
+  // wherever the employee currently sits, and the point of refusing is to move
+  // them out of it.
+  const showActions = !isLeaveSection
 
   // `field` = sortable (report whitelist: name, email, department, section,
   // status, check_in_time, check_out_time, work_hours — applies to all sections).
@@ -755,7 +839,11 @@ export default function AttendanceReportPage() {
     ? (isExcusedSection
         ? [...LEAVE_COLS, { label: 'سبب العذر' }, { label: 'مسجّل بواسطة' }]
         : LEAVE_COLS)
-    : showActions ? [...ATT_COLS, { label: 'إجراءات' }] : ATT_COLS
+    : [
+        ...ATT_COLS,
+        ...(isRejectedSection ? [{ label: 'تفاصيل الرفض' }] : []),
+        ...(showActions ? [{ label: 'إجراءات' }] : []),
+      ]
 
   const activeMeta = SECTIONS.find(s => s.key === section)
   const reportDate = report?.date || date || ''
@@ -767,13 +855,22 @@ export default function AttendanceReportPage() {
     missing_checkout: 'لا توجد سجلات خروج غير مكتملة',
     on_leave:         'لا يوجد موظفون في إجازة معتمدة',
     excused:          'لا توجد أيام غياب مسجَّل عنها عذر في هذا اليوم',
+    rejected:         REJECTION_COPY.sectionEmpty,
   }[section]
 
   const hasFilters = Boolean(date || departmentId || sectionId || search)
 
-  // Fri/Sat (or configured holidays) — the board would otherwise read as if
+  // Friday (or a configured holiday) — the board would otherwise read as if
   // everyone is absent, so show an explicit non-working-day state instead.
+  // Never derived here: `working_day` is the server's answer.
   const nonWorkingDay = !loading && report?.working_day === false
+
+  // One refusal can move two rows *and* move the employee between sections, so
+  // the whole report is pulled again rather than patching the row in place.
+  const afterRejection = (payload) => {
+    if (payload?.message) toast.success(payload.message)
+    fetchReport()
+  }
 
   return (
     <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1240, margin: '0 auto' }}>
@@ -784,7 +881,7 @@ export default function AttendanceReportPage() {
         </h1>
         <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
           ملخّص حضور اليوم: الحاضرون، من أكمل الدوام، من نسي تسجيل الخروج، الموظفون في إجازة معتمدة،
-          ومن سُجّل عذر عن غيابه.
+          من سُجّل عذر عن غيابه، ومن رُفض تسجيله.
         </p>
       </div>
 
@@ -813,11 +910,14 @@ export default function AttendanceReportPage() {
             مسح الفلاتر
           </button>
         )}
-        {/* The unrestricted workbook has 7 sheets (الحضور، لم ينصرفوا بعد،
-            المنصرفون، انصراف مفقود، الإجازات، الغياب بعذر، الملخص);
-            report_section restricts it to the active tile's sheet plus the
-            summary, so the file matches what's on screen. `excused` is a valid
-            section as of v9.1. */}
+        {/* The unrestricted workbook has 8 sheets (الحضور، لم ينصرفوا بعد،
+            المنصرفون، انصراف مفقود، الإجازات، الغياب بعذر، تسجيلات مرفوضة،
+            الملخص); report_section restricts it to the active tile's sheet plus
+            the summary, so the file matches what's on screen. `excused` is a
+            valid section as of v9.1, `rejected` as of the refusal release —
+            which also added a `تسجيلات مرفوضة` row to the summary sheet.
+            Nothing here reads the file back, so there is no fixed index to
+            update. */}
         <ExportButton
           url="/attendance/report" params={{ ...buildParams(), report_section: section }}
           filename="attendance-daily-report.xlsx"
@@ -831,7 +931,8 @@ export default function AttendanceReportPage() {
       </div>
 
       {nonWorkingDay ? (
-        /* Non-working day (Fri/Sat or configured holiday) — no attendance expected */
+        /* Non-working day per the server's `working_day` (Friday, or a
+           configured holiday) — no attendance expected */
         <div style={{
           background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16,
           boxShadow: 'var(--sh-card)', padding: '56px 24px', textAlign: 'center',
@@ -879,6 +980,33 @@ export default function AttendanceReportPage() {
               {LEAVE_COPY.excusedSectionHint}
             </span>
           )}
+          {/* Two refusals are deliberately absent from this section: a day the
+              employee re-recorded correctly (they are in `present` now) and a
+              check-out refused on its own (its check-in still stands, so they
+              are still in `checked_in`). Both are in the records table. */}
+          {isRejectedSection && (
+            <div style={{
+              marginInlineStart: 'auto', display: 'flex', alignItems: 'center',
+              gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end',
+            }}>
+              <span
+                title={REJECTION_COPY.sectionHint}
+                style={{ fontSize: 11.5, color: 'var(--c-text-3)', cursor: 'help' }}
+              >
+                {REJECTION_COPY.sectionHintShort}
+              </span>
+              <Link
+                to="/admin/attendance?rejected=1"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
+                  fontSize: 11.5, fontWeight: 800, color: 'var(--c-primary)', textDecoration: 'none',
+                }}
+              >
+                {REJECTION_COPY.allRejectedLink}
+                <ArrowLeft size={13} />
+              </Link>
+            </div>
+          )}
         </div>
 
         <div style={{ overflowX: 'auto' }}>
@@ -903,7 +1031,12 @@ export default function AttendanceReportPage() {
                   : rows.map((r, idx) => (
                       <AttendanceRow
                         key={getRecordId(r) ?? r.user_id ?? idx} row={r} last={idx === rows.length - 1}
-                        onViewSelfie={setSelfie} onCorrect={setCorrecting} showActions={showActions}
+                        onViewSelfie={setSelfie} onCorrect={setCorrecting}
+                        onReject={row => setRejecting({ row, mode: 'reject' })}
+                        onUndoReject={row => setRejecting({ row, mode: 'undo' })}
+                        showActions={showActions} showCorrection={showCorrection}
+                        showRejection={isRejectedSection}
+                        canReject={canRejectRecord(user, r) && getRecordId(r) != null}
                       />
                     ))
               }
@@ -922,6 +1055,26 @@ export default function AttendanceReportPage() {
       )}
 
       {selfie && <SelfiePreview data={selfie} onClose={() => setSelfie(null)} />}
+      {/* A report row only carries the check-in id, so a refusal filed here
+          always takes the whole day — the modal says so. */}
+      {rejecting && (
+        <RejectRecordModal
+          mode={rejecting.mode}
+          target={{
+            recordId: getRecordId(rejecting.row),
+            name: rejecting.row.name,
+            email: rejecting.row.email,
+            type: 'check_in',
+            recordedAt: rejecting.row.check_in_time,
+            selfieUrl: rejecting.row.check_in_selfie,
+            latitude: rejecting.row.check_in_location?.latitude,
+            longitude: rejecting.row.check_in_location?.longitude,
+            source: rejecting.row,
+          }}
+          onClose={() => setRejecting(null)}
+          onDone={afterRejection}
+        />
+      )}
       {correcting && (
         <CorrectionDialog
           row={correcting} reportDate={reportDate || new Date().toISOString().slice(0, 10)}

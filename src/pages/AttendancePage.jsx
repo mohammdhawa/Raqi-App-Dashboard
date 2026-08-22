@@ -1,18 +1,25 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../components/ui/Toast'
 import {
   Fingerprint, Calendar, LogIn, LogOut,
   MapPin, Camera, X, User as UserIcon, UserX, Building2,
   Loader2, ImageOff, ExternalLink, Plane, CalendarOff,
-  Layers, AlertTriangle, ShieldCheck, Clock,
+  Layers, AlertTriangle, ShieldCheck, ShieldX, Clock,
   ShieldPlus,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
 import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
 import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
+import RejectedBadge from '../components/ui/RejectedBadge'
+import RejectRecordModal from '../components/attendance/RejectRecordModal'
 import { getLeaveUser, getLeaveStart, getLeaveEnd, getLeaveDays, leaveTypeName, deductsBalance } from '../utils/leave'
+import {
+  isRejected, canRejectRecord, REJECTION_COPY, REJECTION_REASON_KEYS, REJECTION_REASONS,
+} from '../utils/attendanceRejection'
 import { SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh, PerPageSelect, ToggleChip, MultiSelect } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
@@ -60,9 +67,9 @@ const ROLE_META = {
 }
 
 // Column defs: `field` marks a header as sortable and must stay inside the
-// endpoint's whitelist (records: recorded_at/type + relation employee_name;
-// absent-today: name/role/department; approved-leave-users: employee_name/
-// leave_type/start_date/requested_days).
+// endpoint's whitelist (records: recorded_at/type/status/work_hours/rejected_at
+// + relation employee_name; absent-today: name/role/department;
+// approved-leave-users: employee_name/leave_type/start_date/requested_days).
 const TABLE_COLS = [
   { label: 'الموظف', field: 'employee_name' },
   { label: 'القسم', field: 'department' },
@@ -70,6 +77,8 @@ const TABLE_COLS = [
   { label: 'التاريخ والوقت', field: 'recorded_at' },
   { label: 'الموقع' },
   { label: 'الصورة' },
+  { label: 'حالة الرفض', field: 'rejected_at' },
+  { label: 'إجراءات' },
 ]
 const TABLE_COLS_ABSENT = [
   { label: 'الموظف', field: 'name' },
@@ -324,7 +333,7 @@ function SelfiePreviewModal({ record, onClose }) {
 
 // ── Skeleton row ──────────────────────────────────────────────────────────────
 
-const SKELETON_CELLS = [[170, 34, 17], [80, 22, 7], [100, 26, 7], [90, 16, 7], [110, 16, 7], [90, 22, 7]]
+const SKELETON_CELLS = [[170, 34, 17], [80, 22, 7], [100, 26, 7], [90, 16, 7], [110, 16, 7], [90, 22, 7], [80, 22, 7], [100, 32, 9]]
 const SKELETON_CELLS_ABSENT = [[170, 34, 17], [80, 22, 7], [120, 16, 7], [70, 26, 7], [110, 30, 8]]
 const SKELETON_CELLS_LEAVE = [[170, 34, 17], [120, 16, 7], [70, 22, 7], [140, 16, 7], [50, 16, 7], [90, 22, 7], [110, 16, 7]]
 
@@ -343,15 +352,20 @@ function SkeletonRow({ cells = SKELETON_CELLS }) {
 
 // ── Record row (separated to avoid hook-in-loop) ─────────────────────────────
 
-function RecordRow({ record, last, onViewSelfie }) {
+function RecordRow({ record, last, onViewSelfie, onReject, onUndoReject, canReject }) {
   const [hov, setHov] = useState(false)
   const u = record.user
+  // The backend counts none of a refused event, so its time and hours are
+  // struck through and muted — a plain row here would read as counted work.
+  const rejected = isRejected(record)
   return (
     <tr
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+        background: rejected
+          ? 'rgba(192,57,43,0.045)'
+          : hov ? 'rgba(34,65,103,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
@@ -367,18 +381,63 @@ function RecordRow({ record, last, onViewSelfie }) {
       <td style={{ padding: '12px 16px' }}>
         <DeptSectionCell department={u?.department?.name} section={u?.section?.name} />
       </td>
-      <td style={{ padding: '12px 16px' }}>
+      <td style={{ padding: '12px 16px', opacity: rejected ? 0.55 : 1 }}>
         <TypeBadge type={record.type} />
       </td>
       <td style={{ padding: '12px 16px' }}>
-        <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--c-text)' }}>{formatDate(record.recorded_at)}</div>
-        <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>{formatTime(record.recorded_at)}</div>
+        <div style={{
+          fontSize: 12.5, fontWeight: 600,
+          color: rejected ? 'var(--c-text-3)' : 'var(--c-text)',
+          textDecoration: rejected ? 'line-through' : 'none',
+        }}>
+          {formatDate(record.recorded_at)}
+        </div>
+        <div style={{
+          fontSize: 11, color: 'var(--c-text-3)', marginTop: 2, fontVariantNumeric: 'tabular-nums',
+          textDecoration: rejected ? 'line-through' : 'none',
+        }}>
+          {formatTime(record.recorded_at)}
+          {record.work_hours != null && ` · ${record.work_hours_formatted ?? `${record.work_hours} س`}`}
+        </div>
       </td>
       <td style={{ padding: '12px 16px' }}>
         <LocationCell lat={record.latitude} lng={record.longitude} />
       </td>
       <td style={{ padding: '12px 16px' }}>
         <SelfieTag record={record} onView={onViewSelfie} />
+      </td>
+      <td style={{ padding: '12px 16px' }}>
+        {rejected
+          ? <RejectedBadge source={record} compact />
+          : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
+      </td>
+      <td style={{ padding: '12px 16px' }}>
+        {/* Hidden where it could only 403 (out of scope), and never offered
+            alongside its own undo. */}
+        {canReject && (rejected ? (
+          <button
+            onClick={() => onUndoReject(record)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px',
+              borderRadius: 9, border: 'none', background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
+              fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer',
+            }}
+          >
+            <ShieldCheck size={13} /> {REJECTION_COPY.undo}
+          </button>
+        ) : (
+          <button
+            onClick={() => onReject(record)}
+            title="رفض تسجيل غير مطابق — الموقع أو الصورة"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px',
+              borderRadius: 9, border: 'none', background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
+              fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer',
+            }}
+          >
+            <ShieldX size={13} /> {REJECTION_COPY.reject}
+          </button>
+        ))}
       </td>
     </tr>
   )
@@ -625,7 +684,35 @@ function SingleDateFilters({
 
 export default function AttendancePage() {
   const { user } = useAuth()
+  const toast = useToast()
   const hasFullAccess = user?.role === 'admin' || !!user?.can_view_attendance
+  // The daily report's «تسجيلات مرفوضة» tab links here with ?rejected=1 to show
+  // every refused row — including the two the report deliberately omits (a day
+  // re-recorded correctly, and a check-out refused on its own).
+  //
+  // These two live in the query string rather than component state so the link
+  // that sets them and the controls that clear them agree: a filter seeded from
+  // the URL but cleared only in state would come back on refresh, and would
+  // travel to anyone the URL was shared with. The rest of the filter bar has no
+  // URL contract and stays local.
+  const [urlParams, setUrlParams] = useSearchParams()
+  const rejectedOnly = urlParams.get('rejected') === '1'
+  const rejectionReason = REJECTION_REASON_KEYS.includes(urlParams.get('rejection_reason'))
+    ? urlParams.get('rejection_reason')
+    : ''
+
+  // Replaced, not pushed: `back` should leave the page rather than walk every
+  // filter combination tried on the way.
+  const updateQuery = (changes) => {
+    const next = new URLSearchParams(urlParams)
+    for (const [key, value] of Object.entries(changes)) {
+      if (value) next.set(key, value)
+      else next.delete(key)
+    }
+    setUrlParams(next, { replace: true })
+  }
+  const setRejectedOnly = v => updateQuery({ rejected: v ? '1' : '' })
+  const setRejectionReason = v => updateQuery({ rejection_reason: v })
 
   // 'records' = attendance log (defaults to today on the backend),
   // 'absent'  = employees with attendance_check who have no check-in for the day,
@@ -673,6 +760,8 @@ export default function AttendancePage() {
 
   const [selfiePreview, setSelfiePreview] = useState(null)
   const [excuseTarget, setExcuseTarget] = useState(null)
+  // { record, mode } — the shared refuse/undo confirm dialog.
+  const [rejecting, setRejecting] = useState(null)
 
   // Absent-today tab — single date (empty = today, resolved by the backend).
   const [absentRows, setAbsentRows]   = useState([])
@@ -746,11 +835,16 @@ export default function AttendancePage() {
     if (type)                 params.type           = type
     if (missingCheckout)      params.missing_checkout = 1
     if (isCorrected)          params.is_corrected     = 1
+    if (rejectedOnly)         params.rejected         = 1
+    // Narrowing by ground only makes sense among refused rows, and the API
+    // treats the two as independent — send them together so the export (which
+    // reuses these params verbatim) mirrors exactly what is on screen.
+    if (rejectionReason)      params.rejection_reason = rejectionReason
     if (whMin !== '')         params.work_hours_min = whMin
     if (whMax !== '')         params.work_hours_max = whMax
     return { ...params, ...sortParams(sort) }
   }, [dateFrom, dateTo, monthValue, departmentIds, sectionIds, userIds, search,
-      type, missingCheckout, isCorrected, whMin, whMax, sort])
+      type, missingCheckout, isCorrected, rejectedOnly, rejectionReason, whMin, whMax, sort])
 
   // ── API ──────────────────────────────────────────────────────────────────
   const fetchRecords = useCallback(async (targetPage) => {
@@ -856,8 +950,8 @@ export default function AttendancePage() {
     fetchRecords(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateFrom, dateTo, monthValue, departmentIds, sectionIds, userIds, search,
-      type, missingCheckout, isCorrected, whMin, whMax, sort, perPage,
-      dateRangeInvalid, view])
+      type, missingCheckout, isCorrected, rejectedOnly, rejectionReason,
+      whMin, whMax, sort, perPage, dateRangeInvalid, view])
 
   // The selected sections only belong to the selected departments — clear them
   // whenever the departments change so we never send an orphan section_id (422).
@@ -902,13 +996,24 @@ export default function AttendancePage() {
   const hasFilters = Boolean(
     dateFrom || dateTo || monthValue || departmentIds.length || sectionIds.length ||
     userIds.length || search || type || missingCheckout || isCorrected ||
-    whMin !== '' || whMax !== ''
+    rejectedOnly || rejectionReason || whMin !== '' || whMax !== ''
   )
   const clearFilters = () => {
     setDateFrom(''); setDateTo(''); setMonthValue('')
     setDepartmentIds([]); setSectionIds([]); setUserIds([]); setSearch('')
     setType(''); setMissingCheckout(false); setIsCorrected(false)
+    // Clears the query string too, so a refresh (or the same URL sent to
+    // someone else) doesn't bring the rejected filters back.
+    updateQuery({ rejected: '', rejection_reason: '' })
     setWhMin(''); setWhMax('')
+  }
+
+  // A refusal can take a check-out down with the check-in, so the page is
+  // refetched rather than a single row patched — `rejected_records` names every
+  // row the decision touched and any of them may be on screen.
+  const afterRejection = (payload) => {
+    if (payload?.message) toast.success(payload.message)
+    fetchRecords(page)
   }
 
   // Active-tab view-model so the table/empty/pagination blocks stay tab-agnostic.
@@ -928,9 +1033,11 @@ export default function AttendancePage() {
         ? (noDateFilter ? 'لا توجد سجلات مطابقة لهذا الموظف اليوم' : 'لا توجد سجلات مطابقة لهذا البحث')
         : 'لا توجد سجلات حضور لهذا اليوم'
   const HOLIDAY_MESSAGE = 'هذا اليوم يوم عطلة (غير يوم عمل) — لا يُتوقع حضور'
-  // The "في إجازة" tab ignores working_day: leave doesn't pause on weekends/
-  // holidays, so a multi-day leave that spans an off-day must still render. Its
-  // empty state is the normal "no one on leave", never the holiday state.
+  // The "في إجازة" tab ignores working_day: leave doesn't pause on a day off
+  // (Friday, or a configured holiday), so a multi-day leave that spans one must
+  // still render. Its empty state is the normal "no one on leave", never the
+  // holiday state. Whether a date is a working day is always the server's
+  // `working_day`, never derived here.
   const emptyMessage = isAbsent
     ? (absentError
         ? absentError
@@ -1120,6 +1227,23 @@ export default function AttendancePage() {
                 active={isCorrected} onChange={setIsCorrected}
                 title="سجلات الانصراف التي أنشأها مشرف تصحيحاً"
               />
+              {/* Same wording the export's metadata block uses, so the file and
+                  the screen name the filter the same way. */}
+              <ToggleChip
+                label={REJECTION_COPY.rejectedFilter} icon={ShieldX}
+                active={rejectedOnly} onChange={setRejectedOnly}
+                title="التسجيلات التي رفضتها الموارد البشرية — لا تُحتسب حضوراً"
+              />
+              <select
+                value={rejectionReason} onChange={e => setRejectionReason(e.target.value)}
+                title={REJECTION_COPY.reasonFilter}
+                style={{ ...deptSelectStyle, minWidth: 0, color: rejectionReason ? 'var(--c-text)' : 'var(--c-text-2)' }}
+              >
+                <option value="">{REJECTION_COPY.reasonFilter}: الكل</option>
+                {REJECTION_REASON_KEYS.map(key => (
+                  <option key={key} value={key}>{REJECTION_REASONS[key]}</option>
+                ))}
+              </select>
 
               {/* Work-hours bounds (check-out rows) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1174,6 +1298,11 @@ export default function AttendancePage() {
               filename="approved-leave-users.xlsx"
             />
           ) : (
+            /* The records workbook gained five appended columns — مرفوض،
+               سبب الرفض، مرفوض بواسطة، وقت الرفض، ملاحظة الرفض — and its
+               metadata block names the two new filters «سجلات مرفوضة» and
+               «سبب الرفض». Nothing here reads the file back, so there is no
+               fixed index to update. */
             <ExportButton
               url="/attendance/records" params={buildRecordFilters()}
               filename="attendance-records.xlsx" disabled={dateRangeInvalid}
@@ -1182,7 +1311,7 @@ export default function AttendancePage() {
         </div>
 
         {/* Table / Holiday Empty State — gated per tab: the leave tab never
-            shows the holiday state (leave spans weekends), only records/absent. */}
+            shows the holiday state (leave spans days off), only records/absent. */}
         {!activeLoading && !isLeave && activeWorkingDay === false ? (
           <div style={{ padding: '56px 24px', textAlign: 'center' }}>
             <CalendarOff size={36} style={{ color: 'var(--c-text-3)', marginBottom: 14 }} />
@@ -1217,7 +1346,15 @@ export default function AttendancePage() {
                       ? activeRows.map((u, idx) => <AbsentRow key={u.id} user={u} last={idx === activeRows.length - 1} onExcuse={employee => setExcuseTarget({ employee, date: resolvedDate || absentDate })} />)
                       : isLeave
                         ? activeRows.map((item, idx) => <LeaveRow key={item.id ?? idx} item={item} last={idx === activeRows.length - 1} />)
-                        : activeRows.map((r, idx) => <RecordRow key={r.id} record={r} last={idx === activeRows.length - 1} onViewSelfie={setSelfiePreview} />)
+                        : activeRows.map((r, idx) => (
+                            <RecordRow
+                              key={r.id} record={r} last={idx === activeRows.length - 1}
+                              onViewSelfie={setSelfiePreview}
+                              onReject={record => setRejecting({ record, mode: 'reject' })}
+                              onUndoReject={record => setRejecting({ record, mode: 'undo' })}
+                              canReject={canRejectRecord(user, r)}
+                            />
+                          ))
                   }
                 </tbody>
               </table>
@@ -1260,6 +1397,27 @@ export default function AttendancePage() {
       {excuseTarget && (
         <ExcuseLeaveModal employee={excuseTarget.employee} date={excuseTarget.date}
           onClose={() => setExcuseTarget(null)} onSubmitted={() => fetchAbsent(absentPage)} />
+      )}
+      {/* Every event has its own row here, so this is the only place a check-out
+          can be refused on its own — the modal warns about the paired check-out
+          only when the target is a check-in. */}
+      {rejecting && (
+        <RejectRecordModal
+          mode={rejecting.mode}
+          target={{
+            recordId: rejecting.record.id,
+            name: rejecting.record.user?.name,
+            email: rejecting.record.user?.email,
+            type: rejecting.record.type,
+            recordedAt: rejecting.record.recorded_at,
+            selfieUrl: rejecting.record.selfie_url,
+            latitude: rejecting.record.latitude,
+            longitude: rejecting.record.longitude,
+            source: rejecting.record,
+          }}
+          onClose={() => setRejecting(null)}
+          onDone={afterRejection}
+        />
       )}
     </div>
   )

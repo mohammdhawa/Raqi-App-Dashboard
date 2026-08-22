@@ -322,24 +322,63 @@ export function readAttendanceError(err, fallback = 'تعذّر تسجيل ال�
 /**
  * Reduce a day's records to what the button needs. The app treats a day as one
  * shift: check-in then check-out, no second round.
+ *
+ * A record HR refused (`is_rejected`) is **not** attendance. The backend looks
+ * straight through it — the day counts as absent, and the employee is expected
+ * to record it again — so counting one here would offer "check out" against a
+ * check-in the server no longer sees, and every tap would come back 422. The
+ * refused rows are still returned separately so the page can say what happened.
+ *
+ * `is_rejected` is absent on older backends, where `!undefined` keeps the
+ * record: an API that predates refusals had none to hide.
  */
 export function readDayStatus(records) {
-  const ordered = [...(records ?? [])]
+  const all = [...(records ?? [])]
     .filter(r => r?.recorded_at)
     .sort((a, b) => (parseApiDate(a.recorded_at) ?? 0) - (parseApiDate(b.recorded_at) ?? 0))
+
+  const ordered = all.filter(r => !r.is_rejected)
+  const rejected = all.filter(r => r.is_rejected)
 
   const lastCheckIn = [...ordered].reverse().find(r => r.type === 'check_in') ?? null
   const hasCheckOut = ordered.some(r => r.type === 'check_out')
   const last = ordered[ordered.length - 1] ?? null
 
   return {
+    // Only the records that still stand — what the status card and the button
+    // reason about.
     ordered,
+    // Every record for the day, refused ones included, for the history list.
+    all,
+    rejected,
+    // The most recent refusal, which is the one worth explaining.
+    lastRejected: rejected[rejected.length - 1] ?? null,
     last,
     lastCheckIn,
     hasCheckOut,
     // What the big button would do next: null once the day's shift is closed.
+    // After a refusal this correctly falls back to 'check_in'.
     nextType: hasCheckOut ? null : lastCheckIn ? 'check_out' : 'check_in',
   }
+}
+
+/** Arabic reason labels, mirroring AttendanceRecord::REJECTION_REASON_LABELS. */
+export const REJECTION_REASONS = {
+  location: 'الموقع المسجَّل لا يطابق موقع العمل',
+  selfie: 'الصورة الشخصية غير صحيحة أو غير واضحة',
+  other: 'مخالفة تعليمات تسجيل الحضور',
+}
+
+/** One sentence explaining a refused record, or '' when it isn't refused. */
+export function readRejectionMessage(record) {
+  if (!record?.is_rejected) return ''
+
+  const what = record.type === 'check_out' ? 'انصرافك' : 'حضورك'
+  const why = REJECTION_REASONS[record.rejection_reason]
+    ?? 'مخالفة تعليمات تسجيل الحضور'
+  const note = record.rejection_note ? ` ملاحظة: ${record.rejection_note}` : ''
+
+  return `لم تُقبل محاولة تسجيل ${what} الساعة ${formatTime(record.recorded_at)}: ${why}.${note}`
 }
 
 /** Milliseconds still to wait before a check-out is allowed (0 when it is). */
