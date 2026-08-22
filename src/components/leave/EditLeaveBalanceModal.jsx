@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Check, Loader2, X } from 'lucide-react'
 import api from '../../services/api'
 import { useToast } from '../ui/Toast'
+import { LEAVE_COPY } from '../../utils/leave'
 
 const inputStyle = {
   width: '100%', height: 42, borderRadius: 10, border: '1px solid var(--c-border)',
@@ -80,7 +81,14 @@ export default function EditLeaveBalanceModal({ row, defaultDays, selectedYear, 
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>تعديل رصيد الإجازات — {row.user.name}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 4 }}>السنة {selectedYear} · مستخدم {row.used_days} يوم · متبقي {row.remaining_days} يوم</div>
+            <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 4 }}>
+              السنة {selectedYear} · مستخدم {row.used_days} يوم · متبقي {row.remaining_days} يوم
+              {/* Approved days under a non-deducting type — never part of
+                  used_days, so they are named apart from it. */}
+              {Number(row.excused_days ?? 0) > 0 && (
+                <span title={LEAVE_COPY.excusedDaysHint}> · {LEAVE_COPY.excusedDays} {row.excused_days} يوم</span>
+              )}
+            </div>
           </div>
           <button type='button' onClick={onClose} disabled={submitting} title='إغلاق' style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
         </div>

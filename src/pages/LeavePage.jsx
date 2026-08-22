@@ -4,16 +4,18 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/ui/Toast'
 import {
   CalendarCheck, CalendarDays, CalendarClock, Wallet, Check, X,
-  Inbox, Loader2, Building2, MessageSquare, Calendar, ClipboardCheck, Tags,
+  Inbox, Loader2, Building2, MessageSquare, Calendar, ClipboardCheck,
   CalendarPlus, AlertTriangle,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
+import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
 import SubmitLeaveModal from '../components/leave/SubmitLeaveModal'
+import { LeaveTypeFilter } from '../components/leave/LeaveTypeSelect'
 import {
-  getLeaveUser, getLeaveType, getLeaveReason, getLeaveStart, getLeaveEnd,
-  getLeaveDays, getLeaveCalendarDays, leaveTypeLabel, readLeaveBalance,
-  leaveApiMessage, LEAVE_TYPE_LABELS,
+  getLeaveUser, getLeaveReason, getLeaveStart, getLeaveEnd,
+  getLeaveDays, getLeaveCalendarDays, leaveTypeName, deductsBalance, readLeaveBalance,
+  leaveApiMessage, LEAVE_COPY, EXCUSED_META,
 } from '../utils/leave'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh, ToggleChip, MultiSelect } from '../components/attendance/controls'
@@ -65,15 +67,26 @@ function DeptCell({ name }) {
   )
 }
 
-function LeaveTypePill({ type }) {
+// The type label plus, on a non-deducting row, the badge saying so — an
+// approver reviewing a queue needs to see which requests are free.
+//
+// Both come off the row: `leave_type_name`/`type` for the label (the stored
+// `leave_type` string is the type's Arabic label on new rows but raw free text
+// on older ones, so it is never switched on), and the `deducts_balance`
+// snapshot for the policy.
+function LeaveTypePill({ item }) {
+  const deducts = deductsBalance(item)
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
-      fontSize: 11.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
-      background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
-    }}>
-      {leaveTypeLabel(type)}
-    </span>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
+        fontSize: 11.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
+        background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
+      }}>
+        {leaveTypeName(item)}
+      </span>
+      {deducts === false && <DeductsBalanceBadge deducts={false} compact short />}
+    </div>
   )
 }
 
@@ -121,11 +134,11 @@ function PagBtn({ children, active, disabled, onClick }) {
 
 // ── Leave balance widget ─────────────────────────────────────────────────────
 
-function BalanceTile({ icon: Icon, label, value, accent }) {
+function BalanceTile({ icon: Icon, label, value, accent, title }) {
   return (
-    <div style={{
+    <div title={title} style={{
       flex: 1, minWidth: 150, display: 'flex', alignItems: 'center', gap: 12,
-      padding: '14px 16px', borderRadius: 12,
+      padding: '14px 16px', borderRadius: 12, cursor: title ? 'help' : undefined,
       background: '#fff', border: '1px solid var(--c-border)',
     }}>
       <div style={{
@@ -150,7 +163,7 @@ function BalanceWidget({ balance, loading }) {
   if (loading) {
     return (
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 22 }}>
-        {[0, 1, 2].map(i => (
+        {[0, 1, 2, 3].map(i => (
           <div key={i} style={{
             flex: 1, minWidth: 150, height: 68, borderRadius: 12,
             background: 'var(--c-surface-2)', animation: 'pulse 1.5s ease-in-out infinite',
@@ -170,6 +183,15 @@ function BalanceWidget({ balance, loading }) {
       <BalanceTile
         icon={CalendarClock} label="الأيام المستخدمة" value={balance?.used}
         accent={{ bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)' }}
+      />
+      {/* Approved days that justified an absence without costing the
+          allocation. Deliberately labelled apart from "الأيام المستخدمة": it is
+          excluded from used_days by design, and reading it as part of the
+          allocation is exactly the mistake to prevent. */}
+      <BalanceTile
+        icon={CalendarCheck} label={LEAVE_COPY.excusedDays} value={balance?.excused}
+        title={LEAVE_COPY.excusedDaysHint}
+        accent={{ bg: EXCUSED_META.bg, color: EXCUSED_META.color }}
       />
       <BalanceTile
         icon={CalendarCheck} label="الأيام المتبقية" value={balance?.remaining}
@@ -249,7 +271,7 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{u?.name ?? '—'}</div>
               <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>
-                {leaveTypeLabel(getLeaveType(item))} · {formatDate(getLeaveStart(item))} — {formatDate(getLeaveEnd(item))}
+                {leaveTypeName(item)} · {formatDate(getLeaveStart(item))} — {formatDate(getLeaveEnd(item))}
                 {getLeaveDays(item) != null && ` · ${getLeaveDays(item)} يوم عمل`}
               </div>
             </div>
@@ -348,7 +370,7 @@ function ApprovalRow({ item, last, onReview }) {
           </div>
         </div>
       </td>
-      <td style={{ padding: '12px 16px' }}><LeaveTypePill type={getLeaveType(item)} /></td>
+      <td style={{ padding: '12px 16px' }}><LeaveTypePill item={item} /></td>
       <td style={{ padding: '12px 16px' }}><LeaveOriginCell item={item} /></td>
       <td style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
@@ -417,7 +439,7 @@ function MineRow({ item, last }) {
         background: hov ? 'rgba(34,65,103,0.015)' : 'transparent', transition: 'background .1s',
       }}
     >
-      <td style={{ padding: '12px 16px' }}><LeaveTypePill type={getLeaveType(item)} /></td>
+      <td style={{ padding: '12px 16px' }}><LeaveTypePill item={item} /></td>
       <td style={{ padding: '12px 16px' }}><LeaveOriginCell item={item} /></td>
       <td style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
@@ -776,19 +798,21 @@ export default function LeavePage() {
             values={statuses} onChange={setStatuses}
           />
 
-          {/* Leave type */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Tags size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-            <select
-              value={leaveType} onChange={e => setLeaveType(e.target.value)}
-              style={{ ...filterSelectStyle, color: leaveType ? 'var(--c-text)' : 'var(--c-text-2)' }}
-            >
-              <option value="">نوع الإجازة: الكل</option>
-              {Object.entries(LEAVE_TYPE_LABELS).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
-            </select>
-          </div>
+          {/* Leave type — fed from the HR vocabulary and sending the type's
+              `code`. The filter accepts a code, an Arabic/English name or the
+              legacy free text, so it keeps matching rows filed both before and
+              after types existed.
+
+              Which types are offered follows the source filter: the approvals
+              queue only ever holds employee-filed requests, while "طلباتي" with
+              no source filter can hold both, so it gets the union — otherwise
+              excuse-only types would be missing from a list containing them. */}
+          <LeaveTypeFilter
+            forForm={isApprovals || excuseFilter === '0'
+              ? 'requests'
+              : excuseFilter === '1' ? 'excuses' : 'all'}
+            value={leaveType} onChange={setLeaveType}
+          />
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <select value={excuseFilter} onChange={event => setExcuseFilter(event.target.value)}
@@ -830,6 +854,9 @@ export default function LeavePage() {
             </button>
           )}
 
+          {/* The leave-list workbook gained a `يُخصم من الرصيد` column right
+              after `نوع الإجازة`, shifting every later column by one. Nothing
+              here reads the file back, so there is no fixed index to update. */}
           <ExportButton
             url={isApprovals ? '/attendance/leave-requests/approvals' : '/attendance/leave-requests'}
             params={buildFilters()}

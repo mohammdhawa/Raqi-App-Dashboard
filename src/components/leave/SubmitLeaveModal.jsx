@@ -8,7 +8,8 @@ import {
 } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
-import { LEAVE_TYPE_LABELS, leaveApiMessage, readLeaveBalance } from '../../utils/leave'
+import { LEAVE_COPY, leaveApiMessage, readLeaveBalance } from '../../utils/leave'
+import LeaveTypeSelect from './LeaveTypeSelect'
 
 const MAX_REASON = 2000
 
@@ -217,7 +218,10 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [managerId, setManagerId] = useState(null)
-  const [leaveType, setLeaveType] = useState('annual')
+  // The type is named by id: it carries the balance policy with it, and the
+  // legacy free-text `leave_type` is no longer sent.
+  const [leaveTypeId, setLeaveTypeId] = useState('')
+  const [leaveType, setLeaveType] = useState(null)
   const [reason, setReason] = useState('')
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
@@ -245,6 +249,14 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
     // Belt and braces: the picker already hides the caller, but a stale
     // selection must not be submitted either.
     else if (user?.id != null && String(managerId) === String(user.id)) next.managerId = SELF_APPROVAL_MESSAGE
+    // `leave_type_id` is only `sometimes` on the endpoint, kept optional for
+    // clients that predate types: a request without one is filed unlabelled and
+    // falls back to *deducting*, which would quietly charge the balance for what
+    // may well be sick leave. The UI requires the choice the API cannot.
+    if (!leaveTypeId) next.leave_type_id = LEAVE_COPY.typeRequired
+    // Mirrors the selected type's `requires_reason` rule; the server-side 422 on
+    // `reason` is still handled.
+    if (leaveType?.requires_reason && !reason.trim()) next.reason = LEAVE_COPY.reasonRequiredByType
     if (reason.length > MAX_REASON) next.reason = `السبب يجب ألا يتجاوز ${MAX_REASON} حرفاً.`
     setErrors(next)
     return Object.keys(next).length === 0
@@ -259,7 +271,7 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
         start_date: startDate,
         end_date: endDate,
         manager_id: managerId,
-        ...(leaveType ? { leave_type: leaveType } : {}),
+        leave_type_id: Number(leaveTypeId),
         ...(reason.trim() ? { reason: reason.trim() } : {}),
       })
       onSubmitted(res.data?.balance ? readLeaveBalance(res.data) : null)
@@ -267,13 +279,19 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
       // The three business-rule rejections all land here as 422 + message; the
       // over-balance one also returns the caller's current balance.
       setFormError(leaveApiMessage(err, 'تعذّر إرسال طلب الإجازة، حاول مرة أخرى'))
-      // `manager_id` carries the self-approval refusal among others, so it is
-      // shown under the approver selector rather than only in the banner.
-      const fieldErrors = err?.response?.data?.errors
-      if (fieldErrors?.manager_id) {
-        const msg = Array.isArray(fieldErrors.manager_id) ? fieldErrors.manager_id[0] : fieldErrors.manager_id
-        setErrors(x => ({ ...x, managerId: msg }))
+      // `manager_id` carries the self-approval refusal among others, and
+      // `leave_type_id` / `leave_type` / `reason` carry the type's own rules
+      // (a retired type, one not offered on this form, or a missing reason), so
+      // each is shown under its field rather than only in the banner.
+      const fieldErrors = err?.response?.data?.errors ?? {}
+      const first = key => {
+        const value = fieldErrors[key]
+        return Array.isArray(value) ? value[0] : value
       }
+      if (fieldErrors.manager_id) setErrors(x => ({ ...x, managerId: first('manager_id') }))
+      if (fieldErrors.leave_type_id) setErrors(x => ({ ...x, leave_type_id: first('leave_type_id') }))
+      if (fieldErrors.leave_type) setErrors(x => ({ ...x, leave_type: first('leave_type') }))
+      if (fieldErrors.reason) setErrors(x => ({ ...x, reason: first('reason') }))
       if (err?.response?.data?.balance) setErrorBalance(readLeaveBalance(err.response.data))
       setSubmitting(false)
     }
@@ -371,18 +389,32 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
             />
           </Field>
 
-          <Field label="نوع الإجازة">
-            <select
-              value={leaveType} onChange={e => setLeaveType(e.target.value)}
-              style={{ ...inputStyle, cursor: 'pointer' }}
-            >
-              {Object.entries(LEAVE_TYPE_LABELS).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
-            </select>
+          <Field
+            label="نوع الإجازة" required
+            error={errors.leave_type_id ?? errors.leave_type}
+            hint={leaveType
+              ? (leaveType.deducts_balance
+                  ? 'أيام هذه الإجازة تُخصم من رصيدك السنوي.'
+                  : 'لا تُخصم أيام هذه الإجازة من رصيدك السنوي.')
+              : 'يحدد النوع ما إذا كانت الأيام تُخصم من رصيدك السنوي.'}
+          >
+            <LeaveTypeSelect
+              forForm="requests" value={leaveTypeId}
+              error={errors.leave_type_id ?? errors.leave_type}
+              onChange={(id, type) => {
+                setLeaveTypeId(String(id))
+                setLeaveType(type)
+                setErrors(x => ({ ...x, leave_type_id: undefined, leave_type: undefined, reason: undefined }))
+              }}
+            />
           </Field>
 
-          <Field label="السبب" error={errors.reason} hint="اختياري — يظهر للمسؤول عند مراجعة الطلب.">
+          <Field
+            label="السبب" required={Boolean(leaveType?.requires_reason)} error={errors.reason}
+            hint={leaveType?.requires_reason
+              ? LEAVE_COPY.reasonRequiredByType
+              : 'اختياري — يظهر للمسؤول عند مراجعة الطلب.'}
+          >
             <textarea
               value={reason} rows={3} maxLength={MAX_REASON}
               onChange={e => { setReason(e.target.value); setErrors(x => ({ ...x, reason: undefined })) }}

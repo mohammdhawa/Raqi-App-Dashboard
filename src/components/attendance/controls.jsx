@@ -63,20 +63,28 @@ export function ExportButton({ url, params, filename, disabled }) {
 // asc → desc → default (null = the endpoint's documented default order);
 // without one it renders the plain header used across the dashboard. Only
 // pass `field` for values in the endpoint's sort whitelist.
-export function SortableTh({ label, field, sort, onSort, align = 'right' }) {
+export function SortableTh({ label, field, sort, onSort, align = 'right', title }) {
   const active = Boolean(field) && sort?.field === field
   const baseStyle = {
     padding: '11px 16px', textAlign: align, fontSize: 11.5, fontWeight: 700,
     color: active ? 'var(--c-primary)' : 'var(--c-text-2)',
     borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
   }
-  if (!field) return <th style={baseStyle}>{label}</th>
+  // `title` explains what a column counts — needed where the label alone could
+  // be misread (e.g. balance days that are NOT part of the allocation).
+  if (!field) {
+    return (
+      <th style={title ? { ...baseStyle, cursor: 'help' } : baseStyle} title={title}>
+        {label}
+      </th>
+    )
+  }
 
   const next = !active ? { field, dir: 'asc' } : sort.dir === 'asc' ? { field, dir: 'desc' } : null
   const Icon = !active ? ArrowUpDown : sort.dir === 'asc' ? ArrowUp : ArrowDown
   return (
     <th
-      onClick={() => onSort(next)} title="ترتيب حسب هذا العمود"
+      onClick={() => onSort(next)} title={title ?? 'ترتيب حسب هذا العمود'}
       style={{ ...baseStyle, cursor: 'pointer', userSelect: 'none' }}
     >
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>

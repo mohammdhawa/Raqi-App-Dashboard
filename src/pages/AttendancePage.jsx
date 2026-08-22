@@ -11,7 +11,8 @@ import {
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
 import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
-import { getLeaveUser, getLeaveType, getLeaveStart, getLeaveEnd, getLeaveDays, leaveTypeLabel } from '../utils/leave'
+import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
+import { getLeaveUser, getLeaveStart, getLeaveEnd, getLeaveDays, leaveTypeName, deductsBalance } from '../utils/leave'
 import { SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh, PerPageSelect, ToggleChip, MultiSelect } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
@@ -463,15 +464,22 @@ function DeptCell({ name }) {
   )
 }
 
-function LeaveTypePill({ type }) {
+// Label from the row's resolved type, policy from the row's own
+// `deducts_balance` snapshot — the raw `leave_type` string is never switched on
+// (new rows hold the type's Arabic label, older ones raw free text).
+function LeaveTypePill({ item }) {
+  const deducts = deductsBalance(item)
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
-      fontSize: 11.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
-      background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
-    }}>
-      {leaveTypeLabel(type)}
-    </span>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
+        fontSize: 11.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
+        background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
+      }}>
+        {leaveTypeName(item)}
+      </span>
+      {deducts === false && <DeductsBalanceBadge deducts={false} compact short />}
+    </div>
   )
 }
 
@@ -503,7 +511,7 @@ function LeaveRow({ item, last }) {
         <DeptCell name={u?.department?.name} />
       </td>
       <td style={{ padding: '12px 16px' }}>
-        <LeaveTypePill type={getLeaveType(item)} />
+        <LeaveTypePill item={item} />
       </td>
       <td style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums' }}>

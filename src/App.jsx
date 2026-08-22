@@ -16,6 +16,7 @@ import AttendanceMonthlyReportPage from './pages/AttendanceMonthlyReportPage'
 import AttendanceEmployeeReportPage from './pages/AttendanceEmployeeReportPage'
 import LeavePage from './pages/LeavePage'
 import LeaveBalancesPage from './pages/LeaveBalancesPage'
+import LeaveTypesPage from './pages/LeaveTypesPage'
 import BroadcastPage from './pages/BroadcastPage'
 import DocumentInboxPage from './pages/DocumentInboxPage'
 import DocumentSentPage from './pages/DocumentSentPage'
@@ -58,6 +59,8 @@ export default function App() {
                   <Route path="/admin/templates/new" element={<TemplateBuilderPage />} />
                   <Route path="/admin/templates/:id/edit" element={<TemplateBuilderPage />} />
                   <Route path="/admin/broadcast" element={<BroadcastPage />} />
+                  {/* Writing leave types is admin-only server-side (403 otherwise) */}
+                  <Route path="/admin/leave-types" element={<LeaveTypesPage />} />
                 </Route>
 
                 <Route element={<RequireNotEmployee><Outlet /></RequireNotEmployee>}>
