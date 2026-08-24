@@ -147,9 +147,9 @@ export function getLeaveEnd(item) {
 // Chargeable (deducted) days — as of attendance v5 the backend's `requested_days`
 // counts WORKING days only (non-working days inside the span don't consume
 // balance), so prefer that explicit value. Which days those are is server config
-// (`attendance.working_days`, currently Saturday–Thursday with Friday the only
-// weekly day off) and is never re-derived here. Falls back to the inclusive
-// calendar span when no explicit count is present.
+// (`attendance.working_days`, currently all seven days — no weekly day off, so
+// today this equals the calendar span) and is never re-derived here. Falls back
+// to the inclusive calendar span when no explicit count is present.
 export function getLeaveDays(item) {
   const explicit = item?.days ?? item?.requested_days ?? item?.days_count ?? item?.duration ?? item?.total_days
   if (explicit != null && explicit !== '') return Number(explicit)
