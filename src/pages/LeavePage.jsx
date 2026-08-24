@@ -92,8 +92,10 @@ function LeaveTypePill({ item }) {
 
 // Days cell: the deducted working-day count (requested_days) as the headline,
 // with the full calendar span shown underneath when it differs (non-working days
-// inside the leave — Fridays and configured holidays — aren't charged, so the two
-// numbers diverge). Both figures come from the server; nothing is counted here.
+// inside the leave aren't charged, so the two numbers diverge). The server
+// calendar is currently all seven days, so they usually match and the second
+// line stays hidden — it reappears once a day off is configured. Both figures
+// come from the server; nothing is counted here.
 function DaysCell({ item }) {
   const days = getLeaveDays(item)
   const calendar = getLeaveCalendarDays(item)

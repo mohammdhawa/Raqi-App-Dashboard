@@ -60,10 +60,10 @@ const WEEKDAY_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأ�
 // working days everywhere (the balance, the monthly report), so a non-working
 // day *inside* a span resolves to `off` instead of being charged, and all three
 // agree on what a span is worth. Which days are non-working is server config
-// (currently Saturday–Thursday, with Friday the only weekly day off), so
-// nothing here assumes a particular calendar — `weekday`/`status` come from the
-// API. The day still carries `leave_type` whatever its status, which is what
-// the calendar shades the full span from.
+// (currently all seven days are working, so `off` only appears for a configured
+// holiday), so nothing here assumes a particular calendar — `weekday`/`status`
+// come from the API. The day still carries `leave_type` whatever its status,
+// which is what the calendar shades the full span from.
 //
 // `rejected` sits second-to-last: a refused check-in is not attendance, so
 // anything that legitimately explains the day (a day off, an excuse, approved

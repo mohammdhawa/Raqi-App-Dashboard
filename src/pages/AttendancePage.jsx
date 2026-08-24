@@ -1034,10 +1034,10 @@ export default function AttendancePage() {
         : 'لا توجد سجلات حضور لهذا اليوم'
   const HOLIDAY_MESSAGE = 'هذا اليوم يوم عطلة (غير يوم عمل) — لا يُتوقع حضور'
   // The "في إجازة" tab ignores working_day: leave doesn't pause on a day off
-  // (Friday, or a configured holiday), so a multi-day leave that spans one must
-  // still render. Its empty state is the normal "no one on leave", never the
-  // holiday state. Whether a date is a working day is always the server's
-  // `working_day`, never derived here.
+  // (a configured holiday — the weekly calendar is currently all seven days),
+  // so a multi-day leave that spans one must still render. Its empty state is
+  // the normal "no one on leave", never the holiday state. Whether a date is a
+  // working day is always the server's `working_day`, never derived here.
   const emptyMessage = isAbsent
     ? (absentError
         ? absentError

@@ -860,9 +860,10 @@ export default function AttendanceReportPage() {
 
   const hasFilters = Boolean(date || departmentId || sectionId || search)
 
-  // Friday (or a configured holiday) — the board would otherwise read as if
-  // everyone is absent, so show an explicit non-working-day state instead.
-  // Never derived here: `working_day` is the server's answer.
+  // A configured holiday (the weekly calendar is currently all seven days) —
+  // the board would otherwise read as if everyone is absent, so show an
+  // explicit non-working-day state instead. Never derived here: `working_day`
+  // is the server's answer.
   const nonWorkingDay = !loading && report?.working_day === false
 
   // One refusal can move two rows *and* move the employee between sections, so
@@ -931,8 +932,8 @@ export default function AttendanceReportPage() {
       </div>
 
       {nonWorkingDay ? (
-        /* Non-working day per the server's `working_day` (Friday, or a
-           configured holiday) — no attendance expected */
+        /* Non-working day per the server's `working_day` (a configured
+           holiday) — no attendance expected */
         <div style={{
           background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16,
           boxShadow: 'var(--sh-card)', padding: '56px 24px', textAlign: 'center',
