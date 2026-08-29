@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -295,8 +295,27 @@ export default function AttendanceMonthlyReportPage() {
   const hasFullAccess = user?.role === 'admin' || !!user?.can_view_attendance
 
   const initial = lastMonthRange()
-  const [from, setFrom] = useState(initial.from)
-  const [to, setTo] = useState(initial.to)
+  // The selected range lives in the URL, not in component state: opening an
+  // employee's details and coming back remounts this page, and only the URL
+  // survives that round trip (the Back button there carries from/to home).
+  // Absent params — the sidebar link — still mean "last month".
+  const [query, setQuery] = useSearchParams()
+  // `??`, not `||`: an explicitly emptied picker (from=) must stay empty —
+  // only an absent param falls back to the default month.
+  const { from, to } = useMemo(() => ({
+    from: query.get('from') ?? initial.from,
+    to: query.get('to') ?? initial.to,
+  }), [query, initial.from, initial.to])
+  // `replace` so picking a range doesn't stack history entries between the
+  // report and whatever the user came from.
+  const setRange = useCallback((range) => {
+    setQuery(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('from', range.from)
+      next.set('to', range.to)
+      return next
+    }, { replace: true })
+  }, [setQuery])
   const [departmentId, setDepartmentId] = useState('')
   const [sectionId, setSectionId] = useState('')
   const [search, setSearch] = useState('')
@@ -371,7 +390,6 @@ export default function AttendanceMonthlyReportPage() {
     return () => window.removeEventListener('topbar:refresh', handler)
   }, [fetchReport])
 
-  const setPreset = (range) => { setFrom(range.from); setTo(range.to) }
   const isLastMonth = from === initial.from && to === initial.to
   const tm = thisMonthRange()
   const isThisMonth = from === tm.from && to === tm.to
@@ -404,15 +422,15 @@ export default function AttendanceMonthlyReportPage() {
         <SectionSelect sections={sections} value={sectionId} onChange={setSectionId} disabled={hasFullAccess && !departmentId} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <CalendarRange size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-          <input type="date" value={from} onChange={e => setFrom(e.target.value)} style={dateInputStyle} />
+          <input type="date" value={from} onChange={e => setRange({ from: e.target.value, to })} style={dateInputStyle} />
           <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>—</span>
           <input
-            type="date" value={to} onChange={e => setTo(e.target.value)}
+            type="date" value={to} onChange={e => setRange({ from, to: e.target.value })}
             style={{ ...dateInputStyle, ...(rangeError ? { border: '1px solid var(--c-rejected)', color: 'var(--c-rejected)' } : {}) }}
           />
         </div>
-        <button onClick={() => setPreset(lastMonthRange())} style={presetBtnStyle(isLastMonth)}>الشهر الماضي</button>
-        <button onClick={() => setPreset(thisMonthRange())} style={presetBtnStyle(isThisMonth)}>هذا الشهر</button>
+        <button onClick={() => setRange(lastMonthRange())} style={presetBtnStyle(isLastMonth)}>الشهر الماضي</button>
+        <button onClick={() => setRange(thisMonthRange())} style={presetBtnStyle(isThisMonth)}>هذا الشهر</button>
         <ToggleChip
           label="غياب بدون عذر فقط" icon={UserX}
           active={hasAbsences} onChange={setHasAbsences}
