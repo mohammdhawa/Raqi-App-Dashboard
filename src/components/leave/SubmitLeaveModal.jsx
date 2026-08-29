@@ -1,25 +1,27 @@
-// Leave-request submission form (POST /attendance/leave-requests) plus the
-// approver picker it feeds from GET /attendance/leave-managers.
+// Leave-request submission form (POST /attendance/leave-requests).
+// The approver chain it posts as `approver_ids` is picked by
+// LeaveApproverChainPicker, fed from GET /attendance/leave-managers.
 // Only components are exported from this module (react-refresh).
 
-import { useState, useEffect, useRef, useMemo } from 'react'
-import {
-  CalendarPlus, Loader2, Search, ChevronDown, Check, AlertTriangle, UserCheck,
-} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { CalendarPlus, Loader2, Check, AlertTriangle } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
-import { LEAVE_COPY, leaveApiMessage, readLeaveBalance } from '../../utils/leave'
+import {
+  LEAVE_COPY, leaveApiMessage, readLeaveBalance,
+  MIN_LEAVE_APPROVERS, MAX_LEAVE_APPROVERS,
+} from '../../utils/leave'
 import LeaveTypeSelect from './LeaveTypeSelect'
+import LeaveApproverChainPicker from './LeaveApproverChainPicker'
 
 const MAX_REASON = 2000
 
 // Segregation of duties: v10 refuses a request whose approver is its own
 // author, for every role, because the review gate only asks whether the caller
-// IS the named approver — so a self-assigned request would be a complete
-// approval with no second party. Mirrored here so the choice is never offered.
+// IS the approver whose turn it is — so a self-assigned step would be a
+// complete approval with no second party. Mirrored here so the choice is never
+// offered, on any step of the chain.
 const SELF_APPROVAL_MESSAGE = 'لا يمكنك اعتماد إجازتك بنفسك. اختر مديراً أو رئيساً آخر.'
-
-const ROLE_LABELS = { manager: 'مدير', chief: 'الرئيس الأعلى' }
 
 const inputStyle = {
   width: '100%', boxSizing: 'border-box', height: 42,
@@ -42,164 +44,6 @@ function Field({ label, required, error, hint, children }) {
   )
 }
 
-// ── Approver picker ───────────────────────────────────────────────────────────
-
-/**
- * Single-select combobox over GET /attendance/leave-managers (managers + chiefs).
- * The endpoint pages at 100, which covers a typical org in one page, so this
- * fetches once and filters client-side; `search` is only re-issued when the
- * result was truncated.
- */
-function ManagerPicker({ value, onChange, error, excludeId }) {
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [managers, setManagers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [serverSearchEnabled, setServerSearchEnabled] = useState(false)
-  const [selectedManager, setSelectedManager] = useState(null)
-  const wrapRef = useRef(null)
-
-  useEffect(() => {
-    function onClickOutside(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [])
-
-  // Re-fetch with `search` only when the first page didn't hold everyone.
-  const serverSearch = serverSearchEnabled ? query : ''
-  useEffect(() => {
-    let active = true
-    const trimmedSearch = serverSearch.trim()
-    const t = setTimeout(() => {
-      if (!active) return
-      setLoading(true)
-      api.get('/attendance/leave-managers', {
-        params: { per_page: 100, ...(trimmedSearch ? { search: trimmedSearch } : {}) },
-      })
-        .then(res => {
-          if (!active) return
-          const pag = res.data?.managers ?? res.data
-          const list = pag?.data ?? (Array.isArray(pag) ? pag : [])
-          // The endpoint lists every manager and chief company-wide, the
-          // caller included when they hold one of those roles. Drop them here
-          // so an approver the API would reject is never on the menu.
-          const selectable = excludeId == null
-            ? list
-            : list.filter(m => String(m.id) !== String(excludeId))
-          setManagers(selectable)
-          if (!trimmedSearch) {
-            setServerSearchEnabled((pag?.total ?? list.length) > list.length)
-          }
-        })
-        .catch(() => { if (active) setManagers([]) })
-        .finally(() => { if (active) setLoading(false) })
-    }, serverSearch ? 280 : 0)
-    return () => { active = false; clearTimeout(t) }
-  }, [serverSearch, excludeId])
-
-  const selected = managers.find(m => String(m.id) === String(value))
-    ?? (String(selectedManager?.id) === String(value) ? selectedManager : null)
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q || serverSearchEnabled) return managers
-    return managers.filter(m =>
-      (m.name ?? '').toLowerCase().includes(q) || (m.email ?? '').toLowerCase().includes(q)
-    )
-  }, [managers, query, serverSearchEnabled])
-
-  return (
-    <div ref={wrapRef} style={{ position: 'relative' }}>
-      <button
-        type="button" onClick={() => setOpen(o => !o)}
-        style={{
-          ...inputStyle, cursor: 'pointer', textAlign: 'start',
-          borderColor: error ? 'var(--c-rejected)' : 'var(--c-border)',
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}
-      >
-        <UserCheck size={15} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-        <span style={{
-          flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          color: selected ? 'var(--c-text)' : 'var(--c-text-3)', fontWeight: selected ? 700 : 400,
-        }}>
-          {selected ? selected.name : 'اختر المسؤول الذي سيراجع الطلب…'}
-        </span>
-        {selected && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-3)', flexShrink: 0 }}>
-            {ROLE_LABELS[selected.role] ?? selected.role}
-          </span>
-        )}
-        <ChevronDown size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-      </button>
-
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 6px)', insetInlineStart: 0, zIndex: 20,
-          width: '100%', background: '#fff', border: '1px solid var(--c-border)',
-          borderRadius: 12, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
-        }}>
-          <div style={{ padding: 8, borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 7 }}>
-            <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-            <input
-              autoFocus value={query} onChange={e => setQuery(e.target.value)}
-              placeholder="ابحث بالاسم أو البريد…"
-              style={{
-                flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent',
-                fontFamily: 'var(--font-sans)', fontSize: 12.5, color: 'var(--c-text)',
-              }}
-            />
-          </div>
-          <div style={{ maxHeight: 240, overflowY: 'auto' }}>
-            {loading && (
-              <div style={{ padding: '18px 12px', textAlign: 'center', color: 'var(--c-text-3)' }}>
-                <Loader2 size={15} className="animate-spin" />
-              </div>
-            )}
-            {!loading && visible.length === 0 && (
-              <div style={{ padding: '18px 12px', textAlign: 'center', fontSize: 12.5, color: 'var(--c-text-3)' }}>
-                لا يوجد مسؤولون مطابقون
-              </div>
-            )}
-            {!loading && visible.map(m => {
-              const active = m.id === value
-              return (
-                <button
-                  key={m.id} type="button"
-                  onClick={() => { setSelectedManager(m); onChange(m.id); setOpen(false); setQuery('') }}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: 9,
-                    padding: '9px 12px', border: 'none', cursor: 'pointer', textAlign: 'start',
-                    background: active ? 'var(--c-primary-light)' : 'transparent',
-                    fontFamily: 'var(--font-sans)',
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>{m.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>
-                      {m.email}
-                      {m.department?.name && ` · ${m.department.name}`}
-                    </div>
-                  </div>
-                  <span style={{
-                    fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '2px 7px', flexShrink: 0,
-                    background: m.role === 'chief' ? 'var(--c-accent-tint)' : 'rgba(34,65,103,0.09)',
-                    color: m.role === 'chief' ? '#8A6A23' : 'var(--c-primary)',
-                  }}>
-                    {ROLE_LABELS[m.role] ?? m.role}
-                  </span>
-                  {active && <Check size={14} style={{ color: 'var(--c-primary)', flexShrink: 0 }} />}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Submit modal ──────────────────────────────────────────────────────────────
 
 function calendarDays(start, end) {
@@ -217,13 +61,17 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
   const { user } = useAuth()
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [managerId, setManagerId] = useState(null)
+  // Ordered approval chain — array order is decision order (`approver_ids`).
+  const [approverIds, setApproverIds] = useState([])
   // The type is named by id: it carries the balance policy with it, and the
   // legacy free-text `leave_type` is no longer sent.
   const [leaveTypeId, setLeaveTypeId] = useState('')
   const [leaveType, setLeaveType] = useState(null)
   const [reason, setReason] = useState('')
   const [errors, setErrors] = useState({})
+  // Per-position messages for the chain, keyed by index — a server
+  // `approver_ids.N` error belongs on row N, not only in the banner.
+  const [approverRowErrors, setApproverRowErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [errorBalance, setErrorBalance] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -245,10 +93,18 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
     if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
       next.endDate = 'يجب أن يكون تاريخ النهاية مساوياً أو بعد تاريخ البداية.'
     }
-    if (!managerId) next.managerId = 'المسؤول المراجع مطلوب.'
+    // The server limits mirrored for UX only — 1 to 10 distinct approvers, none
+    // of them the requester. Every one of these is still enforced server-side.
+    if (approverIds.length < MIN_LEAVE_APPROVERS) next.approverIds = LEAVE_COPY.approversRequired
+    else if (approverIds.length > MAX_LEAVE_APPROVERS) next.approverIds = LEAVE_COPY.approversMax
+    else if (new Set(approverIds.map(String)).size !== approverIds.length) {
+      next.approverIds = LEAVE_COPY.approversDuplicate
+    }
     // Belt and braces: the picker already hides the caller, but a stale
     // selection must not be submitted either.
-    else if (user?.id != null && String(managerId) === String(user.id)) next.managerId = SELF_APPROVAL_MESSAGE
+    else if (user?.id != null && approverIds.some(id => String(id) === String(user.id))) {
+      next.approverIds = SELF_APPROVAL_MESSAGE
+    }
     // `leave_type_id` is only `sometimes` on the endpoint, kept optional for
     // clients that predate types: a request without one is filed unlabelled and
     // falls back to *deducting*, which would quietly charge the balance for what
@@ -263,14 +119,18 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
   }
 
   const submit = async () => {
-    setFormError(''); setErrorBalance(null)
+    setFormError(''); setErrorBalance(null); setApproverRowErrors({})
     if (!validate()) return
     setSubmitting(true)
     try {
       const res = await api.post('/attendance/leave-requests', {
         start_date: startDate,
         end_date: endDate,
-        manager_id: managerId,
+        // The ordered chain. `manager_id` is deliberately not sent alongside it:
+        // the endpoint still accepts it as the legacy one-approver payload, but
+        // requires it to equal approver_ids[0], so sending both only adds a way
+        // for the two to disagree.
+        approver_ids: approverIds,
         leave_type_id: Number(leaveTypeId),
         ...(reason.trim() ? { reason: reason.trim() } : {}),
       })
@@ -279,7 +139,7 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
       // The three business-rule rejections all land here as 422 + message; the
       // over-balance one also returns the caller's current balance.
       setFormError(leaveApiMessage(err, 'تعذّر إرسال طلب الإجازة، حاول مرة أخرى'))
-      // `manager_id` carries the self-approval refusal among others, and
+      // `approver_ids` carries the self-approval refusal among others, and
       // `leave_type_id` / `leave_type` / `reason` carry the type's own rules
       // (a retired type, one not offered on this form, or a missing reason), so
       // each is shown under its field rather than only in the banner.
@@ -288,7 +148,21 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
         const value = fieldErrors[key]
         return Array.isArray(value) ? value[0] : value
       }
-      if (fieldErrors.manager_id) setErrors(x => ({ ...x, managerId: first('manager_id') }))
+      // Per-index errors (`approver_ids.0`, `approver_ids.1`, …) land on the row
+      // they are about — with up to ten approvers, "one of them is ineligible"
+      // is not an answer anyone can act on.
+      const rowErrors = {}
+      for (const key of Object.keys(fieldErrors)) {
+        const match = /^approver_ids\.(\d+)$/.exec(key)
+        if (match) rowErrors[Number(match[1])] = first(key)
+      }
+      if (Object.keys(rowErrors).length) setApproverRowErrors(rowErrors)
+      // `manager_id` is still read: the endpoint keys the legacy payload's
+      // refusals to it, and a mismatch with approver_ids[0] is reported there.
+      const chainError = fieldErrors.approver_ids ? first('approver_ids')
+        : fieldErrors.manager_id ? first('manager_id')
+          : null
+      if (chainError) setErrors(x => ({ ...x, approverIds: chainError }))
       if (fieldErrors.leave_type_id) setErrors(x => ({ ...x, leave_type_id: first('leave_type_id') }))
       if (fieldErrors.leave_type) setErrors(x => ({ ...x, leave_type: first('leave_type') }))
       if (fieldErrors.reason) setErrors(x => ({ ...x, reason: first('reason') }))
@@ -319,7 +193,7 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>طلب إجازة جديد</div>
             <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 3 }}>
-              يُرسل الطلب إلى المسؤول المختار لمراجعته.
+              يُرسل الطلب إلى المعتمد الأول، وينتقل للتالي بعد كل موافقة.
             </div>
           </div>
         </div>
@@ -380,12 +254,16 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
           )}
 
           <Field
-            label="المسؤول المراجع" required error={errors.managerId}
+            label="سلسلة الاعتماد" required error={errors.approverIds}
             hint="لا يمكنك اختيار نفسك — يجب أن يراجع الطلب مسؤول آخر."
           >
-            <ManagerPicker
-              value={managerId} error={errors.managerId} excludeId={user?.id}
-              onChange={id => { setManagerId(id); setErrors(x => ({ ...x, managerId: undefined })) }}
+            <LeaveApproverChainPicker
+              value={approverIds} excludeId={user?.id} rowErrors={approverRowErrors}
+              onChange={next => {
+                setApproverIds(next)
+                setErrors(x => ({ ...x, approverIds: undefined }))
+                setApproverRowErrors({})
+              }}
             />
           </Field>
 

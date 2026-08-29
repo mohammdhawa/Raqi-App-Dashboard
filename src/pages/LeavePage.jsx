@@ -5,17 +5,21 @@ import { useToast } from '../components/ui/Toast'
 import {
   CalendarCheck, CalendarDays, CalendarClock, Wallet, Check, X,
   Inbox, Loader2, Building2, MessageSquare, Calendar, ClipboardCheck,
-  CalendarPlus, AlertTriangle,
+  CalendarPlus, AlertTriangle, Hourglass, UserCog,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
 import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
 import SubmitLeaveModal from '../components/leave/SubmitLeaveModal'
+import ApprovalChain from '../components/leave/ApprovalChain'
+import ReassignApproverModal from '../components/leave/ReassignApproverModal'
 import { LeaveTypeFilter } from '../components/leave/LeaveTypeSelect'
 import {
   getLeaveUser, getLeaveReason, getLeaveStart, getLeaveEnd,
   getLeaveDays, getLeaveCalendarDays, leaveTypeName, deductsBalance, readLeaveBalance,
   leaveApiMessage, LEAVE_COPY, EXCUSED_META,
+  getApprovalChain, getCurrentApprover, getCurrentApproverId, getDecidingApprover,
+  canReviewLeave,
 } from '../utils/leave'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh, ToggleChip, MultiSelect } from '../components/attendance/controls'
@@ -210,14 +214,37 @@ function BalanceWidget({ balance, loading }) {
   )
 }
 
+// `manager_id` is no longer "the manager responsible for this request" — it
+// tracks whoever must act NOW, advancing with the chain and coming to rest on
+// whoever made the final decision. So a pending row names its current approver
+// as such; a decided one shows the approver who closed it, unlabelled, because
+// "current" would be a claim about a request nobody is holding any more. The
+// full picture is the سير الاعتماد column.
 function LeaveOriginCell({ item }) {
-  const name = item.is_excuse
-    ? (item.creator?.name ?? 'الموارد البشرية')
-    : (item.manager?.name ?? '—')
-  return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-    {item.is_excuse ? <LeaveExcuseBadge compact /> : <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>طلب موظف</span>}
-    <span style={{ fontSize: 10.5, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>{name}</span>
-  </div>
+  if (item.is_excuse) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+        <LeaveExcuseBadge compact />
+        <span style={{ fontSize: 10.5, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
+          {item.creator?.name ?? 'الموارد البشرية'}
+        </span>
+      </div>
+    )
+  }
+  const current = getCurrentApprover(item)
+  // Once decided, the name to show is the step that actually decided — taken
+  // from the chain, which every listing loads, rather than from `manager`,
+  // which is a relation a payload may or may not carry.
+  const decided = current ? null : getDecidingApprover(item)
+  const name = current?.name ?? decided?.name ?? item.manager?.name ?? '—'
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+      <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>طلب موظف</span>
+      <span style={{ fontSize: 10.5, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
+        {current ? `${LEAVE_COPY.currentApprover}: ${name}` : name}
+      </span>
+    </div>
+  )
 }
 
 // ── Review (approve / reject) modal ──────────────────────────────────────────
@@ -228,6 +255,13 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
   const [submitting, setSubmitting] = useState(false)
   const u = getLeaveUser(item)
   const isApprove = action === 'approve'
+  const chain = getApprovalChain(item)
+  // A rejection at any step is final: the request becomes `rejected` and every
+  // step behind it becomes `skipped`. Worth saying out loud before the click,
+  // but only when there is a later step for it to cost — counted over the steps
+  // still PENDING, not the whole chain, because on the last step of a chain
+  // whose earlier steps have all approved there is nothing left to skip.
+  const endsChain = !isApprove && chain.filter(s => s.status === 'pending').length > 1
 
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape' && !submitting) onClose() }
@@ -279,6 +313,27 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
               </div>
             </div>
           </div>
+
+          {chain.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 6 }}>
+                {LEAVE_COPY.approvalChain}
+              </div>
+              <ApprovalChain item={item} />
+            </div>
+          )}
+
+          {endsChain && (
+            <div style={{
+              display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 14,
+              padding: '10px 12px', borderRadius: 10,
+              background: 'var(--c-pending-bg)', color: 'var(--c-text-2)',
+              fontSize: 11.5, lineHeight: 1.7,
+            }}>
+              <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--c-pending)' }} />
+              {LEAVE_COPY.chainRejectionHint}
+            </div>
+          )}
 
           {getLeaveReason(item) && (
             <>
@@ -339,23 +394,77 @@ const REASON_CELL_STYLE = {
   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
 }
 
-// A request naming its own author as approver. v10 refuses to APPROVE these
-// whenever they were created (ReviewLeaveRequest's rule on `status`), which is
-// what closes rows stored before submission-side enforcement existed.
-// Rejection stays open on purpose — it is the only way such a row can be
-// closed out at all.
+// A request whose own author holds the step that is currently up for decision.
+// v10 refuses to APPROVE these whenever they were created (ReviewLeaveRequest's
+// rule on `status`), which is what closes rows stored before submission-side
+// enforcement existed. Rejection stays open on purpose — it is the only way
+// such a row can be closed out at all.
+//
+// The comparison is against the CURRENT approver, not a fixed one: with a chain
+// the question is only ever about the step being decided now, and that is
+// exactly what the review gate asks.
 function isSelfAssigned(item) {
   const userId = item?.user_id ?? getLeaveUser(item)?.id
-  const managerId = item?.manager_id ?? item?.manager?.id
-  return userId != null && managerId != null && String(userId) === String(managerId)
+  const currentApproverId = getCurrentApproverId(item)
+  return userId != null && currentApproverId != null && String(userId) === String(currentApproverId)
 }
 
-function ApprovalRow({ item, last, onReview }) {
+// Shown in place of the buttons when the caller may not decide this request:
+// an approver whose turn has not come, or an admin, who reads this queue as a
+// supervisor and is never on a chain at all. Dead buttons would come back 422
+// on every press; naming who is holding the request is the answer they actually
+// need. `observer` only picks the wording — "not your turn yet" is a promise of
+// a turn that an admin is never going to get.
+function WaitingOnApprover({ item, observer }) {
+  const current = getCurrentApprover(item)
+  const name = current?.name ?? (current?.id != null ? `#${current.id}` : null)
+  const fallback = observer ? LEAVE_COPY.observingOnly : LEAVE_COPY.notYourTurn
+  return (
+    <span
+      title={fallback}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '5px 11px', borderRadius: 999, whiteSpace: 'nowrap',
+        fontSize: 12, fontWeight: 700,
+        color: 'var(--c-text-2)', background: 'var(--c-surface-2)',
+        border: '1px solid var(--c-border)',
+      }}
+    >
+      <Hourglass size={12} style={{ flexShrink: 0 }} />
+      {name ? `${LEAVE_COPY.waitingOn}: ${name}` : fallback}
+    </span>
+  )
+}
+
+function ReassignButton({ onClick }) {
+  return (
+    <button
+      onClick={onClick} title={LEAVE_COPY.reassignHint}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 11px',
+        borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff',
+        fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 700,
+        color: 'var(--c-text-2)', cursor: 'pointer', whiteSpace: 'nowrap',
+      }}
+    >
+      <UserCog size={12} /> {LEAVE_COPY.reassign}
+    </button>
+  )
+}
+
+// `supervisor` is the admin's reading of this queue: they see every request but
+// decide none of them, and reassignment is the one thing they may do. Both
+// halves come from the same role, so they travel as one prop.
+function ApprovalRow({ item, last, onReview, supervisor, onReassign }) {
   const [hov, setHov] = useState(false)
   const u = getLeaveUser(item)
   const reason = getLeaveReason(item)
   const isPending = item.status === 'pending' && !item.is_excuse
   const selfAssigned = isSelfAssigned(item)
+  // The approvals queue now lists every request the caller is anywhere on the
+  // chain of, including steps whose turn has not come — so being in the queue
+  // is not permission to decide. Only `can_review` is.
+  const canReview = canReviewLeave(item)
   return (
     <tr
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
@@ -385,43 +494,51 @@ function ApprovalRow({ item, last, onReview }) {
         {reason ? <div style={REASON_CELL_STYLE} title={reason}>{reason}</div> : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
       </td>
       <td style={{ padding: '12px 16px' }}><LeaveStatusBadge status={item.status} /></td>
+      <td style={{ padding: '12px 16px' }}><ApprovalChain item={item} compact /></td>
       <td style={{ padding: '12px 16px' }}>
         {isPending ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button
-                onClick={() => { if (!selfAssigned) onReview(item, 'approve') }}
-                disabled={selfAssigned}
-                title={selfAssigned ? SELF_APPROVAL_BLOCKED : 'موافقة'}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px',
-                  borderRadius: 9, border: 'none', background: 'var(--c-approved-bg)', color: 'var(--c-approved)',
-                  fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
-                  cursor: selfAssigned ? 'not-allowed' : 'pointer', opacity: selfAssigned ? 0.45 : 1,
-                }}
-              >
-                <Check size={13} /> موافقة
-              </button>
-              <button
-                onClick={() => onReview(item, 'reject')} title="رفض"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px',
-                  borderRadius: 9, border: 'none', background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
-                  fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
-                }}
-              >
-                <X size={13} /> رفض
-              </button>
-            </div>
-            {selfAssigned && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'flex-start', gap: 5,
-                fontSize: 10.5, lineHeight: 1.5, color: 'var(--c-text-3)', maxWidth: 210,
-              }}>
-                <AlertTriangle size={11} style={{ flexShrink: 0, marginTop: 2, color: 'var(--c-pending)' }} />
-                {SELF_APPROVAL_BLOCKED}
-              </span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+            {canReview ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    onClick={() => { if (!selfAssigned) onReview(item, 'approve') }}
+                    disabled={selfAssigned}
+                    title={selfAssigned ? SELF_APPROVAL_BLOCKED : 'موافقة'}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px',
+                      borderRadius: 9, border: 'none', background: 'var(--c-approved-bg)', color: 'var(--c-approved)',
+                      fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+                      cursor: selfAssigned ? 'not-allowed' : 'pointer', opacity: selfAssigned ? 0.45 : 1,
+                    }}
+                  >
+                    <Check size={13} /> موافقة
+                  </button>
+                  <button
+                    onClick={() => onReview(item, 'reject')} title="رفض"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px',
+                      borderRadius: 9, border: 'none', background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
+                      fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <X size={13} /> رفض
+                  </button>
+                </div>
+                {selfAssigned && (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'flex-start', gap: 5,
+                    fontSize: 10.5, lineHeight: 1.5, color: 'var(--c-text-3)', maxWidth: 210,
+                  }}>
+                    <AlertTriangle size={11} style={{ flexShrink: 0, marginTop: 2, color: 'var(--c-pending)' }} />
+                    {SELF_APPROVAL_BLOCKED}
+                  </span>
+                )}
+              </>
+            ) : (
+              <WaitingOnApprover item={item} observer={supervisor} />
             )}
+            {supervisor && <ReassignButton onClick={() => onReassign(item)} />}
           </div>
         ) : (
           <span style={{ color: 'var(--c-text-3)', fontSize: 12 }}>—</span>
@@ -457,6 +574,10 @@ function MineRow({ item, last }) {
         <div style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{formatDate(item.created_at)}</div>
       </td>
       <td style={{ padding: '12px 16px' }}><LeaveStatusBadge status={item.status} /></td>
+      {/* Own requests get the chain too: where a request has got to, and who is
+          holding it, is the first thing the employee asks. Excuses HR filed
+          have no chain and fall back to a dash. */}
+      <td style={{ padding: '12px 16px' }}><ApprovalChain item={item} compact /></td>
     </tr>
   )
 }
@@ -477,6 +598,9 @@ function SkeletonRow({ count }) {
 // `field` = sortable (leave-requests whitelist: created_at, start_date,
 // end_date, requested_days, status, leave_type, reviewed_at, id; the approvals
 // queue additionally allows employee_name / employee_email).
+//
+// The chain column carries no `field`: `approvals` is a relation the listing
+// endpoints do not sort on, so offering a sort header would only earn a 422.
 const APPROVAL_COLS = [
   { label: 'الموظف', field: 'employee_name' },
   { label: 'نوع الإجازة', field: 'leave_type' },
@@ -485,6 +609,7 @@ const APPROVAL_COLS = [
   { label: 'الأيام المحتسبة', field: 'requested_days' },
   { label: 'السبب' },
   { label: 'الحالة', field: 'status' },
+  { label: LEAVE_COPY.approvalChain },
   { label: 'إجراءات' },
 ]
 const MINE_COLS = [
@@ -495,6 +620,7 @@ const MINE_COLS = [
   { label: 'السبب' },
   { label: 'تاريخ الطلب', field: 'created_at' },
   { label: 'الحالة', field: 'status' },
+  { label: LEAVE_COPY.approvalChain },
 ]
 
 const STATUS_OPTIONS = [
@@ -563,7 +689,15 @@ export default function LeavePage() {
   const sections = useDeptSections(sectionDeptId, departments, { canFetch: user?.role === 'admin' })
 
   const [review, setReview] = useState(null) // { item, action }
+  const [reassign, setReassign] = useState(null) // request whose step is moving
   const [submitting, setSubmitting] = useState(false) // new-request modal open
+
+  // The admin's reading of the approvals queue. They are never on a chain, so
+  // the listing hands them every request instead — read-only, `can_review` is
+  // false on every row — and reassignment is the one action they get: it moves
+  // one pending step to another approver and decides nothing, the review gate
+  // still refusing admins, so it is never presented as an override.
+  const isSupervisor = user?.role === 'admin'
 
   const reqRef = useRef(0)
 
@@ -667,7 +801,7 @@ export default function LeavePage() {
   // the current year's widget. Only adopt it when the years line up.
   const onSubmitted = (nextBalance) => {
     setSubmitting(false)
-    toast.success('تم إرسال طلب الإجازة إلى المسؤول المختار')
+    toast.success('تم إرسال طلب الإجازة إلى المعتمد الأول في السلسلة')
     const sameYear = nextBalance?.year != null && balance?.year != null
       ? nextBalance.year === balance.year
       : false
@@ -689,7 +823,9 @@ export default function LeavePage() {
   const emptyMessage = hasFilters
     ? 'لا توجد طلبات مطابقة لهذه الفلاتر'
     : isApprovals
-      ? 'لا توجد طلبات إجازة بانتظار مراجعتك'
+      // "awaiting YOUR review" would be wrong for the admin, whose queue is
+      // every request in the company and none of them theirs to decide.
+      ? (isSupervisor ? 'لا توجد طلبات إجازة' : 'لا توجد طلبات إجازة بانتظار مراجعتك')
       : 'لم تقم بإرسال أي طلبات إجازة بعد'
 
   return (
@@ -777,9 +913,12 @@ export default function LeavePage() {
             {total} طلباً
           </span>
           {isApprovals && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--c-text-3)' }}>
+            <span
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--c-text-3)' }}
+              title={LEAVE_COPY.chainOrderHint}
+            >
               <MessageSquare size={12} />
-              يمكنك الموافقة أو الرفض للطلبات قيد المراجعة فقط
+              {isSupervisor ? LEAVE_COPY.adminQueueHint : LEAVE_COPY.queueHint}
             </span>
           )}
 
@@ -886,7 +1025,11 @@ export default function LeavePage() {
                 ? [0, 1, 2, 3, 4].map(i => <SkeletonRow key={i} count={cols.length} />)
                 : tab === 'approvals'
                   ? rows.map((item, idx) => (
-                      <ApprovalRow key={item.id ?? idx} item={item} last={idx === rows.length - 1} onReview={(it, action) => setReview({ item: it, action })} />
+                      <ApprovalRow
+                        key={item.id ?? idx} item={item} last={idx === rows.length - 1}
+                        onReview={(it, action) => setReview({ item: it, action })}
+                        supervisor={isSupervisor} onReassign={setReassign}
+                      />
                     ))
                   : rows.map((item, idx) => (
                       <MineRow key={item.id ?? idx} item={item} last={idx === rows.length - 1} />
@@ -923,6 +1066,14 @@ export default function LeavePage() {
         <ReviewModal
           item={review.item} action={review.action}
           onClose={() => setReview(null)} onConfirm={submitReview}
+        />
+      )}
+
+      {reassign && (
+        <ReassignApproverModal
+          item={reassign}
+          onClose={() => setReassign(null)}
+          onDone={() => { setReassign(null); toast.success(LEAVE_COPY.reassignDone); fetchList(page) }}
         />
       )}
 

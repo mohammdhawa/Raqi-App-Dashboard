@@ -62,6 +62,12 @@ export function deductsBalance(item) {
 // both read as "excused" and must never be conflated:
 //   • the STATUS  «غياب بعذر»    = is_excuse — HR filed it after the fact.
 //   • the BALANCE «أيام لم تُخصم» = deducts_balance = false — it cost nothing.
+
+// Server limits on `approver_ids`, mirrored for UX only — the endpoint is still
+// the authority and its 422s are surfaced as they come.
+export const MIN_LEAVE_APPROVERS = 1
+export const MAX_LEAVE_APPROVERS = 10
+
 export const LEAVE_COPY = {
   // Status (reports)
   excusedStatus:      'غياب بعذر',
@@ -95,6 +101,37 @@ export const LEAVE_COPY = {
   // to insist on a choice.
   typeRequired: 'نوع الإجازة مطلوب.',
 
+  // Sequential approval chain
+  approvalChain:      'سير الاعتماد',
+  currentApprover:    'المعتمد الحالي',
+  waitingOn:          'بانتظار',
+  chainOrderHint:
+    'ترتيب القائمة هو ترتيب القرار: يبدأ الطلب بالمعتمد رقم 1، ولا ينتقل للتالي إلا بعد موافقته.',
+  chainRejectionHint:
+    'رفض أي معتمد ينهي الطلب فوراً، ولا تُطلب الخطوات التالية.',
+  approversRequired:  'اختر معتمداً واحداً على الأقل.',
+  approversMax:       `الحد الأقصى ${MAX_LEAVE_APPROVERS} معتمدين للطلب الواحد.`,
+  approversDuplicate: 'لا يمكن تكرار المعتمد نفسه في سلسلة الاعتماد.',
+  notYourTurn:        'ليس دورك بعد — بانتظار قرار المعتمد الحالي.',
+  queueHint:          'القائمة تشمل كل طلب أنت معتمد فيه — الموافقة والرفض متاحان عند دورك فقط',
+  // The admin reads this queue as a supervisor, never as an approver: the
+  // listing shows them every request so they can reach a stranded one, but the
+  // review endpoint refuses them and `can_review` is false on every row.
+  adminQueueHint:     'القائمة تشمل كل طلبات الإجازة — القرار يبقى على المعتمدين، ولك إعادة إسناد أي خطوة معلّقة',
+  observingOnly:      'أنت تتابع هذا الطلب كمشرف — القرار على المعتمد الحالي.',
+
+  // Reassignment (admin)
+  reassign:           'إعادة إسناد',
+  reassignTitle:      'إعادة إسناد خطوة اعتماد',
+  reassignHint:
+    'نقل خطوة اعتماد معلّقة إلى مدير أو رئيس آخر — لا يعتمد الطلب ولا يرفضه، بل يغيّر من يقرر فيه فقط.',
+  reassignStep:       'الخطوة المراد نقلها',
+  reassignTo:         'المعتمد الجديد',
+  reassignReason:     'سبب إعادة الإسناد',
+  reassignReasonHint: 'مطلوب — يُحفظ في سجل إعادة الإسناد (3 إلى 500 حرف).',
+  reassignNoSteps:    'لا توجد خطوات معلّقة يمكن نقلها في هذا الطلب.',
+  reassignDone:       'تم نقل خطوة الاعتماد إلى المعتمد الجديد.',
+
   // Leave-types admin screen
   typesTitle:        'أنواع الإجازات',
   typesSubtitle:
@@ -126,6 +163,144 @@ export const EXCUSED_META = {
 
 export function getLeaveUser(item) {
   return item?.user ?? item?.employee ?? item?.requester ?? null
+}
+
+// ── Sequential approval chain ────────────────────────────────────────────────
+// A request carries an ordered `approvals` array, one entry per approver, and
+// each entry's `status` is that STEP's state — not the request's. `skipped`
+// means a rejection ahead of it means the step will never be asked, so it is
+// finished work, not outstanding: it gets a neutral treatment, never the
+// pending one.
+//
+// None of this is computed here. Which step is current, which were skipped and
+// whether the viewer may act are all server answers (`current_approver_id`,
+// `status`, `can_review`) — the chain advances under rules this side does not
+// model, and guessing would hand someone a button the API will refuse.
+
+export const APPROVAL_STEP_META = {
+  pending:  { label: 'بانتظار الدور', color: 'var(--c-pending)',  bg: 'var(--c-pending-bg)' },
+  approved: { label: 'وافق',          color: 'var(--c-approved)', bg: 'var(--c-approved-bg)' },
+  rejected: { label: 'رفض',           color: 'var(--c-rejected)', bg: 'var(--c-rejected-bg)' },
+  // Neutral on purpose: the request is already decided, nobody is waiting on
+  // this person, and colouring it like `pending` would read as work left to do.
+  skipped:  { label: 'لم تُطلب',      color: 'var(--c-text-3)',   bg: 'var(--c-surface-2)' },
+}
+
+/** Arabic label for one step's own status. */
+export function approvalStepLabel(status) {
+  return APPROVAL_STEP_META[status]?.label ?? '—'
+}
+
+// The two roles GET /attendance/leave-managers returns. An unknown value is
+// echoed rather than blanked: a role this build has not heard of is still
+// better named by the server's own word for it than by nothing.
+export const LEAVE_ROLE_LABELS = { manager: 'مدير', chief: 'الرئيس الأعلى' }
+
+/** Arabic label for an approver's role. */
+export function leaveRoleLabel(role) {
+  return LEAVE_ROLE_LABELS[role] ?? role
+}
+
+/**
+ * The approval chain, ordered by `approval_order`, as the server sent it.
+ *
+ * A request filed before sequential approval existed carries no `approvals`
+ * array. It is rendered as the chain of one it has always been, built from the
+ * single approver the payload does name — the request's own status is that
+ * lone step's status, there being no second step it could differ from.
+ */
+export function getApprovalChain(item) {
+  const raw = item?.approvals ?? item?.approval_steps
+  if (Array.isArray(raw) && raw.length) {
+    return raw
+      .map((step, i) => ({
+        userId: step?.user_id ?? step?.user?.id ?? null,
+        order: step?.approval_order ?? step?.order ?? i + 1,
+        status: step?.status ?? 'pending',
+        reviewedAt: step?.reviewed_at ?? null,
+        user: step?.user ?? null,
+        name: step?.user?.name ?? step?.name ?? null,
+      }))
+      .sort((a, b) => a.order - b.order)
+  }
+
+  const approver = item?.manager ?? null
+  const approverId = item?.manager_id ?? approver?.id ?? null
+  if (approverId == null) return []
+  return [{
+    userId: approverId,
+    order: 1,
+    status: item?.status === 'approved' || item?.status === 'rejected' ? item.status : 'pending',
+    reviewedAt: item?.reviewed_at ?? null,
+    user: approver,
+    name: approver?.name ?? null,
+  }]
+}
+
+/**
+ * Whose turn it is, or null once the request is decided.
+ *
+ * `manager_id` is the fallback because it now *tracks* the current approver —
+ * the first at submission, advancing with the chain — so it is the same answer
+ * on a payload predating `current_approver_id`. It is only read on a pending
+ * request: after a decision it rests on whoever made it, which is history, not
+ * a turn.
+ */
+export function getCurrentApproverId(item) {
+  const explicit = item?.current_approver_id
+  if (explicit != null && explicit !== '') return explicit
+  if (item?.status !== 'pending') return null
+  return item?.manager_id ?? item?.manager?.id ?? null
+}
+
+/** The current approver as `{ id, order, name }`, or null once decided. */
+export function getCurrentApprover(item) {
+  const id = getCurrentApproverId(item)
+  if (id == null) return null
+  const step = getApprovalChain(item).find(s => String(s.userId) === String(id))
+  return {
+    id,
+    order: step?.order ?? null,
+    name: step?.name ?? item?.manager?.name ?? null,
+  }
+}
+
+/**
+ * The approver who closed the request — the last step that actually decided, so
+ * the final approval on an approved request and the refusing step on a rejected
+ * one. Null while the request is still pending.
+ *
+ * Read from the chain rather than from `manager_id`, which points at the same
+ * person but only names them where the payload carries the `manager` relation.
+ * The chain is loaded by every listing, so this answers on all of them.
+ */
+export function getDecidingApprover(item) {
+  const decided = getApprovalChain(item)
+    .filter(s => s.status === 'approved' || s.status === 'rejected')
+  const step = decided[decided.length - 1]
+  if (!step) return null
+  return {
+    id: step.userId,
+    order: step.order,
+    status: step.status,
+    name: step.name ?? item?.manager?.name ?? null,
+  }
+}
+
+/**
+ * Whether the viewer may decide this request right now — `can_review`, which is
+ * true only for the approver whose turn it is. Never re-derived: the approvals
+ * queue lists every request the caller is *anywhere* on, so "assigned to me" and
+ * "mine to decide" are different questions.
+ *
+ * A payload carrying no `can_review` at all predates the chain; such a request
+ * had exactly one approver and the queue only ever held their own, so the
+ * buttons stay live and the server stays the authority.
+ */
+export function canReviewLeave(item) {
+  const flag = item?.can_review
+  if (flag == null || flag === '') return true
+  return flag === true || flag === 1 || flag === '1'
 }
 
 export function getLeaveType(item) {
@@ -232,6 +407,11 @@ const LEAVE_API_MESSAGES = {
     'لا يمكن أن يكون الرصيد أقل من الأيام المعتمدة بالفعل هذا العام.',
   'Only pending leave requests can be reviewed.':
     'لا يمكن مراجعة الطلبات التي تمت مراجعتها مسبقاً.',
+  // Sequential approval: the caller is on the chain but a step ahead of theirs
+  // is still open. Translated rather than passed through, like every other
+  // business-rule 422 here — the reason is the point, not the English.
+  'It is not your turn to review this leave request.':
+    'ليس دورك لمراجعة هذا الطلب — بانتظار قرار المعتمد الحالي.',
   'Leave request exceeds the employee remaining annual leave balance.':
     'طلب الإجازة يتجاوز رصيد الإجازة السنوية المتبقّي للموظف.',
   'Unauthorized.':
