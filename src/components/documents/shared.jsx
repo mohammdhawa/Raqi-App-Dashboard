@@ -108,19 +108,9 @@ export function OriginTag({ doc }) {
 
 // ── Initials avatar ───────────────────────────────────────────────────────────
 
-export function InitialsAvatar({ name, size = 30, gradient }) {
-  const initials = (name ?? '؟').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('')
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: gradient ?? 'linear-gradient(135deg, var(--c-primary), #1C3A5E)',
-      color: '#fff', fontWeight: 800, fontSize: size * 0.38,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      {initials}
-    </div>
-  )
-}
+// Moved to components/ui when the approver picker became shared with the leave
+// module; re-exported here so the document screens keep their single import.
+export { default as InitialsAvatar } from '../ui/InitialsAvatar'
 
 // ── Workflow turn-taking helpers ─────────────────────────────────────────────
 
