@@ -364,7 +364,15 @@ export default function AttendanceEmployeeReportPage() {
     return () => window.removeEventListener('topbar:refresh', handler)
   }, [fetchReport])
 
-  const goBack = () => navigate('/admin/attendance/monthly')
+  // Carry the range back: the monthly report reads it from the URL, so a bare
+  // path would drop the user on last month instead of the month they opened.
+  const goBack = () => {
+    const back = new URLSearchParams()
+    if (from) back.set('from', from)
+    if (to) back.set('to', to)
+    const qs = back.toString()
+    navigate(qs ? `/admin/attendance/monthly?${qs}` : '/admin/attendance/monthly')
+  }
 
   const u = report?.user
   const summary = report?.summary ?? {}
