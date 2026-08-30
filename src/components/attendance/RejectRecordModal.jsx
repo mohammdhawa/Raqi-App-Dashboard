@@ -124,6 +124,7 @@ export default function RejectRecordModal({ target, mode = 'reject', onClose, on
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState(null)
+  const [capabilityDenied, setCapabilityDenied] = useState(false)
 
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape' && !submitting) onClose() }
@@ -138,12 +139,12 @@ export default function RejectRecordModal({ target, mode = 'reject', onClose, on
   // is shown for every target but a check-out. Undo makes no such distinction —
   // see REJECTION_COPY.undoRestoreNote.
   const takesWholeDay = target?.type !== 'check_out'
-  const canSubmit = isUndo
+  const canSubmit = !capabilityDenied && (isUndo
     ? Boolean(target?.recordId)
-    : Boolean(target?.recordId) && Boolean(reason) && !noteMissing
+    : Boolean(target?.recordId) && Boolean(reason) && !noteMissing)
 
   const submit = async () => {
-    if (submitting) return
+    if (submitting || capabilityDenied) return
     setError('')
     setFieldErrors(null)
 
@@ -159,12 +160,14 @@ export default function RejectRecordModal({ target, mode = 'reject', onClose, on
       onDone(data)
       onClose()
     } catch (err) {
-      const { message, errors, blocked } = readRejectionError(err)
+      const result = readRejectionError(err)
+      const { message, errors, blocked } = result
       setError(message)
       setFieldErrors(errors)
-      // 403 (out of scope / gone) and the two "already re-recorded" 422s are
-      // answers about the row, not transient failures — pull the view again so
-      // the button state matches what the server now holds.
+      setCapabilityDenied(result.capabilityDenied)
+      // A capability denial permanently disables this already-open modal.
+      // Every 403 (capability / scope / gone) and the two "already re-recorded"
+      // 422s also refresh the view so its actions match the server.
       if (blocked || err?.response?.status === 403) onDone(null)
     } finally {
       setSubmitting(false)
