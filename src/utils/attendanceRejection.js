@@ -18,8 +18,13 @@
 
 import api from '../services/api'
 import { REJECTION_REASONS, formatDate, formatTime } from './attendanceCapture'
+import {
+  ATTENDANCE_REJECT_FORBIDDEN,
+  canRejectRecord,
+  isAttendanceRejectCapabilityDenied,
+} from './attendancePermissions'
 
-export { REJECTION_REASONS }
+export { ATTENDANCE_REJECT_FORBIDDEN, REJECTION_REASONS, canRejectRecord }
 
 // Table/export wording for the same three grounds — the long labels are full
 // sentences and don't fit a cell.
@@ -99,6 +104,7 @@ export const REJECTION_COPY = {
 // undo-blocked ones can be recognised and explained (below), and as the
 // fallback when a response arrives with no body.
 export const REJECTION_MESSAGES = {
+  forbidden:        'ليس لديك صلاحية لرفض تسجيلات الحضور.',
   outOfScope:       'هذا السجل خارج نطاق صلاحيتك.',
   alreadyRejected:  'تم رفض هذا السجل مسبقاً.',
   notRejected:      'هذا السجل غير مرفوض.',
@@ -196,26 +202,6 @@ export function rejectionTooltip(source) {
   return lines.join('\n')
 }
 
-/**
- * Whether the caller may refuse this row — used to hide an action that can only
- * come back `403`.
- *
- * Admins and HR (`can_view_attendance`) reach everyone; managers and chiefs only
- * their own department. Every listing is already scoped server-side, so a row
- * whose department we cannot read is assumed reachable: hiding the button on a
- * row the API would accept is the worse failure.
- */
-export function canRejectRecord(user, row) {
-  if (!user) return false
-  if (user.role === 'admin' || user.can_view_attendance) return true
-  if (user.role !== 'manager' && user.role !== 'chief') return false
-
-  const own = user.department_id
-  const rowDept = row?.user?.department_id ?? row?.department_id ?? null
-  if (own == null || rowDept == null) return true
-  return String(own) === String(rowDept)
-}
-
 // ── Calls ────────────────────────────────────────────────────────────────────
 
 /**
@@ -251,17 +237,21 @@ export async function undoRejection(recordId) {
 export function readRejectionError(err, fallback = 'تعذّر تنفيذ الإجراء، حاول مرة أخرى.') {
   const res = err?.response
   const data = res?.data
+  const capabilityDenied = isAttendanceRejectCapabilityDenied(res)
 
   if (data?.errors && typeof data.errors === 'object') {
     return {
       message: Object.values(data.errors).flat().join('، '),
       errors: data.errors,
       blocked: false,
+      capabilityDenied: false,
     }
   }
 
   const message = data?.message
-    ?? (res?.status === 403 ? REJECTION_MESSAGES.outOfScope : fallback)
+    ?? (capabilityDenied
+      ? REJECTION_MESSAGES.forbidden
+      : (res?.status === 403 ? REJECTION_MESSAGES.outOfScope : fallback))
   const blocked = message === REJECTION_MESSAGES.standingCheckIn
     || message === REJECTION_MESSAGES.standingCheckOut
 
@@ -269,5 +259,6 @@ export function readRejectionError(err, fallback = 'تعذّر تنفيذ الإ
     message: blocked ? message + UNDO_BLOCKED_HINT : message,
     errors: null,
     blocked,
+    capabilityDenied,
   }
 }
