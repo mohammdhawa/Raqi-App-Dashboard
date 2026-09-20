@@ -4,7 +4,7 @@ import api from '../services/api'
 import {
   UserCheck, LogIn, AlertTriangle, Plane, CalendarOff, UserX,
   Clock, Building2, Layers, ChevronRight, Loader2,
-  ShieldPlus, ShieldCheck, ShieldX,
+  ShieldPlus, ShieldCheck, ShieldX, Undo2,
 } from 'lucide-react'
 import { leaveTypeLabel, EXCUSED_META, LEAVE_COPY } from '../utils/leave'
 import {
@@ -12,6 +12,7 @@ import {
 } from '../utils/attendanceRejection'
 import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
 import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
+import UndoExcuseModal from '../components/leave/UndoExcuseModal'
 import { ExportButton, SortableTh, ToggleChip } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
 
@@ -177,7 +178,7 @@ function TimeCell({ time }) {
   )
 }
 
-function DayRow({ day, last, onExcuse }) {
+function DayRow({ day, last, onExcuse, onUndoExcuse }) {
   const [hov, setHov] = useState(false)
   const dim = day.status === 'off'
   // A day inside a leave/excuse span names the span in `leave_type` whatever
@@ -249,9 +250,19 @@ function DayRow({ day, last, onExcuse }) {
           counted inside `absent_days`. Excluding it here would quietly remove
           HR's excuse action from exactly the days a refusal created. Anything
           the day is already answered for (`off` / `excused` / `on_leave`)
-          outranks both, so this stays the "unanswered absence" test. */}
+          outranks both, so this stays the "unanswered absence" test.
+
+          An `excused` day is the one HR may have to take back, and it used to
+          fall into the bare dash. The undo is the quiet counterpart of filing:
+          the excuse block already carries `leave_request_id`, and it is only
+          ever an HR-filed excuse — an employee's own request is decided through
+          its approval chain and the endpoint refuses it. No capability gate
+          here: filing has none either (the page is behind attendance-view
+          routing), the server enforces scope, and the modal shows its 403. */}
       <td style={{ padding: '11px 16px' }}>
-        {EXCUSABLE_STATUSES.includes(day.status) ? <button onClick={() => onExcuse(day)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><ShieldPlus size={13} /> تسجيل عذر</button> : <span style={{ color: 'var(--c-text-3)' }}>—</span>}
+        {EXCUSABLE_STATUSES.includes(day.status) ? <button onClick={() => onExcuse(day)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><ShieldPlus size={13} /> تسجيل عذر</button>
+          : day.status === 'excused' && excuse ? <button onClick={() => onUndoExcuse(day)} title={LEAVE_COPY.undoExcuseTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><Undo2 size={13} /> {LEAVE_COPY.undoExcuse}</button>
+          : <span style={{ color: 'var(--c-text-3)' }}>—</span>}
       </td>
       {/* Shown for every day inside a span, not only `on_leave` ones — a
           non-working day in the middle of a leave is `off` but still part
@@ -333,6 +344,9 @@ export default function AttendanceEmployeeReportPage() {
   const [workingDaysOnly, setWorkingDaysOnly] = useState(false)
   const [sort, setSort] = useState(null)
   const [excuseDay, setExcuseDay] = useState(null)
+  // The `excused` day whose excuse is being retracted — its `excuse` block
+  // carries the leave-request id the endpoint needs.
+  const [undoDay, setUndoDay] = useState(null)
   const reqRef = useRef(0)
 
   // Shared by the fetch and the XLSX export so the file mirrors the view.
@@ -532,7 +546,7 @@ export default function AttendanceEmployeeReportPage() {
             <tbody>
               {loading
                 ? [0, 1, 2, 3, 4, 5, 6].map(i => <SkeletonRow key={i} />)
-                : days.map((d, idx) => <DayRow key={d.date ?? idx} day={d} last={idx === days.length - 1} onExcuse={setExcuseDay} />)
+                : days.map((d, idx) => <DayRow key={d.date ?? idx} day={d} last={idx === days.length - 1} onExcuse={setExcuseDay} onUndoExcuse={setUndoDay} />)
               }
             </tbody>
           </table>
@@ -546,6 +560,25 @@ export default function AttendanceEmployeeReportPage() {
         )}
       </div>
       {excuseDay && <ExcuseLeaveModal employee={{ id: u?.id ?? Number(userId), name: u?.name, email: u?.email }} date={excuseDay.date} onClose={() => setExcuseDay(null)} onSubmitted={fetchReport} />}
+      {/* One undo moves the day's status, three summary counters and the
+          balance at once, so the report is pulled again rather than patched. */}
+      {undoDay && (
+        <UndoExcuseModal
+          target={{
+            leaveRequestId: undoDay.excuse?.leave_request_id,
+            name: u?.name, email: u?.email,
+            // The day, not the excuse's period — the day's `excuse` block
+            // carries no dates, and the undo takes the whole span.
+            date: undoDay.date,
+            leaveTypeName: undoDay.excuse?.leave_type_name ?? leaveTypeLabel(undoDay.leave_type),
+            deductsBalance: undoDay.excuse?.deducts_balance,
+            reason: undoDay.excuse?.reason,
+            recordedBy: undoDay.excuse?.recorded_by,
+          }}
+          onClose={() => setUndoDay(null)}
+          onDone={fetchReport}
+        />
+      )}
     </div>
   )
 }

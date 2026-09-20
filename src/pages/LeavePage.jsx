@@ -623,10 +623,15 @@ const MINE_COLS = [
   { label: LEAVE_COPY.approvalChain },
 ]
 
+// `?status=…` / `?statuses=a,b`. `cancelled` is the fourth lifecycle value — an
+// HR excuse undone through DELETE …/excuse. Such rows drop out of every default
+// listing by no longer being approved, so this option is the only way to find
+// them again; it is never filtered out client-side.
 const STATUS_OPTIONS = [
   { id: 'pending', name: 'قيد المراجعة' },
   { id: 'approved', name: 'موافَق عليها' },
   { id: 'rejected', name: 'مرفوضة' },
+  { id: 'cancelled', name: 'ملغاة' },
 ]
 
 const filterSelectStyle = {
@@ -669,7 +674,7 @@ export default function LeavePage() {
   const [total, setTotal] = useState(0)
 
   // Filters shared by both tabs (both endpoints accept them)
-  const [statuses, setStatuses] = useState([])       // pending/approved/rejected
+  const [statuses, setStatuses] = useState([])       // pending/approved/rejected/cancelled
   const [leaveType, setLeaveType] = useState('')
   const [excuseFilter, setExcuseFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')       // overlap semantics
