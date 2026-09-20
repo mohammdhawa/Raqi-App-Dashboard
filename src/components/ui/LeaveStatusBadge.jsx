@@ -1,4 +1,4 @@
-import { Clock, Check, X, Plane } from 'lucide-react'
+import { Clock, Check, X, Plane, Undo2 } from 'lucide-react'
 
 // Leave request lifecycle statuses + the attendance "Approved Leave" display
 // state. Shared between AttendancePage (approved-leave view) and LeavePage so
@@ -7,6 +7,10 @@ const LEAVE_STATUS_META = {
   pending:        { label: 'قيد المراجعة', color: 'var(--c-pending)',  bg: 'var(--c-pending-bg)',     icon: Clock },
   approved:       { label: 'موافق عليها',  color: 'var(--c-approved)', bg: 'var(--c-approved-bg)',    icon: Check },
   rejected:       { label: 'مرفوضة',       color: 'var(--c-rejected)', bg: 'var(--c-rejected-bg)',    icon: X },
+  // An HR excuse retracted through DELETE …/excuse. Muted on purpose, never the
+  // refusal red: nobody was refused, the entry was withdrawn. The label matches
+  // the XLSX export's word for the same status exactly.
+  cancelled:      { label: 'ملغاة',        color: 'var(--c-text-2)',   bg: 'var(--c-surface-2)',      icon: Undo2 },
   approved_leave: { label: 'في إجازة',     color: 'var(--c-primary)',  bg: 'var(--c-primary-light)',  icon: Plane },
 }
 

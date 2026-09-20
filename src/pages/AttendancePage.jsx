@@ -8,15 +8,16 @@ import {
   MapPin, Camera, X, User as UserIcon, UserX, Building2,
   Loader2, ImageOff, ExternalLink, Plane, CalendarOff,
   Layers, AlertTriangle, ShieldCheck, ShieldX, Clock,
-  ShieldPlus,
+  ShieldPlus, Undo2,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
 import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
+import UndoExcuseModal from '../components/leave/UndoExcuseModal'
 import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
 import RejectedBadge from '../components/ui/RejectedBadge'
 import RejectRecordModal from '../components/attendance/RejectRecordModal'
-import { getLeaveUser, getLeaveStart, getLeaveEnd, getLeaveDays, leaveTypeName, deductsBalance } from '../utils/leave'
+import { getLeaveUser, getLeaveStart, getLeaveEnd, getLeaveDays, leaveTypeName, deductsBalance, LEAVE_COPY } from '../utils/leave'
 import {
   isRejected, canRejectRecord, REJECTION_COPY, REJECTION_REASON_KEYS, REJECTION_REASONS,
 } from '../utils/attendanceRejection'
@@ -95,6 +96,9 @@ const TABLE_COLS_LEAVE = [
   { label: 'الأيام', field: 'requested_days' },
   { label: 'الحالة' },
   { label: 'مسجّل بواسطة' },
+  // Only ever an excuse's undo — the planned-leave rows in this same table are
+  // an approver's decision, not HR's entry, and have nothing to undo here.
+  { label: 'إجراءات' },
 ]
 
 const dateInputStyle = {
@@ -335,7 +339,7 @@ function SelfiePreviewModal({ record, onClose }) {
 
 const SKELETON_CELLS = [[170, 34, 17], [80, 22, 7], [100, 26, 7], [90, 16, 7], [110, 16, 7], [90, 22, 7], [80, 22, 7], [100, 32, 9]]
 const SKELETON_CELLS_ABSENT = [[170, 34, 17], [80, 22, 7], [120, 16, 7], [70, 26, 7], [110, 30, 8]]
-const SKELETON_CELLS_LEAVE = [[170, 34, 17], [120, 16, 7], [70, 22, 7], [140, 16, 7], [50, 16, 7], [90, 22, 7], [110, 16, 7]]
+const SKELETON_CELLS_LEAVE = [[170, 34, 17], [120, 16, 7], [70, 22, 7], [140, 16, 7], [50, 16, 7], [90, 22, 7], [110, 16, 7], [100, 31, 9]]
 
 function SkeletonRow({ cells = SKELETON_CELLS }) {
   const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)' }
@@ -542,7 +546,7 @@ function LeaveTypePill({ item }) {
   )
 }
 
-function LeaveRow({ item, last }) {
+function LeaveRow({ item, last, onUndoExcuse }) {
   const [hov, setHov] = useState(false)
   const u = getLeaveUser(item)
   const start = getLeaveStart(item)
@@ -592,6 +596,23 @@ function LeaveRow({ item, last }) {
         <div style={{ fontSize: 12, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>
           {item.is_excuse ? (item.creator?.name ?? 'الموارد البشرية') : (item.manager?.name ?? '—')}
         </div>
+      </td>
+      {/* Never on a planned leave: that one a named manager granted, and
+          withdrawing it is a different decision the endpoint refuses. */}
+      <td style={{ padding: '12px 16px' }}>
+        {item.is_excuse && item.id != null ? (
+          <button
+            onClick={() => onUndoExcuse(item)} title={LEAVE_COPY.undoExcuseTitle}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
+              borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff',
+              fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
+              color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
+            }}
+          >
+            <Undo2 size={13} /> {LEAVE_COPY.undoExcuse}
+          </button>
+        ) : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
       </td>
     </tr>
   )
@@ -760,6 +781,8 @@ export default function AttendancePage() {
 
   const [selfiePreview, setSelfiePreview] = useState(null)
   const [excuseTarget, setExcuseTarget] = useState(null)
+  // The approved-leave row whose HR excuse is being retracted.
+  const [undoingExcuse, setUndoingExcuse] = useState(null)
   // { record, mode } — the shared refuse/undo confirm dialog.
   const [rejecting, setRejecting] = useState(null)
 
@@ -1345,7 +1368,7 @@ export default function AttendancePage() {
                     : isAbsent
                       ? activeRows.map((u, idx) => <AbsentRow key={u.id} user={u} last={idx === activeRows.length - 1} onExcuse={employee => setExcuseTarget({ employee, date: resolvedDate || absentDate })} />)
                       : isLeave
-                        ? activeRows.map((item, idx) => <LeaveRow key={item.id ?? idx} item={item} last={idx === activeRows.length - 1} />)
+                        ? activeRows.map((item, idx) => <LeaveRow key={item.id ?? idx} item={item} last={idx === activeRows.length - 1} onUndoExcuse={setUndoingExcuse} />)
                         : activeRows.map((r, idx) => (
                             <RecordRow
                               key={r.id} record={r} last={idx === activeRows.length - 1}
@@ -1397,6 +1420,25 @@ export default function AttendancePage() {
       {excuseTarget && (
         <ExcuseLeaveModal employee={excuseTarget.employee} date={excuseTarget.date}
           onClose={() => setExcuseTarget(null)} onSubmitted={() => fetchAbsent(absentPage)} />
+      )}
+      {/* The row leaves this list entirely once the excuse is retracted — it is
+          approved leave no longer — so the tab is refetched, not patched. */}
+      {undoingExcuse && (
+        <UndoExcuseModal
+          target={{
+            leaveRequestId: undoingExcuse.id,
+            name: getLeaveUser(undoingExcuse)?.name,
+            email: getLeaveUser(undoingExcuse)?.email,
+            startDate: getLeaveStart(undoingExcuse),
+            endDate: getLeaveEnd(undoingExcuse),
+            leaveTypeName: leaveTypeName(undoingExcuse),
+            deductsBalance: deductsBalance(undoingExcuse),
+            reason: undoingExcuse.reason,
+            recordedBy: undoingExcuse.creator?.name,
+          }}
+          onClose={() => setUndoingExcuse(null)}
+          onDone={() => fetchLeave(leavePage)}
+        />
       )}
       {/* Every event has its own row here, so this is the only place a check-out
           can be refused on its own — the modal warns about the paired check-out

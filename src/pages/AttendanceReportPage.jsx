@@ -6,11 +6,12 @@ import { useToast } from '../components/ui/Toast'
 import {
   Calendar, CalendarOff, X, MapPin, LogIn, LogOut, UserCheck,
   AlertTriangle, Plane, Clock, ImageOff, ExternalLink, Loader2,
-  ShieldCheck, ShieldX, Building2, Layers, ArrowLeft,
+  ShieldCheck, ShieldX, Building2, Layers, ArrowLeft, Undo2,
 } from 'lucide-react'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh } from '../components/attendance/controls'
 import RejectRecordModal from '../components/attendance/RejectRecordModal'
+import UndoExcuseModal from '../components/leave/UndoExcuseModal'
 import { sortParams } from '../utils/attendanceQuery'
 import { useDeptSections } from '../utils/useDeptSections'
 import { leaveTypeName, deductsBalance, EXCUSED_META, LEAVE_COPY } from '../utils/leave'
@@ -383,7 +384,7 @@ function AttendanceRow({
 // Serves both leave sections. On an excused row the `excuse` block behind the
 // absence — its reason and who recorded it — is the audit trail HR needs, so it
 // gets its own columns rather than a tooltip.
-function LeaveReportRow({ row, last, showExcuse }) {
+function LeaveReportRow({ row, last, showExcuse, onUndoExcuse }) {
   const [hov, setHov] = useState(false)
   const excuse = row.excuse ?? null
   const deducts = deductsBalance(row)
@@ -430,6 +431,25 @@ function LeaveReportRow({ row, last, showExcuse }) {
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>
               {excuse?.recorded_by ?? 'الموارد البشرية'}
             </span>
+          </td>
+          {/* Only an HR-filed excuse can be undone — an employee's own request
+              is decided through its approval chain and the endpoint answers 422
+              for one. The section is excuses by definition, so `is_excuse` is
+              belt and braces against a row that arrived without its block. */}
+          <td style={{ padding: '12px 16px' }}>
+            {row.is_excuse && excuse?.leave_request_id ? (
+              <button
+                onClick={() => onUndoExcuse(row)} title={LEAVE_COPY.undoExcuseTitle}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
+                  borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff',
+                  fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
+                  color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
+                }}
+              >
+                <Undo2 size={13} /> {LEAVE_COPY.undoExcuse}
+              </button>
+            ) : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
           </td>
         </>
       )}
@@ -752,6 +772,8 @@ export default function AttendanceReportPage() {
   const [correcting, setCorrecting] = useState(null)
   // { row, mode } — one dialog for both directions of a refusal.
   const [rejecting, setRejecting]   = useState(null)
+  // The excused row whose HR excuse is being retracted.
+  const [undoingExcuse, setUndoingExcuse] = useState(null)
   // Applied to the rows of every report section; null keeps the documented
   // per-section default order.
   const [sort, setSort] = useState(null)
@@ -837,7 +859,7 @@ export default function AttendanceReportPage() {
   ]
   const cols = isLeaveSection
     ? (isExcusedSection
-        ? [...LEAVE_COLS, { label: 'سبب العذر' }, { label: 'مسجّل بواسطة' }]
+        ? [...LEAVE_COLS, { label: 'سبب العذر' }, { label: 'مسجّل بواسطة' }, { label: 'إجراءات' }]
         : LEAVE_COLS)
     : [
         ...ATT_COLS,
@@ -1027,6 +1049,7 @@ export default function AttendanceReportPage() {
                       <LeaveReportRow
                         key={r.excuse?.leave_request_id ?? r.user_id ?? idx} row={r}
                         last={idx === rows.length - 1} showExcuse={isExcusedSection}
+                        onUndoExcuse={setUndoingExcuse}
                       />
                     ))
                   : rows.map((r, idx) => (
@@ -1080,6 +1103,26 @@ export default function AttendanceReportPage() {
         <CorrectionDialog
           row={correcting} reportDate={reportDate || new Date().toISOString().slice(0, 10)}
           onClose={() => setCorrecting(null)} onDone={fetchReport}
+        />
+      )}
+      {/* Undoing moves the employee out of «الغياب بعذر» and back among the
+          absentees, so the report is pulled again rather than dropping the row.
+          The modal raises its own toast — this only refreshes. */}
+      {undoingExcuse && (
+        <UndoExcuseModal
+          target={{
+            leaveRequestId: undoingExcuse.excuse?.leave_request_id,
+            name: undoingExcuse.name,
+            email: undoingExcuse.email,
+            startDate: undoingExcuse.start_date,
+            endDate: undoingExcuse.end_date,
+            leaveTypeName: leaveTypeName(undoingExcuse),
+            deductsBalance: undoingExcuse.excuse?.deducts_balance ?? deductsBalance(undoingExcuse),
+            reason: undoingExcuse.excuse?.reason,
+            recordedBy: undoingExcuse.excuse?.recorded_by,
+          }}
+          onClose={() => setUndoingExcuse(null)}
+          onDone={fetchReport}
         />
       )}
     </div>

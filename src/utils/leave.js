@@ -3,6 +3,8 @@
 // variants and falls back gracefully — same defensive style used elsewhere in
 // the dashboard (see notifText in Topbar).
 
+import api from '../services/api'
+
 // Legacy free-text codes, from before `leave_types` existed. Rows filed since
 // then store the type's Arabic label in `leave_type`, so this map is only a
 // fallback for the old raw strings — never a switch to drive logic off.
@@ -100,6 +102,30 @@ export const LEAVE_COPY = {
   // silently falls back to a deducting, unlabelled one — so the UI is what has
   // to insist on a choice.
   typeRequired: 'نوع الإجازة مطلوب.',
+
+  // Undoing an HR excuse (DELETE /attendance/leave-requests/{id}/excuse).
+  undoExcuse:          'تراجع عن العذر',
+  undoExcuseTitle:     'التراجع عن عذر الغياب',
+  // The confirm has to state all three consequences: the day, the employee, the
+  // balance — the last one only when the excuse actually deducted.
+  undoExcuseWarning:
+    'سيعود هذا اليوم غياباً بدون عذر، وسيُشعَر الموظف بذلك.',
+  undoExcuseRefunds:   'وسيُعاد يوم الرصيد المخصوم.',
+  // The day grid acts on one day but the excuse behind it may span several, and
+  // the day's `excuse` block names no dates — so the span is stated as a rule
+  // rather than guessed at, the way REJECTION_COPY.undoRestoreNote does.
+  undoExcuseWholeSpan: 'يشمل التراجع كامل فترة العذر، لا هذا اليوم وحده.',
+  // Not a delete: the row survives as «ملغاة» and the period is free again, so
+  // the corrected excuse can be filed straight after. Nothing restores this one.
+  undoExcuseRefile:    'تصبح الفترة متاحة فوراً لتسجيل العذر الصحيح — ولا يمكن التراجع عن هذا الإجراء.',
+  undoExcuseReason:    'سبب التراجع (اختياري)',
+  undoExcuseReasonHint: 'يُرسَل إلى الموظف ضمن الإشعار عند كتابته.',
+  undoExcuseReasonPlaceholder: 'سبب التراجع — يراه الموظف في الإشعار…',
+  undoExcuseReasonMax: 'سبب التراجع يجب ألا يتجاوز ٢٠٠٠ محرف.',
+  undoExcuseNoTarget:  'تعذّر تحديد العذر المطلوب.',
+  undoExcuseDone:      'تم التراجع عن العذر',
+  undoExcuseFailed:    'تعذّر التراجع عن العذر، حاول مرة أخرى.',
+  undoExcuseUnauthorized: 'لا تملك صلاحية التراجع عن عذر هذا الموظف.',
 
   // Sequential approval chain
   approvalChain:      'سير الاعتماد',
@@ -377,6 +403,35 @@ export function splitDateRange(start, end, excluded = []) {
   return segments
 }
 
+// ── Calls ────────────────────────────────────────────────────────────────────
+
+// The one business-rule 422 callers act on rather than just display: someone
+// else undid the same excuse first, so the screen is stale. Matched against the
+// raw English `message` — LEAVE_API_MESSAGES below is what turns it into Arabic.
+export const EXCUSE_ALREADY_UNDONE = 'This excuse has already been undone.'
+
+/**
+ * Undo an HR-filed excuse → { message, leave_request, balance }.
+ *
+ * Unlike undoRejection(), this DOES notify the employee: their absence stops
+ * being justified. `reason` is optional and is passed on to them when given.
+ *
+ * The row moves to `status: "cancelled"` and is never deleted, and `balance` is
+ * the employee's fresh balance — prefer it over a refetch where one is on
+ * screen. Everything else (the day's status, the report counters) unwinds from
+ * that status change, so callers refetch the view rather than patching a row.
+ *
+ * A DELETE body is not the second positional argument — axios takes it as
+ * `{ data }`, and the key is left out entirely when there is no reason.
+ */
+export async function undoLeaveExcuse(leaveRequestId, reason) {
+  const trimmed = reason?.trim()
+  const res = await api.delete(`/attendance/leave-requests/${leaveRequestId}/excuse`, {
+    ...(trimmed ? { data: { reason: trimmed } } : {}),
+  })
+  return res.data
+}
+
 // The leave endpoints' *validation* errors are Arabic (set in the FormRequests),
 // but the business-rule 422s are raised in the controller as English strings.
 // Translate the known ones; anything unrecognised falls through unchanged.
@@ -395,6 +450,19 @@ const LEAVE_API_MESSAGES = {
     LEAVE_COPY.attendedDates,
   'Leave excuse recorded.':
     'تم تسجيل العذر.',
+  'Leave excuse undone.':
+    'تم التراجع عن العذر.',
+  // Two HR users on the same screen, one clicked first. An answer, not a
+  // failure: the employee was not notified twice — the view is simply stale.
+  // Keyed off the constant so the string callers match on and the string
+  // translated here cannot drift apart.
+  [EXCUSE_ALREADY_UNDONE]:
+    'تم التراجع عن هذا العذر مسبقاً.',
+  'Only a standing excuse can be undone.':
+    'لا يمكن التراجع إلا عن عذر سارٍ.',
+  // Never expected: the action is not offered on a row with `is_excuse` false.
+  'Only an HR-filed excuse can be undone here. An employee-submitted leave request is decided through its approval chain.':
+    'لا يمكن التراجع إلا عن الأعذار المسجَّلة من الموارد البشرية — طلبات الإجازة يقرّرها المعتمدون.',
   'Leave type created.':
     'تم إنشاء نوع الإجازة.',
   'Leave type updated.':
