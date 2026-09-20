@@ -295,10 +295,13 @@ export default function AttendanceMonthlyReportPage() {
   const hasFullAccess = user?.role === 'admin' || !!user?.can_view_attendance
 
   const initial = lastMonthRange()
-  // The selected range lives in the URL, not in component state: opening an
-  // employee's details and coming back remounts this page, and only the URL
-  // survives that round trip (the Back button there carries from/to home).
-  // Absent params — the sidebar link — still mean "last month".
+  // The whole view — range, filters, sorting — lives in the URL, not in
+  // component state: opening an employee's details and coming back remounts
+  // this page, and only the URL survives that round trip. That covers both ways
+  // back — the browser's own button replays the URL we left behind, and the
+  // details page's back link replays the copy we hand it — so a filtered view
+  // comes back filtered. Absent params (the sidebar link) still mean "last
+  // month, no filters".
   const [query, setQuery] = useSearchParams()
   // `??`, not `||`: an explicitly emptied picker (from=) must stay empty —
   // only an absent param falls back to the default month.
@@ -306,6 +309,20 @@ export default function AttendanceMonthlyReportPage() {
     from: query.get('from') ?? initial.from,
     to: query.get('to') ?? initial.to,
   }), [query, initial.from, initial.to])
+  const departmentId = query.get('department_id') ?? ''
+  const sectionId = query.get('section_id') ?? ''
+  const search = query.get('search') ?? ''
+  // "Only rows with …" filters — totals are recomputed server-side over the
+  // surviving rows, so the tiles/footer stay consistent with the table.
+  const hasAbsences = query.get('has_absences') === '1'
+  const hasMissingCheckouts = query.get('has_missing_checkouts') === '1'
+  // Memoised on `query` (itself memoised on location.search by the router): a
+  // fresh object every render would keep re-triggering the fetch effect below.
+  const sort = useMemo(() => {
+    const field = query.get('sort_by')
+    return field ? { field, dir: query.get('sort_direction') === 'desc' ? 'desc' : 'asc' } : null
+  }, [query])
+
   // `replace` so picking a range doesn't stack history entries between the
   // report and whatever the user came from.
   const setRange = useCallback((range) => {
@@ -316,19 +333,36 @@ export default function AttendanceMonthlyReportPage() {
       return next
     }, { replace: true })
   }, [setQuery])
-  const [departmentId, setDepartmentId] = useState('')
-  const [sectionId, setSectionId] = useState('')
-  const [search, setSearch] = useState('')
-  const [departments, setDepartments] = useState([])
+  // Single writer for every filter above. A param is dropped when its value is
+  // empty/false, so the unfiltered view keeps a clean URL and the readers'
+  // defaults stay the only place a default is spelled out.
+  const patchQuery = useCallback((patch) => {
+    setQuery(prev => {
+      const next = new URLSearchParams(prev)
+      for (const [key, value] of Object.entries(patch)) {
+        if (value === false || value == null || value === '') next.delete(key)
+        else next.set(key, value === true ? '1' : String(value))
+      }
+      return next
+    }, { replace: true })
+  }, [setQuery])
+  // Picking a department invalidates the chosen section (the API 422s on a
+  // section that doesn't belong to it), so both move in one write — clearing it
+  // from an effect afterwards would also wipe a section restored from the URL.
+  const setDepartmentId = useCallback(v => patchQuery({ department_id: v, section_id: '' }), [patchQuery])
+  const setSectionId = useCallback(v => patchQuery({ section_id: v }), [patchQuery])
+  const setSearch = useCallback(v => patchQuery({ search: v }), [patchQuery])
+  const setHasAbsences = useCallback(v => patchQuery({ has_absences: v }), [patchQuery])
+  const setHasMissingCheckouts = useCallback(v => patchQuery({ has_missing_checkouts: v }), [patchQuery])
+  const setSort = useCallback(
+    s => patchQuery({ sort_by: s?.field ?? '', sort_direction: s?.dir ?? '' }),
+    [patchQuery],
+  )
 
+  const [departments, setDepartments] = useState([])
   const [report, setReport] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  // "Only rows with …" filters — totals are recomputed server-side over the
-  // surviving rows, so the tiles/footer stay consistent with the table.
-  const [hasAbsences, setHasAbsences] = useState(false)
-  const [hasMissingCheckouts, setHasMissingCheckouts] = useState(false)
-  const [sort, setSort] = useState(null)
 
   // Managers/chiefs have no department picker (dept-locked server-side) but
   // may still filter by section — feed them their own department's sections.
@@ -352,8 +386,6 @@ export default function AttendanceMonthlyReportPage() {
       .then(res => setDepartments(res.data.departments ?? []))
       .catch(() => setDepartments([]))
   }, [])
-
-  useEffect(() => { setSectionId('') }, [departmentId])
 
   // Shared by the fetch and the XLSX export so the file mirrors the view.
   const buildParams = useCallback(() => {
@@ -398,7 +430,16 @@ export default function AttendanceMonthlyReportPage() {
   const totals = report?.totals ?? {}
 
   const openEmployee = (row) => {
-    navigate(`/admin/attendance/employee?user_id=${row.user_id}&from=${from}&to=${to}`)
+    // Hand the details page a copy of the exact view we're leaving, so its back
+    // link can replay it verbatim. from/to go in resolved — the default month
+    // is absent from our URL, but the details page needs a concrete range.
+    const back = new URLSearchParams(query)
+    back.set('from', from)
+    back.set('to', to)
+    const next = new URLSearchParams({
+      user_id: String(row.user_id), from, to, back: back.toString(),
+    })
+    navigate(`/admin/attendance/employee?${next}`)
   }
 
   return (
