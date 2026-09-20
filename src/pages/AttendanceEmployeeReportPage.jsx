@@ -320,6 +320,9 @@ export default function AttendanceEmployeeReportPage() {
   const userId = params.get('user_id')
   const from = params.get('from')
   const to = params.get('to')
+  // The monthly report keeps its whole view — range, filters, sorting — in its
+  // own URL and hands us a copy here, so going back can restore it as it was.
+  const back = params.get('back')
 
   const [report, setReport] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -364,13 +367,19 @@ export default function AttendanceEmployeeReportPage() {
     return () => window.removeEventListener('topbar:refresh', handler)
   }, [fetchReport])
 
-  // Carry the range back: the monthly report reads it from the URL, so a bare
-  // path would drop the user on last month instead of the month they opened.
+  // Replay the view we were opened from: the monthly report reads everything
+  // from its URL, so a bare path would drop the user on an unfiltered last
+  // month instead of the filtered month they opened. Without a `back` copy — a
+  // bookmarked or hand-typed link straight to this page — carry at least the
+  // range. Re-parsed rather than concatenated, so whatever arrives in `back`
+  // can only ever become query params on this one fixed path.
   const goBack = () => {
-    const back = new URLSearchParams()
-    if (from) back.set('from', from)
-    if (to) back.set('to', to)
-    const qs = back.toString()
+    const restored = new URLSearchParams(back ?? '')
+    if (!back) {
+      if (from) restored.set('from', from)
+      if (to) restored.set('to', to)
+    }
+    const qs = restored.toString()
     navigate(qs ? `/admin/attendance/monthly?${qs}` : '/admin/attendance/monthly')
   }
 
