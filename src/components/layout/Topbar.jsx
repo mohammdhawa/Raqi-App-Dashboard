@@ -20,6 +20,7 @@ const PAGE_META = {
   '/admin/attendance/monthly': { name: 'التقرير الشهري للحضور', section: 'الإدارة' },
   '/admin/attendance/employee': { name: 'تقرير الموظف التفصيلي', section: 'الإدارة' },
   '/admin/leave':       { name: 'إدارة الإجازات',     section: 'الإدارة' },
+  '/admin/leave-register': { name: 'سجل الإجازات', section: 'الإدارة' },
   '/admin/leave-balances': { name: 'أرصدة الإجازات', section: 'الإدارة' },
   '/admin/departments': { name: 'الإدارات',           section: 'الإدارة' },
   '/admin/sections':    { name: 'الأقسام',            section: 'الإدارة' },

@@ -34,6 +34,7 @@ const NAV = [
       { label: 'التقرير اليومي',      icon: ClipboardList,   path: '/admin/attendance/report', show: (auth) => auth.canViewAttendance },
       { label: 'التقرير الشهري',      icon: CalendarRange,   path: '/admin/attendance/monthly', show: (auth) => auth.canViewAttendance },
       { label: 'إدارة الإجازات',      icon: CalendarCheck,   path: '/admin/leave',        roles: ['admin', 'manager', 'chief', 'employee'] },
+      { label: 'سجل الإجازات',        icon: CalendarRange,   path: '/admin/leave-register', show: (auth) => auth.canViewLeaveRegister },
       { label: 'أرصدة الإجازات',      icon: WalletCards,     path: '/admin/leave-balances', show: (auth) => auth.canViewAttendance },
       { label: 'أنواع الإجازات',      icon: Tags,            path: '/admin/leave-types',  roles: ['admin'] },
       { label: 'الإدارات',           icon: Building2,       path: '/admin/departments',  roles: ['admin'] },
