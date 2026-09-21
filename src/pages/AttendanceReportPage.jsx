@@ -6,7 +6,7 @@ import { useToast } from '../components/ui/Toast'
 import {
   Calendar, CalendarOff, X, MapPin, LogIn, LogOut, UserCheck,
   AlertTriangle, Plane, Clock, ImageOff, ExternalLink, Loader2,
-  ShieldCheck, ShieldX, Building2, Layers, ArrowLeft, Undo2,
+  ShieldCheck, ShieldX, Building2, Layers, ArrowLeft, Undo2, CalendarCheck,
 } from 'lucide-react'
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh } from '../components/attendance/controls'
@@ -14,6 +14,7 @@ import RejectRecordModal from '../components/attendance/RejectRecordModal'
 import CorrectCheckoutModal from '../components/attendance/CorrectCheckoutModal'
 import { readCorrection, correctionTooltip } from '../utils/attendanceCorrection'
 import UndoExcuseModal from '../components/leave/UndoExcuseModal'
+import ReturnToWorkModal from '../components/leave/ReturnToWorkModal'
 import { sortParams } from '../utils/attendanceQuery'
 import { damascusToday } from '../utils/attendanceCapture'
 import { useDeptSections } from '../utils/useDeptSections'
@@ -364,7 +365,7 @@ function AttendanceRow({
 // Serves both leave sections. On an excused row the `excuse` block behind the
 // absence — its reason and who recorded it — is the audit trail HR needs, so it
 // gets its own columns rather than a tooltip.
-function LeaveReportRow({ row, last, showExcuse, onUndoExcuse }) {
+function LeaveReportRow({ row, last, showExcuse, onUndoExcuse, onReturnToWork }) {
   const [hov, setHov] = useState(false)
   const excuse = row.excuse ?? null
   const deducts = deductsBalance(row)
@@ -432,6 +433,27 @@ function LeaveReportRow({ row, last, showExcuse, onUndoExcuse }) {
             ) : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
           </td>
         </>
+      )}
+      {/* Planned leave: the employee turned up anyway. Not an undo — the leave
+          ends at the days actually taken and the approval stands — but it is
+          what frees today for a check-in, which is why it belongs on the daily
+          board and not only in the leave register. */}
+      {!showExcuse && (
+        <td style={{ padding: '12px 16px' }}>
+          {row.leave_request_id ? (
+            <button
+              onClick={() => onReturnToWork(row)} title={LEAVE_COPY.returnToWorkTitle}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
+                borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff',
+                fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
+                color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
+              }}
+            >
+              <CalendarCheck size={13} /> {LEAVE_COPY.returnToWork}
+            </button>
+          ) : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
+        </td>
       )}
     </tr>
   )
@@ -574,6 +596,8 @@ export default function AttendanceReportPage() {
   const [rejecting, setRejecting]   = useState(null)
   // The excused row whose HR excuse is being retracted.
   const [undoingExcuse, setUndoingExcuse] = useState(null)
+  // The on-leave row whose employee turned up at work anyway.
+  const [returningToWork, setReturningToWork] = useState(null)
   // Applied to the rows of every report section; null keeps the documented
   // per-section default order.
   const [sort, setSort] = useState(null)
@@ -657,10 +681,14 @@ export default function AttendanceReportPage() {
     { label: 'الفترة' },
     { label: 'حالة الإجازة' },
   ]
+  // Both leave sections get an actions column now — the excused half retracts
+  // an entry filed by mistake, the planned half ends a leave the employee came
+  // back from early. The excused one carries two more columns for the excuse
+  // behind the absence, which planned leave has nothing to put in.
   const cols = isLeaveSection
     ? (isExcusedSection
         ? [...LEAVE_COLS, { label: 'سبب العذر' }, { label: 'مسجّل بواسطة' }, { label: 'إجراءات' }]
-        : LEAVE_COLS)
+        : [...LEAVE_COLS, { label: 'إجراءات' }])
     : [
         ...ATT_COLS,
         ...(isRejectedSection ? [{ label: 'تفاصيل الرفض' }] : []),
@@ -847,9 +875,10 @@ export default function AttendanceReportPage() {
                 : isLeaveSection
                   ? rows.map((r, idx) => (
                       <LeaveReportRow
-                        key={r.excuse?.leave_request_id ?? r.user_id ?? idx} row={r}
+                        key={r.leave_request_id ?? r.excuse?.leave_request_id ?? r.user_id ?? idx} row={r}
                         last={idx === rows.length - 1} showExcuse={isExcusedSection}
                         onUndoExcuse={setUndoingExcuse}
+                        onReturnToWork={setReturningToWork}
                       />
                     ))
                   : rows.map((r, idx) => (
@@ -927,6 +956,29 @@ export default function AttendanceReportPage() {
             recordedBy: undoingExcuse.excuse?.recorded_by,
           }}
           onClose={() => setUndoingExcuse(null)}
+          onDone={fetchReport}
+        />
+      )}
+      {/* The employee stops being «في إجازة» for this day and becomes someone
+          who can check in, so the board is pulled again rather than dropping the
+          row — the counters above move with it. The report is always keyed to
+          one day, and that day is why the employee is standing there, so it is
+          the return date the form opens on. */}
+      {returningToWork && (
+        <ReturnToWorkModal
+          key={returningToWork.leave_request_id}
+          target={{
+            leaveRequestId: returningToWork.leave_request_id,
+            name: returningToWork.name,
+            email: returningToWork.email,
+            startDate: returningToWork.start_date,
+            endDate: returningToWork.end_date,
+            leaveTypeName: leaveTypeName(returningToWork),
+            deductsBalance: deductsBalance(returningToWork),
+            approvedBy: returningToWork.approved_by,
+            defaultReturnedOn: reportDate,
+          }}
+          onClose={() => setReturningToWork(null)}
           onDone={fetchReport}
         />
       )}

@@ -127,6 +127,35 @@ export const LEAVE_COPY = {
   undoExcuseFailed:    'تعذّر التراجع عن العذر، حاول مرة أخرى.',
   undoExcuseUnauthorized: 'لا تملك صلاحية التراجع عن عذر هذا الموظف.',
 
+  // Employee came back early (POST …/{id}/return-to-work). The counterpart of
+  // the undo above on the OTHER half of the list: that one retracts an HR entry
+  // filed by mistake, this one ends a real leave the employee stopped taking.
+  returnToWork:        'عاد إلى العمل',
+  returnToWorkTitle:   'إنهاء الإجازة لعودة الموظف',
+  returnToWorkHint:
+    'الموظف حضر قبل انتهاء إجازته المعتمدة — تُنهى الإجازة في اليوم السابق لعودته فيصبح بإمكانه تسجيل الحضور.',
+  returnToWorkDate:    'تاريخ العودة',
+  returnToWorkDateHint: 'يجب أن يقع ضمن فترة الإجازة. الافتراضي هو اليوم المعروض.',
+  returnToWorkDateOutside: 'تاريخ العودة يجب أن يقع ضمن فترة الإجازة.',
+  // The two outcomes, stated before the click so neither is a surprise. Which
+  // one applies is decided by the return date, so the modal picks the line.
+  returnToWorkShortens: 'ستنتهي الإجازة في {end} بدلاً من {was}، وتبقى الأيام السابقة إجازة كما هي.',
+  returnToWorkCancels:  'لم يبدأ الموظف إجازته، لذلك ستُلغى الإجازة بالكامل.',
+  returnToWorkRefunds:  'وسيُعاد {n} إلى رصيد الموظف.',
+  returnToWorkDays:     n => (n === 1 ? 'يوم واحد' : n === 2 ? 'يومان' : `${n} أيام`),
+  // The approval is NOT undone — the distinction the whole endpoint rests on.
+  returnToWorkKeepsApproval:
+    'لا يُلغى قرار الاعتماد: الإجازة تبقى معتمدة عن الأيام التي أخذها الموظف فعلاً.',
+  returnToWorkReason:  'سبب العودة (اختياري)',
+  returnToWorkReasonHint: 'يُرسَل إلى الموظف ضمن الإشعار عند كتابته.',
+  returnToWorkReasonPlaceholder: 'سبب العودة المبكرة — يراه الموظف في الإشعار…',
+  returnToWorkReasonMax: 'سبب العودة يجب ألا يتجاوز ٢٠٠٠ محرف.',
+  returnToWorkNoTarget: 'تعذّر تحديد الإجازة المطلوبة.',
+  returnToWorkDone:    'تم إنهاء الإجازة — يمكن للموظف تسجيل الحضور الآن.',
+  returnToWorkDoneCancelled: 'تم إلغاء الإجازة — يمكن للموظف تسجيل الحضور الآن.',
+  returnToWorkFailed:  'تعذّر إنهاء الإجازة، حاول مرة أخرى.',
+  returnToWorkUnauthorized: 'لا تملك صلاحية تعديل إجازة هذا الموظف.',
+
   // Sequential approval chain
   approvalChain:      'سير الاعتماد',
   currentApprover:    'المعتمد الحالي',
@@ -432,6 +461,34 @@ export async function undoLeaveExcuse(leaveRequestId, reason) {
   return res.data
 }
 
+/**
+ * The employee came back before their approved leave was over →
+ * { message, cancelled, days_returned, leave_request, balance }.
+ *
+ * Not a withdrawal and not the undo above: the approval stands for every day
+ * the leave actually covered, and only the remainder is handed back. The row
+ * keeps `status: "approved"` with a shorter `end_date` — unless they returned
+ * on the first day, when there is no shorter leave to keep and it is cancelled
+ * instead, which is what `cancelled` in the response reports.
+ *
+ * `returnedOn` is optional and defaults server-side to today in the attendance
+ * timezone; callers looking at a specific day (the leave tab is always keyed to
+ * one) should pass that day rather than rely on the default.
+ *
+ * The point of the call is that the employee can then check in: the check-in
+ * guard refuses a day covered by approved leave, and this is what frees it.
+ * Callers refetch — one call moves the roster, the day's counters and the
+ * balance at once.
+ */
+export async function returnLeaveToWork(leaveRequestId, { returnedOn, reason } = {}) {
+  const trimmed = reason?.trim()
+  const res = await api.post(`/attendance/leave-requests/${leaveRequestId}/return-to-work`, {
+    ...(returnedOn ? { returned_on: returnedOn } : {}),
+    ...(trimmed ? { reason: trimmed } : {}),
+  })
+  return res.data
+}
+
 // The leave endpoints' *validation* errors are Arabic (set in the FormRequests),
 // but the business-rule 422s are raised in the controller as English strings.
 // Translate the known ones; anything unrecognised falls through unchanged.
@@ -463,6 +520,23 @@ const LEAVE_API_MESSAGES = {
   // Never expected: the action is not offered on a row with `is_excuse` false.
   'Only an HR-filed excuse can be undone here. An employee-submitted leave request is decided through its approval chain.':
     'لا يمكن التراجع إلا عن الأعذار المسجَّلة من الموارد البشرية — طلبات الإجازة يقرّرها المعتمدون.',
+  // Returning to work. The two success strings are translated like every other
+  // message here, though the modal prefers its own copy — `cancelled` in the
+  // body is what tells the two outcomes apart, not the sentence.
+  'Leave shortened to the days actually taken.':
+    'تم إنهاء الإجازة عند آخر يوم أخذه الموظف فعلاً.',
+  'Leave cancelled — the employee returned to work on its first day.':
+    'تم إلغاء الإجازة بالكامل — عاد الموظف في أول أيامها.',
+  'Only an approved leave can be cut short by a return to work.':
+    'لا يمكن إنهاء إلا إجازة معتمدة وسارية.',
+  // The limit that keeps this from being a withdrawal route: a leave that has
+  // not started, or one already over, cannot be reached at all.
+  'The return date must fall inside the leave period.':
+    LEAVE_COPY.returnToWorkDateOutside,
+  // Never expected: the action is not offered on a row with `is_excuse` true —
+  // that half has its own undo, which is what the English message points at.
+  'This is an HR-filed excuse for an absence, not a leave being taken. Undo it with DELETE /attendance/leave-requests/{leaveRequest}/excuse.':
+    'هذا عذر مسجَّل من الموارد البشرية عن غياب، وليس إجازة — استخدم «تراجع عن العذر».',
   'Leave type created.':
     'تم إنشاء نوع الإجازة.',
   'Leave type updated.':
