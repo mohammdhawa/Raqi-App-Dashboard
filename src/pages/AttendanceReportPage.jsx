@@ -11,8 +11,11 @@ import {
 import { DepartmentSelect, SectionSelect, SearchInput } from '../components/attendance/filters'
 import { ExportButton, SortableTh } from '../components/attendance/controls'
 import RejectRecordModal from '../components/attendance/RejectRecordModal'
+import CorrectCheckoutModal from '../components/attendance/CorrectCheckoutModal'
+import { readCorrection, correctionTooltip } from '../utils/attendanceCorrection'
 import UndoExcuseModal from '../components/leave/UndoExcuseModal'
 import { sortParams } from '../utils/attendanceQuery'
+import { damascusToday } from '../utils/attendanceCapture'
 import { useDeptSections } from '../utils/useDeptSections'
 import { leaveTypeName, deductsBalance, EXCUSED_META, LEAVE_COPY } from '../utils/leave'
 import {
@@ -43,33 +46,10 @@ function fmtDateTime(value) {
   if (!d) return '—'
   return `${fmtDate(value)} — ${fmtTime(value)}`
 }
-// datetime-local ("YYYY-MM-DDTHH:mm[:ss]") → backend "YYYY-MM-DD HH:mm:ss"
-function toBackendDatetime(local) {
-  if (!local) return null
-  const [d, t = ''] = local.split('T')
-  const time = t.length === 5 ? `${t}:00` : t
-  return `${d} ${time}`
-}
-
 // The orphan check-in row id needed by the correction endpoint isn't named
 // explicitly in the report payload, so read the common variants defensively.
 function getRecordId(row) {
   return row?.record_id ?? row?.check_in_id ?? row?.checkin_id ?? row?.attendance_id ?? row?.id ?? null
-}
-function getCorrection(row) {
-  const by = row?.corrected_by
-  const at = row?.corrected_at
-  if (!by && !at) return null
-  const byName = by && typeof by === 'object' ? (by.name ?? by.email) : by
-  return { by: byName, at, note: row?.correction_note ?? row?.correction?.note ?? null }
-}
-
-// Tooltip for the "تم التصحيح" badge: the correction note and when it was made.
-function correctionTooltip({ note, at }) {
-  const parts = []
-  if (note) parts.push(note)
-  if (at) parts.push(`وقت التصحيح: ${fmtDateTime(at)}`)
-  return parts.length ? parts.join('\n') : 'تم تصحيح الانصراف بواسطة مشرف'
 }
 
 // ── Section / status meta (consistent colors across the report) ──────────────
@@ -293,7 +273,7 @@ function AttendanceRow({
   showActions, showCorrection, showRejection, canReject,
 }) {
   const [hov, setHov] = useState(false)
-  const correction = getCorrection(row)
+  const correction = readCorrection(row)
   const rejection = readRejection(row)
   // A refused day has no check-out to be missing — it has no attendance at all,
   // so it must not borrow the "forgot to check out" warning.
@@ -500,186 +480,6 @@ function SummaryTile({ meta, count, active, onClick }) {
         </div>
       </div>
     </button>
-  )
-}
-
-// ── Correction dialog ────────────────────────────────────────────────────────
-function CorrectionDialog({ row, reportDate, onClose, onDone }) {
-  const toast = useToast()
-  const recordId = getRecordId(row)
-  const checkInDate = toDate(row.check_in_time)
-  // Default to the checkout-reminder time (17:00) on the report day.
-  const [datetime, setDatetime] = useState(`${reportDate}T17:00`)
-  const [note, setNote] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    const onKey = e => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  const minAttr = checkInDate
-    ? `${row.check_in_time.slice(0, 10)}T${row.check_in_time.slice(11, 16)}`
-    : undefined
-
-  // Mirror the backend rule (وقت الانصراف يجب أن يكون بعد وقت الحضور) client-side so
-  // we can disable the submit and warn live before the request is ever sent.
-  const chosen = datetime ? new Date(datetime) : null
-  const timeInvalid = !chosen || Number.isNaN(chosen.getTime()) || (checkInDate && chosen <= checkInDate)
-  const liveError = datetime && checkInDate && chosen && chosen <= checkInDate
-    ? 'وقت الانصراف يجب أن يكون بعد وقت الحضور'
-    : ''
-
-  const submit = async () => {
-    setError('')
-    if (!datetime) { setError('يرجى تحديد وقت الخروج'); return }
-    if (timeInvalid) { setError('وقت الانصراف يجب أن يكون بعد وقت الحضور'); return }
-    if (!recordId) { setError('تعذّر تحديد سجل الدخول المراد تصحيحه'); return }
-    setSubmitting(true)
-    try {
-      const body = { checked_out_at: toBackendDatetime(datetime) }
-      if (note.trim()) body.note = note.trim()
-      await api.patch(`/attendance/records/${recordId}/checkout`, body)
-      toast.success('تم تسجيل الخروج وتصحيح السجل')
-      onDone()
-      onClose()
-    } catch (err) {
-      const data = err.response?.data
-
-      // 403 covers both "you may not touch this record" and "this record does
-      // not exist": the route pins its missing-model handler to the same 403 as
-      // the authorization middleware, so the two are indistinguishable by
-      // design and neither may be reported as a missing record. The row that
-      // opened this dialog may simply be stale, so the report is pulled again.
-      if (err.response?.status === 403) {
-        setError('ليس لديك صلاحية لتصحيح هذا السجل، أو لم يعد السجل متاحاً. تم تحديث التقرير.')
-        onDone()
-      } else {
-        // 422 keeps carrying the field validation and the business rules
-        // (wrong record type, nothing to correct, checkout before check-in).
-        setError(data?.errors
-          ? Object.values(data.errors).flat().join('، ')
-          : (data?.message ?? 'تعذّر تصحيح السجل، حاول مرة أخرى'))
-      }
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(20,32,50,0.5)',
-        backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{ width: 'min(440px, 100%)', background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card-lg)' }}
-      >
-        {/* Header */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>تصحيح الخروج المنسي</div>
-            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {row.name} — دخول {fmtTime(row.check_in_time) ?? '—'}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{
-            display: 'flex', gap: 9, padding: '10px 12px', borderRadius: 10,
-            background: 'var(--c-pending-bg)', border: '1px solid var(--c-pending)22',
-          }}>
-            <AlertTriangle size={15} style={{ color: 'var(--c-pending)', flexShrink: 0, marginTop: 1 }} />
-            <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: 'var(--c-text-2)' }}>
-              لم يُسجِّل الموظف خروجه وأُغلق اليوم تلقائياً. حدّد وقت الخروج الفعلي ليُحتسب وقت العمل،
-              وسيُسجَّل اسمك ووقت التصحيح في سجل المراجعة.
-            </p>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 6 }}>
-              وقت الخروج الفعلي
-            </label>
-            <input
-              type="datetime-local" value={datetime} min={minAttr}
-              onChange={e => setDatetime(e.target.value)}
-              style={{
-                width: '100%', height: 40, borderRadius: 10, border: '1px solid var(--c-border)',
-                background: '#fff', padding: '0 12px', fontSize: 13, fontFamily: 'var(--font-sans)',
-                color: 'var(--c-text)', outline: 'none',
-              }}
-            />
-            {liveError && (
-              <p style={{ margin: '6px 0 0', fontSize: 11.5, fontWeight: 600, color: 'var(--c-rejected)' }}>
-                {liveError}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 6 }}>
-              ملاحظة (اختياري)
-            </label>
-            <textarea
-              value={note} onChange={e => setNote(e.target.value)} rows={2}
-              placeholder="سبب التصحيح أو مرجعه..."
-              style={{
-                width: '100%', borderRadius: 10, border: '1px solid var(--c-border)',
-                background: '#fff', padding: '10px 12px', fontSize: 13, fontFamily: 'var(--font-sans)',
-                color: 'var(--c-text)', outline: 'none', resize: 'vertical', lineHeight: 1.6,
-              }}
-            />
-          </div>
-
-          {error && (
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)', padding: '8px 12px', borderRadius: 9 }}>
-              {error}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div style={{ padding: '14px 20px', borderTop: '1px solid var(--c-border)', display: 'flex', justifyContent: 'flex-start', gap: 10 }}>
-          <button
-            onClick={submit} disabled={submitting || timeInvalid || !recordId}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 18px', borderRadius: 10,
-              background: 'var(--c-primary)', color: '#fff', border: 'none',
-              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
-              cursor: (submitting || timeInvalid || !recordId) ? 'default' : 'pointer',
-              opacity: (submitting || timeInvalid || !recordId) ? 0.7 : 1,
-            }}
-            className="hover:opacity-90"
-          >
-            {submitting ? <Loader2 size={15} className="animate-spin" /> : <ShieldCheck size={15} />}
-            تأكيد التصحيح
-          </button>
-          <button
-            onClick={onClose}
-            style={{
-              height: 40, padding: '0 18px', borderRadius: 10, background: '#fff', border: '1px solid var(--c-border)',
-              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: 'var(--c-text-2)', cursor: 'pointer',
-            }}
-          >
-            إلغاء
-          </button>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -1100,8 +900,13 @@ export default function AttendanceReportPage() {
         />
       )}
       {correcting && (
-        <CorrectionDialog
-          row={correcting} reportDate={reportDate || new Date().toISOString().slice(0, 10)}
+        <CorrectCheckoutModal
+          target={{
+            recordId: getRecordId(correcting),
+            name: correcting.name,
+            checkInTime: correcting.check_in_time,
+            date: reportDate || damascusToday(),
+          }}
           onClose={() => setCorrecting(null)} onDone={fetchReport}
         />
       )}

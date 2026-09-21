@@ -13,6 +13,8 @@ import {
 import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
 import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
 import UndoExcuseModal from '../components/leave/UndoExcuseModal'
+import CorrectCheckoutModal from '../components/attendance/CorrectCheckoutModal'
+import { readCorrection, correctionTooltip } from '../utils/attendanceCorrection'
 import { ExportButton, SortableTh, ToggleChip } from '../components/attendance/controls'
 import { sortParams } from '../utils/attendanceQuery'
 
@@ -178,7 +180,7 @@ function TimeCell({ time }) {
   )
 }
 
-function DayRow({ day, last, onExcuse, onUndoExcuse }) {
+function DayRow({ day, last, onExcuse, onUndoExcuse, onCorrect }) {
   const [hov, setHov] = useState(false)
   const dim = day.status === 'off'
   // A day inside a leave/excuse span names the span in `leave_type` whatever
@@ -186,6 +188,11 @@ function DayRow({ day, last, onExcuse, onUndoExcuse }) {
   // the middle of it, which resolves to `off`.
   const inSpan = day.leave_type != null
   const excuse = day.excuse ?? null
+  const correction = readCorrection(day)
+  // The day HR can still close by hand: a check-in the employee never checked
+  // out of. Without the check-in row id there is nothing to send the correction
+  // endpoint, so the action is withheld rather than offered and failed.
+  const canCorrect = day.status === 'missing_checkout' && day.check_in_id != null
   // Present on **any** day carrying a refused check-in, even when leave or a
   // later accepted check-in outranks it in `status`. It is what the employee was
   // notified about and what HR will be asked about, so it is always shown.
@@ -237,7 +244,22 @@ function DayRow({ day, last, onExcuse, onUndoExcuse }) {
         )}
       </td>
       <td style={{ padding: '11px 16px' }}><TimeCell time={day.check_in_time} /></td>
-      <td style={{ padding: '11px 16px' }}><TimeCell time={day.check_out_time} /></td>
+      <td style={{ padding: '11px 16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 5 }}>
+          <TimeCell time={day.check_out_time} />
+          {/* A checkout filed by hand still reads as a normal `present` day, so
+              the badge is the only thing saying the time came from HR. */}
+          {correction && (
+            <span title={correctionTooltip(correction)} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              fontSize: 10.5, fontWeight: 700, color: 'var(--c-approved)', cursor: 'help',
+            }}>
+              <ShieldCheck size={11} />
+              تم التصحيح
+            </span>
+          )}
+        </div>
+      </td>
       <td style={{ padding: '11px 16px' }}>
         {day.work_hours_formatted
           ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
@@ -258,9 +280,17 @@ function DayRow({ day, last, onExcuse, onUndoExcuse }) {
           ever an HR-filed excuse — an employee's own request is decided through
           its approval chain and the endpoint refuses it. No capability gate
           here: filing has none either (the page is behind attendance-view
-          routing), the server enforces scope, and the modal shows its 403. */}
+          routing), the server enforces scope, and the modal shows its 403.
+
+          A `missing_checkout` day takes the third action, on the same terms:
+          the day is worth zero work hours until someone says when the employee
+          actually left, and this drill-down is where a month's forgotten
+          checkouts are actually noticed — the daily board only reaches the day
+          it happened. The three statuses are disjoint, so the branches never
+          compete for the cell. */}
       <td style={{ padding: '11px 16px' }}>
-        {EXCUSABLE_STATUSES.includes(day.status) ? <button onClick={() => onExcuse(day)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><ShieldPlus size={13} /> تسجيل عذر</button>
+        {canCorrect ? <button onClick={() => onCorrect(day)} title="تسجيل وقت الخروج الفعلي ليُحتسب وقت العمل" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><Clock size={13} /> تصحيح الخروج</button>
+          : EXCUSABLE_STATUSES.includes(day.status) ? <button onClick={() => onExcuse(day)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><ShieldPlus size={13} /> تسجيل عذر</button>
           : day.status === 'excused' && excuse ? <button onClick={() => onUndoExcuse(day)} title={LEAVE_COPY.undoExcuseTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><Undo2 size={13} /> {LEAVE_COPY.undoExcuse}</button>
           : <span style={{ color: 'var(--c-text-3)' }}>—</span>}
       </td>
@@ -315,7 +345,7 @@ const COLS = [
   { label: 'الدخول' },
   { label: 'الخروج' },
   { label: 'ساعات العمل', field: 'work_hours' },
-  { label: '—' },
+  { label: 'إجراءات' },
   { label: 'نوع الإجازة' },
   { label: 'العذر' },
 ]
@@ -347,6 +377,9 @@ export default function AttendanceEmployeeReportPage() {
   // The `excused` day whose excuse is being retracted — its `excuse` block
   // carries the leave-request id the endpoint needs.
   const [undoDay, setUndoDay] = useState(null)
+  // The `missing_checkout` day whose check-out is being filed by hand — its
+  // `check_in_id` is the record the correction endpoint takes.
+  const [correctDay, setCorrectDay] = useState(null)
   const reqRef = useRef(0)
 
   // Shared by the fetch and the XLSX export so the file mirrors the view.
@@ -546,7 +579,7 @@ export default function AttendanceEmployeeReportPage() {
             <tbody>
               {loading
                 ? [0, 1, 2, 3, 4, 5, 6].map(i => <SkeletonRow key={i} />)
-                : days.map((d, idx) => <DayRow key={d.date ?? idx} day={d} last={idx === days.length - 1} onExcuse={setExcuseDay} onUndoExcuse={setUndoDay} />)
+                : days.map((d, idx) => <DayRow key={d.date ?? idx} day={d} last={idx === days.length - 1} onExcuse={setExcuseDay} onUndoExcuse={setUndoDay} onCorrect={setCorrectDay} />)
               }
             </tbody>
           </table>
@@ -576,6 +609,21 @@ export default function AttendanceEmployeeReportPage() {
             recordedBy: undoDay.excuse?.recorded_by,
           }}
           onClose={() => setUndoDay(null)}
+          onDone={fetchReport}
+        />
+      )}
+      {/* One correction turns the day `present`, fills its work hours and moves
+          two summary counters, so the report is pulled again rather than
+          patched. The modal raises its own toast. */}
+      {correctDay && (
+        <CorrectCheckoutModal
+          target={{
+            recordId: correctDay.check_in_id,
+            name: u?.name,
+            checkInTime: correctDay.check_in_time,
+            date: correctDay.date,
+          }}
+          onClose={() => setCorrectDay(null)}
           onDone={fetchReport}
         />
       )}
