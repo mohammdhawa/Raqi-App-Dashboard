@@ -8,12 +8,13 @@ import {
   MapPin, Camera, X, User as UserIcon, UserX, Building2,
   Loader2, ImageOff, ExternalLink, Plane, CalendarOff,
   Layers, AlertTriangle, ShieldCheck, ShieldX, Clock,
-  ShieldPlus, Undo2,
+  ShieldPlus, Undo2, CalendarCheck,
 } from 'lucide-react'
 import LeaveStatusBadge from '../components/ui/LeaveStatusBadge'
 import LeaveExcuseBadge from '../components/ui/LeaveExcuseBadge'
 import ExcuseLeaveModal from '../components/leave/ExcuseLeaveModal'
 import UndoExcuseModal from '../components/leave/UndoExcuseModal'
+import ReturnToWorkModal from '../components/leave/ReturnToWorkModal'
 import DeductsBalanceBadge from '../components/ui/DeductsBalanceBadge'
 import RejectedBadge from '../components/ui/RejectedBadge'
 import RejectRecordModal from '../components/attendance/RejectRecordModal'
@@ -546,7 +547,7 @@ function LeaveTypePill({ item }) {
   )
 }
 
-function LeaveRow({ item, last, onUndoExcuse }) {
+function LeaveRow({ item, last, onUndoExcuse, onReturnToWork }) {
   const [hov, setHov] = useState(false)
   const u = getLeaveUser(item)
   const start = getLeaveStart(item)
@@ -597,10 +598,15 @@ function LeaveRow({ item, last, onUndoExcuse }) {
           {item.is_excuse ? (item.creator?.name ?? 'الموارد البشرية') : (item.manager?.name ?? '—')}
         </div>
       </td>
-      {/* Never on a planned leave: that one a named manager granted, and
-          withdrawing it is a different decision the endpoint refuses. */}
+      {/* Each half of the list gets the action that fits it, and never the
+          other's. An excuse is an HR entry that can be retracted outright; a
+          planned leave a named manager granted is not HR's to withdraw — what
+          HR can record is that the employee turned up anyway, which ends the
+          leave at the days actually taken and frees the day for a check-in. */}
       <td style={{ padding: '12px 16px' }}>
-        {item.is_excuse && item.id != null ? (
+        {item.id == null ? (
+          <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>
+        ) : item.is_excuse ? (
           <button
             onClick={() => onUndoExcuse(item)} title={LEAVE_COPY.undoExcuseTitle}
             style={{
@@ -612,7 +618,19 @@ function LeaveRow({ item, last, onUndoExcuse }) {
           >
             <Undo2 size={13} /> {LEAVE_COPY.undoExcuse}
           </button>
-        ) : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
+        ) : (
+          <button
+            onClick={() => onReturnToWork(item)} title={LEAVE_COPY.returnToWorkTitle}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
+              borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff',
+              fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
+              color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
+            }}
+          >
+            <CalendarCheck size={13} /> {LEAVE_COPY.returnToWork}
+          </button>
+        )}
       </td>
     </tr>
   )
@@ -783,6 +801,7 @@ export default function AttendancePage() {
   const [excuseTarget, setExcuseTarget] = useState(null)
   // The approved-leave row whose HR excuse is being retracted.
   const [undoingExcuse, setUndoingExcuse] = useState(null)
+  const [returningToWork, setReturningToWork] = useState(null)
   // { record, mode } — the shared refuse/undo confirm dialog.
   const [rejecting, setRejecting] = useState(null)
 
@@ -1368,7 +1387,7 @@ export default function AttendancePage() {
                     : isAbsent
                       ? activeRows.map((u, idx) => <AbsentRow key={u.id} user={u} last={idx === activeRows.length - 1} onExcuse={employee => setExcuseTarget({ employee, date: resolvedDate || absentDate })} />)
                       : isLeave
-                        ? activeRows.map((item, idx) => <LeaveRow key={item.id ?? idx} item={item} last={idx === activeRows.length - 1} onUndoExcuse={setUndoingExcuse} />)
+                        ? activeRows.map((item, idx) => <LeaveRow key={item.id ?? idx} item={item} last={idx === activeRows.length - 1} onUndoExcuse={setUndoingExcuse} onReturnToWork={setReturningToWork} />)
                         : activeRows.map((r, idx) => (
                             <RecordRow
                               key={r.id} record={r} last={idx === activeRows.length - 1}
@@ -1437,6 +1456,29 @@ export default function AttendancePage() {
             recordedBy: undoingExcuse.creator?.name,
           }}
           onClose={() => setUndoingExcuse(null)}
+          onDone={() => fetchLeave(leavePage)}
+        />
+      )}
+      {/* The row leaves this list once the day it was listed under is no longer
+          covered — the leave ends before it, or is cancelled outright — so the
+          tab is refetched rather than patched. `leaveResolvedDate` is the day
+          on screen and the reason the employee is standing there, so it is the
+          return date the form opens on. */}
+      {returningToWork && (
+        <ReturnToWorkModal
+          key={returningToWork.id}
+          target={{
+            leaveRequestId: returningToWork.id,
+            name: getLeaveUser(returningToWork)?.name,
+            email: getLeaveUser(returningToWork)?.email,
+            startDate: getLeaveStart(returningToWork),
+            endDate: getLeaveEnd(returningToWork),
+            leaveTypeName: leaveTypeName(returningToWork),
+            deductsBalance: deductsBalance(returningToWork),
+            approvedBy: returningToWork.manager?.name,
+            defaultReturnedOn: leaveResolvedDate || leaveDate,
+          }}
+          onClose={() => setReturningToWork(null)}
           onDone={() => fetchLeave(leavePage)}
         />
       )}
