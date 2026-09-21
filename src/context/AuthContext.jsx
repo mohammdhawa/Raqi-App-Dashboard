@@ -95,9 +95,14 @@ export function AuthProvider({ children }) {
   // admin without the flag would reach a page that can only 403. Independent of
   // canViewAttendance, which is about seeing *other people's* records.
   const canCheckAttendance = !!user?.attendance_check
+  // `leave.register.view` — deliberately NARROWER than canViewAttendance, which
+  // admits managers and chiefs: the company-wide leave register is admin + HR
+  // only, so mirroring the backend gate verbatim is what keeps a manager from
+  // reaching a page that can only 403 them.
+  const canViewLeaveRegister = user?.role === 'admin' || !!user?.can_view_attendance
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, loading, canViewAttendance, canCheckAttendance, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, loading, canViewAttendance, canCheckAttendance, canViewLeaveRegister, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )
@@ -121,6 +126,14 @@ export function RequireAuth({ children }) {
 export function RequireAttendanceAccess({ children }) {
   const { canViewAttendance } = useAuth()
   if (!canViewAttendance) {
+    return <Navigate to="/dashboard" replace />
+  }
+  return children
+}
+
+export function RequireLeaveRegisterAccess({ children }) {
+  const { canViewLeaveRegister } = useAuth()
+  if (!canViewLeaveRegister) {
     return <Navigate to="/dashboard" replace />
   }
   return children

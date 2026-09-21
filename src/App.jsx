@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import { AuthProvider, RequireAuth, RequireAttendanceAccess, RequireAttendanceCheck, RequireNotEmployee, RequireRole, useAuth } from './context/AuthContext'
+import { AuthProvider, RequireAuth, RequireAttendanceAccess, RequireAttendanceCheck, RequireLeaveRegisterAccess, RequireNotEmployee, RequireRole, useAuth } from './context/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/LoginPage'
@@ -15,6 +15,7 @@ import AttendanceReportPage from './pages/AttendanceReportPage'
 import AttendanceMonthlyReportPage from './pages/AttendanceMonthlyReportPage'
 import AttendanceEmployeeReportPage from './pages/AttendanceEmployeeReportPage'
 import LeavePage from './pages/LeavePage'
+import LeaveRegisterPage from './pages/LeaveRegisterPage'
 import LeaveBalancesPage from './pages/LeaveBalancesPage'
 import LeaveTypesPage from './pages/LeaveTypesPage'
 import BroadcastPage from './pages/BroadcastPage'
@@ -48,6 +49,11 @@ export default function App() {
                 <Route path="/admin/attendance/monthly" element={<RequireAttendanceAccess><AttendanceMonthlyReportPage /></RequireAttendanceAccess>} />
                 <Route path="/admin/attendance/employee" element={<RequireAttendanceAccess><AttendanceEmployeeReportPage /></RequireAttendanceAccess>} />
                 <Route path="/admin/leave" element={<RequireRole roles={['admin', 'manager', 'chief', 'employee']}><LeavePage /></RequireRole>} />
+                {/* Narrower than the attendance pages on purpose: the register
+                    is admin + HR only server-side (leave.register.view), so a
+                    manager who can open every attendance report is sent back
+                    rather than shown a page that can only 403. */}
+                <Route path="/admin/leave-register" element={<RequireLeaveRegisterAccess><LeaveRegisterPage /></RequireLeaveRegisterAccess>} />
                 <Route path="/admin/leave-balances" element={<RequireAttendanceAccess><LeaveBalancesPage /></RequireAttendanceAccess>} />
 
                 <Route element={<RequireRole roles="admin"><Outlet /></RequireRole>}>
