@@ -8,7 +8,7 @@ import api from '../../services/api'
 import BlockProgress from '../ui/BlockProgress'
 import SectionHeading from './SectionHeading'
 import {
-  ResponsiveContainer, AreaChart, Area, BarChart, Bar,
+  ResponsiveContainer, AreaChart, Area,
   CartesianGrid, XAxis, YAxis, Tooltip, Legend,
 } from 'recharts'
 
@@ -154,6 +154,44 @@ function RecentActivityItem({ label, sub, status, loading }) {
       }}>
         {meta.label}
       </span>
+    </div>
+  )
+}
+
+// Headcount per department as horizontal bars, largest first. A column chart
+// put a dozen Arabic department names under the axis, where they overlapped
+// into an unreadable strip; rows give every name its own line.
+function StaffBars({ rows }) {
+  const sorted = [...rows].sort((x, y) => (y.userCount ?? 0) - (x.userCount ?? 0))
+  const max = Math.max(1, ...sorted.map(r => r.userCount ?? 0))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+      {sorted.map(row => {
+        const count = row.userCount ?? 0
+        return (
+          <div key={row.id ?? row.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span title={row.name} style={{
+              flex: '0 0 38%', minWidth: 0, fontSize: 12.5, fontWeight: 500, color: 'var(--c-text)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {row.name}
+            </span>
+            <span style={{ flex: 1, height: 10, background: 'var(--c-surface-2)' }}>
+              <span style={{
+                display: 'block', height: '100%', background: 'var(--c-primary)',
+                // A non-empty department always shows a sliver.
+                width: count > 0 ? `max(3px, ${(count / max) * 100}%)` : 0,
+              }} />
+            </span>
+            <span style={{
+              flex: '0 0 30px', textAlign: 'end', fontFamily: 'var(--font-mono)',
+              fontSize: 12, fontWeight: 500, color: 'var(--c-text-2)', fontVariantNumeric: 'tabular-nums',
+            }}>
+              {count}
+            </span>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -327,15 +365,7 @@ export default function AdminOverview() {
           empty={staffDistribution.length === 0}
           emptyText="لا توجد بيانات إدارات بعد"
         >
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={staffDistribution} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <CartesianGrid stroke="#D6D1C6" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6F7873' }} axisLine={false} tickLine={false} interval={0} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#6F7873' }} axisLine={false} tickLine={false} width={32} />
-              <Tooltip contentStyle={{ borderRadius: 4, border: '1px solid #D6D1C6', fontSize: 12 }} />
-              <Bar dataKey="userCount" name="عدد الموظفين" fill="#1D5446" radius={[2, 2, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <StaffBars rows={staffDistribution} />
         </ChartCard>
 
         {/* Recent documents list */}
