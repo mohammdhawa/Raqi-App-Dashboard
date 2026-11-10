@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
+import ActionCards from '../components/dashboard/ActionCards'
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar,
   CartesianGrid, XAxis, YAxis, Tooltip, Legend,
@@ -105,6 +106,21 @@ function ChartCard({ title, sub, height = 180, loading, empty, emptyText, childr
   )
 }
 
+// Sunaa signature 04: every section is numbered, like a drawing sheet.
+function SectionHeading({ index, title }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'baseline', gap: 10, margin: '0 0 14px',
+      paddingBottom: 10, borderBottom: '1px solid var(--c-border)',
+    }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, color: 'var(--c-accent-text)' }}>
+        {index}
+      </span>
+      <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--c-text)' }}>{title}</h2>
+    </div>
+  )
+}
+
 function RecentActivityItem({ label, sub, status, loading }) {
   const STATUS_META = {
     approved: { color: 'var(--c-approved)', bg: 'var(--c-approved-bg)', label: 'معتمد' },
@@ -158,7 +174,12 @@ export default function DashboardPage() {
   const [staffDistribution, setStaffDistribution] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // The statistics endpoints sit behind `dashboard.view`, which only admins
+  // hold. Everyone else gets the action cards alone, not a page of dashes.
+  const isAdmin = user?.role === 'admin'
+
   const fetchDashboard = useCallback(async () => {
+    if (!isAdmin) { setLoading(false); return }
     setLoading(true)
     try {
       const [statsRes, statusRes, activityRes, recentRes, staffRes] = await Promise.allSettled([
@@ -176,7 +197,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [isAdmin])
 
   useEffect(() => { fetchDashboard() }, [fetchDashboard])
 
@@ -228,10 +249,21 @@ export default function DashboardPage() {
             {user?.name ?? 'مرحباً بك'}
           </h1>
           <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6 }}>
-            مرحباً في لوحة إدارة صنع للإنشاءات. هنا نظرة سريعة على حالة المنظومة.
+            {isAdmin
+              ? 'مرحباً في لوحة إدارة صنع للإنشاءات. هنا ما ينتظرك اليوم ونظرة سريعة على حالة المنظومة.'
+              : 'مرحباً في لوحة صنع للإنشاءات. هنا ما ينتظرك اليوم.'}
           </p>
         </div>
       </div>
+
+      {/* ── Waiting for you (every role) ───────────────────────────────────── */}
+      <section style={{ marginBottom: 32 }}>
+        <SectionHeading index="01" title="بانتظارك اليوم" />
+        <ActionCards />
+      </section>
+
+      {isAdmin && (<>
+      <SectionHeading index="02" title="حالة المنظومة" />
 
       {/* ── Stat cards ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
@@ -395,6 +427,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      </>)}
     </div>
   )
 }

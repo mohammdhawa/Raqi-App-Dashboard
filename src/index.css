@@ -131,3 +131,9 @@ select[style*="background: transparent"]:focus-visible {
   outline-offset: 1px;
   border-color: var(--c-accent) !important;
 }
+
+/* Home page action cards */
+.action-card { transition: border-color .15s, transform .15s; }
+.action-card:hover { border-color: var(--c-accent) !important; }
+.action-card-arrow { transition: transform .15s; }
+.action-card:hover .action-card-arrow { transform: translateX(-3px); }
