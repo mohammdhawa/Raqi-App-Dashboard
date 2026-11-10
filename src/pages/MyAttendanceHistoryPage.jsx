@@ -136,7 +136,7 @@ function RecordRow({ record, last }) {
           {rejected && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
-              padding: '2px 8px', borderRadius: 999,
+              padding: '2px 8px', borderRadius: 2,
               fontSize: 10.5, fontWeight: 800, lineHeight: 1.5, whiteSpace: 'nowrap',
               color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)',
               border: '1px solid rgba(179,38,30,0.22)',
@@ -330,7 +330,7 @@ export default function MyAttendanceHistoryPage() {
         }}>
           <span style={{
             fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-            background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+            background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
           }}>
             {total} سجلاً
           </span>
@@ -389,7 +389,7 @@ export default function MyAttendanceHistoryPage() {
             ))}
           </div>
         ) : forbidden ? (
-          <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '48px 20px', textAlign: 'center' }}>
             <ShieldAlert size={30} style={{ color: 'var(--c-text-3)', marginBottom: 10 }} />
             <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>غير مصرح</p>
             <p style={{ margin: 0, fontSize: 13, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
@@ -397,12 +397,12 @@ export default function MyAttendanceHistoryPage() {
             </p>
           </div>
         ) : error ? (
-          <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '48px 20px', textAlign: 'center' }}>
             <AlertTriangle size={30} style={{ color: 'var(--c-rejected)', marginBottom: 10 }} />
             <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: 'var(--c-text-2)' }}>{error}</p>
           </div>
         ) : records.length === 0 ? (
-          <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '48px 20px', textAlign: 'center' }}>
             <Fingerprint size={30} style={{ color: 'var(--c-text-3)', marginBottom: 10 }} />
             <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: 'var(--c-text-2)' }}>
               {rejectedOnly

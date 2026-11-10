@@ -66,7 +66,7 @@ function TextInput({ placeholder, value, onChange, mono, disabled }) {
         placeholder={placeholder} value={value} onChange={onChange} disabled={disabled}
         style={{
           flex: 1, border: 0, outline: 0, background: 'transparent',
-          fontFamily: mono ? "'Courier New', Courier, monospace" : 'var(--font-sans)',
+          fontFamily: mono ? 'var(--font-mono)' : 'var(--font-sans)',
           fontSize: 13, color: 'var(--c-text)', textAlign: 'right', direction: 'rtl',
         }}
       />
@@ -1009,7 +1009,7 @@ export default function TemplateBuilderPage() {
                 <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>حقول القالب</span>
                 <span style={{
                   fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-                  background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+                  background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
                 }}>
                   {fields.length} حقول
                 </span>

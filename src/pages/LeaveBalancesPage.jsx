@@ -46,7 +46,7 @@ function BalanceRow({ row, defaultDays, last, onEdit }) {
       <Initials name={row.user?.name} />
       <div><div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 13.5, fontWeight: 700 }}>{row.user?.name ?? '—'}</span>
-        {!row.is_custom && <span title={`يستخدم الرصيد الافتراضي للشركة (${defaultDays} يوم)`} style={{ padding: '2px 8px', borderRadius: 999, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 10.5, fontWeight: 800 }}>الافتراضي</span>}
+        {!row.is_custom && <span title={`يستخدم الرصيد الافتراضي للشركة (${defaultDays} يوم)`} style={{ padding: '2px 8px', borderRadius: 2, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 10.5, fontWeight: 800 }}>الافتراضي</span>}
       </div><div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{row.user?.email ?? '—'}</div></div>
     </div></td>
     <td style={{ padding: '12px 16px', fontSize: 12.5, color: 'var(--c-text-2)' }}>
@@ -143,7 +143,7 @@ export default function LeaveBalancesPage() {
       </div>
       <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px', borderRadius: 999, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 11, fontWeight: 700 }}><Wallet size={12} />{total} موظفاً</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px', borderRadius: 2, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 11, fontWeight: 700 }}><Wallet size={12} />{total} موظفاً</span>
           <div style={{ flex: 1 }} />
           <SearchInput value={search} onChange={setSearch} />
           {hasFullAccess && <DepartmentSelect departments={departments} value={departmentId} onChange={changeDepartment} />}
@@ -168,7 +168,7 @@ export default function LeaveBalancesPage() {
             </tbody>
           </table>
         </div>
-        {!loading && rows.length === 0 && <div style={{ padding: '56px 20px', textAlign: 'center' }}><Inbox size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} /><p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>لا يوجد موظفون مطابقون للتصفية</p></div>}
+        {!loading && rows.length === 0 && <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}><Inbox size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} /><p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>لا يوجد موظفون مطابقون للتصفية</p></div>}
         {lastPage > 1 && <div style={{ padding: '12px 20px', borderTop: '1px solid var(--c-border)', display: 'flex', justifyContent: 'center', gap: 6 }}>
           <PagBtn disabled={page <= 1} onClick={() => { setPage(page - 1); fetchRows(page - 1) }}>‹</PagBtn>
           {Array.from({ length: lastPage }, (_, index) => index + 1).map(value => <PagBtn key={value} active={value === page} onClick={() => { setPage(value); fetchRows(value) }}>{value}</PagBtn>)}

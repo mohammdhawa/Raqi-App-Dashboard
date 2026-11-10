@@ -70,7 +70,7 @@ function StatePill({ active }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
-      padding: '3px 10px', borderRadius: 999, whiteSpace: 'nowrap',
+      padding: '3px 10px', borderRadius: 2, whiteSpace: 'nowrap',
       fontSize: 11, fontWeight: 800,
       color: active ? 'var(--c-approved)' : 'var(--c-text-3)',
       background: active ? 'var(--c-approved-bg)' : 'var(--c-surface-2)',
@@ -90,7 +90,7 @@ function FormPill({ icon: Icon, label, on }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
-      padding: '3px 9px', borderRadius: 999, whiteSpace: 'nowrap',
+      padding: '3px 9px', borderRadius: 2, whiteSpace: 'nowrap',
       fontSize: 10.5, fontWeight: 700, color: 'var(--c-text-2)',
       background: 'var(--c-surface)', border: '1px solid var(--c-border)',
     }}>
@@ -157,7 +157,7 @@ function TypeRow({ type, last, onEdit, onDelete }) {
       </td>
       <td style={{ padding: '12px 16px' }}>
         <span style={{
-          fontFamily: "'Courier New', Courier, monospace", direction: 'ltr', display: 'inline-block',
+          fontFamily: 'var(--font-mono)', direction: 'ltr', display: 'inline-block',
           fontSize: 11.5, color: 'var(--c-text-2)', background: 'var(--c-surface)',
           border: '1px solid var(--c-border)', borderRadius: 3, padding: '2px 8px',
         }}>
@@ -344,7 +344,7 @@ function TypeDrawer({ mode, type, onClose, onSaved }) {
               title={isEdit ? LEAVE_COPY.codeLockedHint : undefined}
               style={{
                 ...inputStyle, direction: 'ltr', textAlign: 'left',
-                fontFamily: "'Courier New', Courier, monospace",
+                fontFamily: 'var(--font-mono)',
                 borderColor: errors.code ? 'var(--c-rejected)' : 'var(--c-border)',
                 ...(isEdit ? { color: 'var(--c-text-3)', cursor: 'not-allowed' } : {}),
               }}
@@ -523,7 +523,7 @@ function DeleteTypeModal({ type, onClose, onDone }) {
             {LEAVE_COPY.retireInsteadOfDelete}
           </p>
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 12px', borderRadius: 999,
+            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 12px', borderRadius: 2,
             background: 'var(--c-surface)', border: '1px solid var(--c-border)',
             fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
           }}>
@@ -720,7 +720,7 @@ export default function LeaveTypesPage() {
 
         {/* Filters */}
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px' }}>
             {visible.length} نوعاً
           </span>
           {tab === 'active' && !hasFilters && (
@@ -811,7 +811,7 @@ export default function LeaveTypesPage() {
         </div>
 
         {!loading && visible.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <Inbox size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
               {hasFilters

@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import ActionCards from '../components/dashboard/ActionCards'
+import BlockProgress from '../components/ui/BlockProgress'
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar,
   CartesianGrid, XAxis, YAxis, Tooltip, Legend,
@@ -49,7 +50,7 @@ function StatCard({ icon: Icon, label, value, sub, iconBg, iconColor, loading })
           <SkeletonRect w={52} h={28} r={8} />
         ) : (
           <div style={{
-            fontSize: 28, fontWeight: 800, color: 'var(--c-text)',
+            fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 600, color: 'var(--c-text)',
             letterSpacing: -1, fontVariantNumeric: 'tabular-nums',
           }}>
             {value ?? '—'}
@@ -154,7 +155,7 @@ function RecentActivityItem({ label, sub, status, loading }) {
         <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>{sub}</div>
       </div>
       <span style={{
-        padding: '3px 10px', borderRadius: 999,
+        padding: '3px 10px', borderRadius: 2,
         fontSize: 11, fontWeight: 700,
         background: meta.bg, color: meta.color,
         whiteSpace: 'nowrap',
@@ -343,15 +344,20 @@ export default function DashboardPage() {
               { key: 'rejected', label: 'مرفوضة',     icon: XCircle,       bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)' },
             ].map(({ key, label, icon: Icon, bg, color }) => (
               <div key={key} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 12px', borderRadius: 4,
+                padding: '10px 12px 12px', borderRadius: 4,
                 background: bg, border: `1px solid color-mix(in srgb, ${color} 13%, transparent)`,
               }}>
-                <Icon size={16} style={{ color, flexShrink: 0 }} />
-                <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>{label}</span>
-                <span style={{ fontSize: 13, fontWeight: 800, color, fontVariantNumeric: 'tabular-nums' }}>
-                  {loading ? '—' : statusPct(statusCounts[key])}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 9 }}>
+                  <Icon size={16} style={{ color, flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>{label}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color, fontVariantNumeric: 'tabular-nums' }}>
+                    {loading ? '—' : statusPct(statusCounts[key])}
+                  </span>
+                </div>
+                <BlockProgress
+                  value={loading ? 0 : statusCounts[key]} max={statusTotal} blocks={10}
+                  color={color} track="rgba(14,22,19,0.10)" height={5} label={label}
+                />
               </div>
             ))}
           </div>

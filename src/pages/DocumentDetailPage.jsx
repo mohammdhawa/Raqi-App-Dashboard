@@ -44,7 +44,7 @@ function InfoItem({ icon: Icon, label, value, mono }) {
       </div>
       <div style={{
         fontSize: 13, fontWeight: 700, color: 'var(--c-text)',
-        fontFamily: mono ? "'Courier New', Courier, monospace" : 'var(--font-sans)',
+        fontFamily: mono ? 'var(--font-mono)' : 'var(--font-sans)',
       }}>
         {value}
       </div>
@@ -253,7 +253,7 @@ function AttachmentsCard({ documentId, attachments }) {
         <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>مرفقات إضافية</span>
         <span style={{
           fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-          background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+          background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
         }}>
           {attachments.length}
         </span>
@@ -336,7 +336,7 @@ function CommentsCard({ docId }) {
         <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>التعليقات</span>
         <span style={{
           fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-          background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+          background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
         }}>
           {comments.length}
         </span>
@@ -421,7 +421,7 @@ function PendingBanner({ users }) {
         {users.map(u => (
           <div key={u.id} style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            background: '#fff', borderRadius: 999, padding: '4px 10px 4px 4px',
+            background: '#fff', borderRadius: 2, padding: '4px 10px 4px 4px',
             border: '1px solid var(--c-border)',
           }}>
             <InitialsAvatar name={u.name} size={22} />
@@ -467,7 +467,7 @@ function WorkflowStep({ w, isLast, isMe }) {
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>{w.user?.name ?? '—'}</span>
           <span style={{
             fontSize: 10.5, fontWeight: 700, color: 'var(--c-text-3)',
-            background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 8px',
+            background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 8px',
           }}>
             {w.role === 'chief' ? 'الرئيس الأعلى' : 'مدير'}
           </span>

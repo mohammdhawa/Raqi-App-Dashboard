@@ -68,7 +68,7 @@ function TextInput({ placeholder, value, onChange, mono }) {
         placeholder={placeholder} value={value} onChange={onChange}
         style={{
           flex: 1, border: 0, outline: 0, background: 'transparent',
-          fontFamily: mono ? "'Courier New', Courier, monospace" : 'var(--font-sans)',
+          fontFamily: mono ? 'var(--font-mono)' : 'var(--font-sans)',
           fontSize: 13, color: 'var(--c-text)',
           textAlign: 'right', direction: 'rtl',
           letterSpacing: mono ? 0.5 : 'normal',
@@ -129,7 +129,7 @@ function DeptCard({ dept, onEdit, onDelete, onSections }) {
         {/* Code badge — top-left (physical) */}
         <div style={{
           position: 'absolute', top: 12, left: 12,
-          fontFamily: "'Courier New', Courier, monospace",
+          fontFamily: 'var(--font-mono)',
           fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3,
           background: 'rgba(133,114,69,0.13)',
           color: '#6B5B35',
@@ -395,7 +395,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
 
               {/* Dept ref chip */}
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12,
-                padding: '5px 13px', borderRadius: 999,
+                padding: '5px 13px', borderRadius: 2,
                 background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                 fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)',
               }}>
@@ -406,7 +406,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
               {/* Stats chips */}
               <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '4px 12px', borderRadius: 999,
+                  padding: '4px 12px', borderRadius: 2,
                   background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                   fontSize: 12, fontWeight: 600, color: 'var(--c-text-2)',
                 }}>
@@ -414,7 +414,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
                   {blockedCounts.users} موظفاً
                 </div>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '4px 12px', borderRadius: 999,
+                  padding: '4px 12px', borderRadius: 2,
                   background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                   fontSize: 12, fontWeight: 600, color: 'var(--c-text-2)',
                 }}>
@@ -459,7 +459,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
 
               {/* Dept ref chip */}
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '5px 13px', borderRadius: 999,
+                padding: '5px 13px', borderRadius: 2,
                 background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                 fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)',
               }}>
@@ -614,7 +614,7 @@ export default function DepartmentsPage() {
           {[0, 1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} />)}
         </div>
       ) : depts.length === 0 ? (
-        <div style={{ padding: '72px 20px', textAlign: 'center' }}>
+        <div className="site-grid-light" style={{ padding: '72px 20px', textAlign: 'center' }}>
           <Building2 size={36} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
           <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
             {search ? 'لا توجد نتائج مطابقة' : 'لا توجد إدارات بعد'}

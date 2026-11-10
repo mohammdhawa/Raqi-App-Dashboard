@@ -129,7 +129,7 @@ function RatePill({ rate }) {
       : ['var(--c-rejected)', 'var(--c-rejected-bg)']
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 999,
+      display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 2,
       fontSize: 12, fontWeight: 800, color, background: bg, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
     }}>
       {v}%
@@ -497,7 +497,7 @@ export default function AttendanceMonthlyReportPage() {
         )}
         <div style={{ flex: 1 }} />
         {report && !rangeError && (
-          <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 999, padding: '6px 12px', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '6px 12px', whiteSpace: 'nowrap' }}>
             {report.working_days} يوم عمل · {fmtDate(report.from)} — {fmtDate(report.to)}
           </span>
         )}
@@ -587,7 +587,7 @@ export default function AttendanceMonthlyReportPage() {
         )}
 
         {!loading && !rangeError && rows.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <Users size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
               {error || 'لا يوجد موظفون مطابقون في هذه الفترة'}

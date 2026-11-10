@@ -200,7 +200,7 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
                     {attended.map(day => (
                       <span key={day} style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 999,
+                        display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 2,
                         background: '#fff', border: '1px solid color-mix(in srgb, var(--c-pending) 27%, transparent)',
                         fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap',
                       }}>

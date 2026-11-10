@@ -188,7 +188,7 @@ function TypeBreakdown({ types, totalDays }) {
             title={`${type.requests} طلباً · ${type.employees} موظفاً · ${share}% من أيام الفترة`}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 11px',
-              borderRadius: 999, background: 'var(--c-surface-2)', cursor: 'help',
+              borderRadius: 2, background: 'var(--c-surface-2)', cursor: 'help',
               fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap',
             }}
           >
@@ -288,7 +288,7 @@ function LeaveRow({ row, last }) {
       <td style={{ padding: '12px 16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
           <span style={{
-            display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
+            display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
             fontSize: 11.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
             background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
           }}>
@@ -578,7 +578,7 @@ export default function LeaveRegisterPage() {
         {report && !rangeError && (
           <span style={{
             fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)',
-            background: 'var(--c-surface-2)', borderRadius: 999, padding: '6px 12px', whiteSpace: 'nowrap',
+            background: 'var(--c-surface-2)', borderRadius: 2, padding: '6px 12px', whiteSpace: 'nowrap',
           }}>
             {fmtDate(report.from)} — {fmtDate(report.to)}
           </span>
@@ -648,7 +648,7 @@ export default function LeaveRegisterPage() {
         )}
 
         {!loading && !rangeError && rows.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <CalendarDays size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
               {error || (hasFilters ? 'لا توجد إجازات مطابقة لهذه الفلاتر' : 'لا توجد إجازات في هذه الفترة')}

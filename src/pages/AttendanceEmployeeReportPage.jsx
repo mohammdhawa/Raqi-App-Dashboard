@@ -117,7 +117,7 @@ function StatusBadge({ status }) {
   const Icon = m.icon
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: 999,
+      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: 2,
       fontSize: 12, fontWeight: 700, color: m.color, background: m.bg, border: `1px solid color-mix(in srgb, ${m.color} 13%, transparent)`, whiteSpace: 'nowrap',
     }}>
       <Icon size={12} />
@@ -300,7 +300,7 @@ function DayRow({ day, last, onExcuse, onUndoExcuse, onCorrect }) {
       <td style={{ padding: '11px 16px' }}>
         {inSpan
           ? <span style={{
-              display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
+              display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
               fontSize: 11.5, fontWeight: 700, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
             }}>{leaveTypeLabel(excuse?.leave_type_name ?? day.leave_type)}</span>
           : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
@@ -494,7 +494,7 @@ export default function AttendanceEmployeeReportPage() {
                 )}
               </div>
             </div>
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 999, padding: '6px 12px', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '6px 12px', whiteSpace: 'nowrap' }}>
               {fmtDate(report?.from)} — {fmtDate(report?.to)}
             </span>
           </>
@@ -586,7 +586,7 @@ export default function AttendanceEmployeeReportPage() {
         </div>
 
         {!loading && days.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <CalendarOff size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>لا توجد أيام في هذه الفترة</p>
           </div>

@@ -484,7 +484,7 @@ function DeleteSectionModal({ section, onClose, onDeleted }) {
                 يجب أولاً نقل الموظفين المرتبطين بهذا القسم أو إزالتهم قبل أن تتمكن من حذفه.
               </p>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 10,
-                padding: '5px 12px', borderRadius: 999, background: 'var(--c-surface)',
+                padding: '5px 12px', borderRadius: 2, background: 'var(--c-surface)',
                 border: '1px solid var(--c-border)', fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
               }}>
                 <Layers size={12} />
@@ -492,7 +492,7 @@ function DeleteSectionModal({ section, onClose, onDeleted }) {
               </div>
               <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '4px 12px', borderRadius: 999, background: 'var(--c-surface)',
+                  padding: '4px 12px', borderRadius: 2, background: 'var(--c-surface)',
                   border: '1px solid var(--c-border)', fontSize: 12, fontWeight: 600, color: 'var(--c-text-2)',
                 }}>
                   <Users size={11} />
@@ -526,7 +526,7 @@ function DeleteSectionModal({ section, onClose, onDeleted }) {
                 سيتم حذف هذا القسم نهائياً وإزالة ختمه. لا يمكن التراجع عن هذا الإجراء.
               </p>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '5px 12px', borderRadius: 999, background: 'var(--c-surface)',
+                padding: '5px 12px', borderRadius: 2, background: 'var(--c-surface)',
                 border: '1px solid var(--c-border)', fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
               }}>
                 <Layers size={12} />
@@ -586,7 +586,7 @@ function SectionRow({ section, last, onEdit, onDelete, onPreview }) {
         <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{section.name}</div>
         {section.code && (
           <div style={{
-            fontFamily: "'Courier New', Courier, monospace",
+            fontFamily: 'var(--font-mono)',
             fontSize: 11, color: 'var(--c-text-3)', marginTop: 2,
           }}>
             {section.code}
@@ -837,7 +837,7 @@ export default function SectionsPage() {
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>قائمة الأقسام</span>
             <span style={{
               fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-              background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+              background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {total} معروضة
             </span>
@@ -921,7 +921,7 @@ export default function SectionsPage() {
 
         {/* Empty state */}
         {!loading && sections.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <Layers size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
               {search || deptFilter ? 'لا توجد نتائج مطابقة' : 'لا توجد أقسام بعد'}

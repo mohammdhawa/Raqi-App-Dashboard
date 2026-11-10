@@ -26,7 +26,7 @@ function InboxRow({ doc, last, userId, onView }) {
       <td style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{doc.title || '—'}</div>
         <div style={{
-          fontFamily: "'Courier New', Courier, monospace",
+          fontFamily: 'var(--font-mono)',
           fontSize: 11, color: 'var(--c-text-3)', marginTop: 2,
         }}>
           {doc.document_number ?? '—'}
@@ -158,7 +158,7 @@ export default function DocumentInboxPage() {
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>الوارد</span>
             <span style={{
               fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-              background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+              background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {total} مستنداً
             </span>
@@ -228,7 +228,7 @@ export default function DocumentInboxPage() {
 
         {/* Empty state */}
         {!loading && filtered.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <Inbox size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
               {hasFilters ? 'لا توجد نتائج مطابقة' : 'لا توجد مستندات في الوارد حالياً'}

@@ -219,7 +219,7 @@ function QueuedPanel({ result, onNew }) {
       {result.broadcast_id && (
         <div style={{ marginTop: 16, fontSize: 11, color: 'var(--c-text-3)' }}>
           معرّف الإرسال:{' '}
-          <span style={{ fontFamily: "'Courier New', Courier, monospace" }}>{result.broadcast_id}</span>
+          <span style={{ fontFamily: 'var(--font-mono)' }}>{result.broadcast_id}</span>
         </div>
       )}
 

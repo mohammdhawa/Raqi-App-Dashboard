@@ -137,3 +137,15 @@ select[style*="background: transparent"]:focus-visible {
 .action-card:hover { border-color: var(--c-accent) !important; }
 .action-card-arrow { transition: transform .15s; }
 .action-card:hover .action-card-arrow { transform: translateX(-3px); }
+
+/* 02 · Site grid on light surfaces: empty states read like an unbuilt plot */
+.site-grid-light {
+  background-color: var(--c-surface);
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--c-border) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--c-border) 55%, transparent) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center;
+}
+/* Icons are block-level under the CSS reset, so text-align cannot centre them */
+.site-grid-light > svg { margin-inline: auto; }

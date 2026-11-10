@@ -105,7 +105,7 @@ function StatusBadge({ status }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
-      padding: '5px 11px', borderRadius: 999,
+      padding: '5px 11px', borderRadius: 2,
       fontSize: 12, fontWeight: 700, color: m.color,
       background: m.bg, border: `1px solid color-mix(in srgb, ${m.color} 13%, transparent)`, whiteSpace: 'nowrap',
     }}>
@@ -198,7 +198,7 @@ function PunchCell({ time, selfie, loc, onViewSelfie, label, missing }) {
     return (
       <span style={{
         display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700,
-        color: 'var(--c-pending)', background: 'var(--c-pending-bg)', padding: '4px 9px', borderRadius: 999,
+        color: 'var(--c-pending)', background: 'var(--c-pending-bg)', padding: '4px 9px', borderRadius: 2,
         border: '1px solid color-mix(in srgb, var(--c-pending) 13%, transparent)', whiteSpace: 'nowrap',
       }}>
         <AlertTriangle size={11} />
@@ -382,7 +382,7 @@ function LeaveReportRow({ row, last, showExcuse, onUndoExcuse, onReturnToWork })
       <td style={{ padding: '12px 16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 5 }}>
           <span style={{
-            display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
+            display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
             fontSize: 11.5, fontWeight: 700, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
           }}>
             {leaveTypeName(row)}
@@ -775,7 +775,7 @@ export default function AttendanceReportPage() {
         />
         <div style={{ flex: 1 }} />
         {reportDate && (
-          <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 999, padding: '6px 12px' }}>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '6px 12px' }}>
             ليوم {fmtDate(reportDate)}
           </span>
         )}
@@ -818,7 +818,7 @@ export default function AttendanceReportPage() {
             </span>
           )}
           <span style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--c-text)' }}>{activeMeta?.label}</span>
-          <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px' }}>
+          <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px' }}>
             {countFor(section)}
           </span>
           {section === 'missing_checkout' && countFor('missing_checkout') > 0 && (
@@ -898,7 +898,7 @@ export default function AttendanceReportPage() {
         </div>
 
         {!loading && rows.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             {activeMeta && <activeMeta.icon size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />}
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>{emptyLabel}</p>
           </div>

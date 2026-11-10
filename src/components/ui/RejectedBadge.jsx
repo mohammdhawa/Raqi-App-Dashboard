@@ -21,7 +21,7 @@ export default function RejectedBadge({ source, compact = false, withReason = tr
       title={rejectionTooltip(source)}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 5,
-        padding: compact ? '2px 8px' : '4px 10px', borderRadius: 999,
+        padding: compact ? '2px 8px' : '4px 10px', borderRadius: 2,
         fontSize: compact ? 10.5 : 11.5, fontWeight: 800, lineHeight: 1.5,
         color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)',
         border: '1px solid rgba(179,38,30,0.22)',

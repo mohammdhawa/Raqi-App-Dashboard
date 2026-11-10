@@ -9,7 +9,7 @@ import { leaveRoleLabel } from '../../utils/leave'
 export default function RoleTag({ role }) {
   return (
     <span style={{
-      fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '2px 7px', flexShrink: 0,
+      fontSize: 10, fontWeight: 800, borderRadius: 2, padding: '2px 7px', flexShrink: 0,
       whiteSpace: 'nowrap',
       background: role === 'chief' ? 'var(--c-accent-tint)' : 'rgba(29,84,70,0.09)',
       color: role === 'chief' ? '#6B5B35' : 'var(--c-primary)',

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../services/api'
+import BlockProgress from '../components/ui/BlockProgress'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/ui/Toast'
 import {
@@ -83,7 +84,7 @@ function LeaveTypePill({ item }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
       <span style={{
-        display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
+        display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
         fontSize: 11.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
         background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
       }}>
@@ -158,7 +159,7 @@ function BalanceTile({ icon: Icon, label, value, accent, title }) {
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>{label}</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
-          {value == null ? '—' : value}
+          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{value == null ? '—' : value}</span>
           <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)', marginInlineStart: 4 }}>يوم</span>
         </div>
       </div>
@@ -205,6 +206,25 @@ function BalanceWidget({ balance, loading }) {
         accent={{ bg: 'var(--c-approved-bg)', color: 'var(--c-approved)' }}
       />
       </div>
+      {/* One block per allocated day while that stays readable, else tenths. */}
+      {balance?.allocated > 0 && balance?.used != null && (
+        <div style={{
+          marginTop: 10, padding: '12px 16px', borderRadius: 8,
+          background: '#fff', border: '1px solid var(--c-border)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 9 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)' }}>المستخدم من الرصيد السنوي</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, color: 'var(--c-text-2)', direction: 'ltr' }}>
+              {balance.used} / {balance.allocated}
+            </span>
+          </div>
+          <BlockProgress
+            value={balance.used} max={balance.allocated}
+            blocks={Number.isInteger(balance.allocated) && balance.allocated <= 31 ? balance.allocated : 10}
+            label="المستخدم من الرصيد السنوي"
+          />
+        </div>
+      )}
       {Number(balance?.overBalance ?? 0) > 0 && (
         <div style={{ marginTop: 10, padding: '10px 13px', borderRadius: 4, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 800 }}>
           تجاوز الرصيد بـ {balance.overBalance} يوم
@@ -424,7 +444,7 @@ function WaitingOnApprover({ item, observer }) {
       title={fallback}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        padding: '5px 11px', borderRadius: 999, whiteSpace: 'nowrap',
+        padding: '5px 11px', borderRadius: 2, whiteSpace: 'nowrap',
         fontSize: 12, fontWeight: 700,
         color: 'var(--c-text-2)', background: 'var(--c-surface-2)',
         border: '1px solid var(--c-border)',
@@ -913,7 +933,7 @@ export default function LeavePage() {
         }}>
           <span style={{
             fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-            background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+            background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
           }}>
             {total} طلباً
           </span>
@@ -1046,7 +1066,7 @@ export default function LeavePage() {
 
         {/* Empty state */}
         {!loading && rows.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <Inbox size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>{emptyMessage}</p>
           </div>

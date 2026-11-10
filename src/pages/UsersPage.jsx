@@ -51,7 +51,7 @@ function RoleBadge({ role }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
-      padding: '3px 10px', borderRadius: 999,
+      padding: '3px 10px', borderRadius: 2,
       fontSize: 11, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
       background: m.bg, color: m.color, border: m.border,
     }}>
@@ -842,7 +842,7 @@ export default function UsersPage() {
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>قائمة المستخدمين</span>
             <span style={{
               fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-              background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+              background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {total} حسابات
             </span>
@@ -867,7 +867,7 @@ export default function UsersPage() {
               >
                 {t.label}
                 <span style={{
-                  fontSize: 10.5, fontWeight: 800, borderRadius: 999, padding: '1px 7px',
+                  fontSize: 10.5, fontWeight: 800, borderRadius: 2, padding: '1px 7px',
                   background: tab === t.key ? 'rgba(255,255,255,0.2)' : 'var(--c-surface-2)',
                   color: tab === t.key ? '#fff' : 'var(--c-text-2)',
                 }}>
@@ -968,7 +968,7 @@ export default function UsersPage() {
 
         {/* Empty state */}
         {!loading && filtered.length === 0 && (
-          <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '48px 20px', textAlign: 'center' }}>
             <Users size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>لا توجد نتائج</p>
           </div>

@@ -56,5 +56,7 @@
 
   /* Typography */
   --font-sans: 'IBM Plex Sans Arabic', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+  /* Plex Mono has no Arabic glyphs; fall back to the body face for them, not
+     to a system monospace Arabic. */
+  --font-mono: 'IBM Plex Mono', 'IBM Plex Sans Arabic', ui-monospace, monospace;
 }

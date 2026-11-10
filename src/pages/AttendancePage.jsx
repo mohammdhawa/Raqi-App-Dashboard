@@ -124,7 +124,7 @@ function TypeBadge({ type }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
-      padding: '5px 11px', borderRadius: 999,
+      padding: '5px 11px', borderRadius: 2,
       fontSize: 12, fontWeight: 700, color: meta.color,
       background: meta.bg, border: `1px solid color-mix(in srgb, ${meta.color} 13%, transparent)`,
       whiteSpace: 'nowrap',
@@ -139,7 +139,7 @@ function RoleBadge({ role }) {
   const m = ROLE_META[role] ?? ROLE_META.employee
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
+      display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
       fontSize: 11, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
       background: m.bg, color: m.color,
     }}>
@@ -152,7 +152,7 @@ function AbsentBadge() {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
-      padding: '5px 11px', borderRadius: 999,
+      padding: '5px 11px', borderRadius: 2,
       fontSize: 12, fontWeight: 700, color: 'var(--c-rejected)',
       background: 'var(--c-rejected-bg)', border: '1px solid color-mix(in srgb, var(--c-rejected) 13%, transparent)',
       whiteSpace: 'nowrap',
@@ -205,7 +205,7 @@ function SelfieTag({ record, onView }) {
       onClick={() => onView(record)} title="عرض الصورة"
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        padding: '4px 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 700,
+        padding: '4px 10px', borderRadius: 2, fontSize: 11.5, fontWeight: 700,
         background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
         border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)',
         transition: 'background .12s, color .12s',
@@ -536,7 +536,7 @@ function LeaveTypePill({ item }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
       <span style={{
-        display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
+        display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
         fontSize: 11.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
         background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
       }}>
@@ -1157,7 +1157,7 @@ export default function AttendancePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
             <span style={{
               fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-              background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+              background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {tabCountLabel}
             </span>
@@ -1404,7 +1404,7 @@ export default function AttendancePage() {
 
             {/* Empty state */}
             {!activeLoading && activeRows.length === 0 && (
-              <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+              <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
                 {isAbsent
                   ? <UserX size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
                   : isLeave
