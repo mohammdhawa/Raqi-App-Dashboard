@@ -14,7 +14,7 @@ import { leaveRoleLabel } from '../../utils/leave'
 const triggerStyle = {
   width: '100%', boxSizing: 'border-box', height: 42,
   background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-  borderRadius: 10, padding: '0 12px', outline: 'none',
+  borderRadius: 4, padding: '0 12px', outline: 'none',
   fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
 }
 
@@ -71,7 +71,7 @@ export default function LeaveManagerSelect({
         <div style={{
           position: 'absolute', top: 'calc(100% + 6px)', insetInlineStart: 0, zIndex: 20,
           width: '100%', background: '#fff', border: '1px solid var(--c-border)',
-          borderRadius: 12, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
+          borderRadius: 8, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
         }}>
           <div style={{ padding: 8, borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 7 }}>
             <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />

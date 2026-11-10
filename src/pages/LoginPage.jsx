@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Mail, Eye, EyeOff, Lock, AlertCircle, Shield, Timer } from 'lucide-react'
+import { Mail, Eye, EyeOff, Lock, AlertCircle, Timer } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { readRemember } from '../services/authStorage'
 
@@ -74,66 +74,48 @@ export default function LoginPage() {
         className="hidden lg:flex lg:flex-col lg:items-center lg:justify-center"
         style={{
           flex: '0 0 46%',
-          background: 'linear-gradient(160deg, #1A3354 0%, #224167 55%, #1C3A5E 100%)',
+          background: 'var(--c-primary)',
           padding: '48px 40px',
           position: 'relative', overflow: 'hidden',
+          /* Sunaa signature 05: bronze base rule under a dark block */
+          borderBottom: '4px solid var(--c-accent)',
         }}
       >
-        {/* Decorative circles */}
-        <div style={{
-          position: 'absolute', top: -80, right: -80,
-          width: 320, height: 320, borderRadius: '50%',
-          background: 'rgba(200,163,107,0.07)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: -100, left: -60,
-          width: 280, height: 280, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.04)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: 120, right: 30,
-          width: 140, height: 140, borderRadius: '50%',
-          background: 'rgba(200,163,107,0.05)',
-          pointerEvents: 'none',
-        }} />
+        {/* Signature 02: hairline site grid */}
+        <div className="site-grid-dark" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
 
-        {/* Logo */}
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <div style={{
-            width: 80, height: 80, borderRadius: 22,
-            background: 'linear-gradient(135deg, var(--c-accent) 0%, #a8883a 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 28px',
-            boxShadow: '0 8px 32px rgba(200,163,107,0.35)',
-          }}>
-            <Shield size={38} color="#fff" strokeWidth={1.8} />
-          </div>
+          <img
+            src="/assets/sunaa-mark-on-dark.png"
+            alt="صنع للإنشاءات"
+            style={{ width: 132, height: 132, objectFit: 'contain', display: 'block', margin: '0 auto 28px' }}
+          />
 
-          <h1 style={{
-            color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 10px',
-            letterSpacing: -0.3,
-          }}>
-            الراقي للاعتمادات
+          <h1 style={{ color: '#fff', fontSize: 30, fontWeight: 700, margin: '0 0 6px', letterSpacing: -0.3 }}>
+            صنع للإنشاءات
           </h1>
+          <div style={{
+            color: 'var(--c-accent-on-dark)', fontFamily: 'var(--font-mono)',
+            fontSize: 11, fontWeight: 500, letterSpacing: 3, marginBottom: 22,
+          }}>
+            SUNAA CONSTRUCTION
+          </div>
           <p style={{
-            color: 'rgba(255,255,255,0.65)', fontSize: 14, lineHeight: 1.7,
-            maxWidth: 260, margin: '0 auto',
+            color: 'rgba(255,255,255,0.85)', fontSize: 14.5, lineHeight: 1.7,
+            maxWidth: 280, margin: '0 auto',
           }}>
             منصة إدارة المستندات والموافقات المؤسسية
           </p>
 
-          {/* Divider */}
-          <div style={{
-            margin: '32px auto',
-            width: 48, height: 3, borderRadius: 3,
-            background: 'var(--c-accent)',
-            opacity: 0.8,
-          }} />
+          {/* Signature 06: block progress as the divider */}
+          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', margin: '30px auto' }}>
+            <span style={{ width: 28, height: 5, background: 'var(--c-accent)' }} />
+            <span style={{ width: 28, height: 5, background: 'var(--c-accent)' }} />
+            <span style={{ width: 28, height: 5, background: 'rgba(255,255,255,0.22)' }} />
+          </div>
 
           <p style={{
-            color: 'rgba(255,255,255,0.4)', fontSize: 12.5,
+            color: 'rgba(255,255,255,0.66)', fontSize: 13,
             lineHeight: 1.8, maxWidth: 240, margin: '0 auto',
           }}>
             اعتمد مستنداتك بأمان وكفاءة<br />مع سجل تدقيق كامل لكل خطوة
@@ -147,6 +129,11 @@ export default function LoginPage() {
         style={{ flex: 1, background: '#fff' }}
       >
         <div style={{ width: '100%', maxWidth: 400 }}>
+          {/* Mark, shown where the brand panel is hidden */}
+          <img
+            src="/assets/sunaa-mark.png" alt="صنع للإنشاءات" className="lg:hidden"
+            style={{ width: 56, height: 56, objectFit: 'contain', marginBottom: 20 }}
+          />
           {/* Form heading */}
           <div style={{ marginBottom: 32 }}>
             <h2 style={{
@@ -164,7 +151,7 @@ export default function LoginPage() {
           {error && (
             <div style={{
               display: 'flex', alignItems: 'flex-start', gap: 10,
-              padding: '12px 14px', borderRadius: 12,
+              padding: '12px 14px', borderRadius: 8,
               background: 'var(--c-rejected-bg)',
               border: '1px solid rgba(211,47,47,0.25)',
               marginBottom: 20,
@@ -196,8 +183,8 @@ export default function LoginPage() {
               </label>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 9, height: 46,
-                background: 'var(--c-surface)', border: `1.5px solid ${error ? 'rgba(211,47,47,0.4)' : 'var(--c-border)'}`,
-                borderRadius: 12, padding: '0 14px',
+                background: '#fff', border: `1.5px solid ${error ? 'rgba(211,47,47,0.4)' : 'var(--c-border)'}`,
+                borderRadius: 8, padding: '0 14px',
                 transition: 'border-color .15s',
               }}>
                 <Mail size={15} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
@@ -226,8 +213,8 @@ export default function LoginPage() {
               </label>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 9, height: 46,
-                background: 'var(--c-surface)', border: `1.5px solid ${error ? 'rgba(211,47,47,0.4)' : 'var(--c-border)'}`,
-                borderRadius: 12, padding: '0 14px',
+                background: '#fff', border: `1.5px solid ${error ? 'rgba(211,47,47,0.4)' : 'var(--c-border)'}`,
+                borderRadius: 8, padding: '0 14px',
                 transition: 'border-color .15s',
               }}>
                 <Lock size={15} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
@@ -282,14 +269,14 @@ export default function LoginPage() {
               type="submit"
               disabled={submitting || loading || locked}
               style={{
-                width: '100%', height: 46, borderRadius: 12, border: 0,
-                background: (submitting || locked) ? 'rgba(34,65,103,0.7)' : 'var(--c-primary)',
+                width: '100%', height: 46, borderRadius: 8, border: 0,
+                background: (submitting || locked) ? 'rgba(29,84,70,0.7)' : 'var(--c-primary)',
                 color: '#fff', fontSize: 14, fontWeight: 800,
                 fontFamily: 'var(--font-sans)',
                 cursor: locked ? 'not-allowed' : submitting ? 'wait' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 transition: 'background .15s, transform .1s',
-                boxShadow: '0 4px 14px rgba(34,65,103,0.28)',
+                boxShadow: 'none',
               }}
             >
               {locked ? (

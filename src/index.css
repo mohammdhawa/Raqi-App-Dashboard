@@ -80,3 +80,54 @@ body {
   .adm-topbar { right: 0; }
   .adm-main { margin-right: 0; }
 }
+
+/* ── Sunaa signature elements ── */
+
+/* Keyboard focus: bronze ring, as on the component sheet */
+:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+/* 01 · The bronze block marks the active nav item */
+.sb-block {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  background: transparent;
+}
+.sb-item.is-active .sb-block { background: var(--c-accent-on-dark); }
+
+/* 02 · Site grid: hairline plan grid behind dark hero blocks */
+.site-grid-dark {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+/* Metadata and figures in Plex Mono, like drawing labels */
+.mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
+
+/* ── Form focus ──
+   Fields set `outline: none` inline, so the ring is restored here. A field is
+   either a bordered control, or a borderless transparent control inside a
+   bordered wrapper; in the second case the wrapper takes the ring. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--c-accent) !important;
+  outline-offset: 1px;
+}
+input[style*="background: transparent"]:focus-visible,
+textarea[style*="background: transparent"]:focus-visible,
+select[style*="background: transparent"]:focus-visible {
+  outline: none !important;
+}
+:has(> input[style*="background: transparent"]:focus-visible),
+:has(> textarea[style*="background: transparent"]:focus-visible),
+:has(> select[style*="background: transparent"]:focus-visible) {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 1px;
+  border-color: var(--c-accent) !important;
+}

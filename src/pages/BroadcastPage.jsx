@@ -13,7 +13,7 @@ const MAX_TITLE = 255
 const MAX_BODY = 1500
 
 const cardStyle = {
-  background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16,
+  background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8,
   boxShadow: 'var(--sh-card)', overflow: 'hidden', marginBottom: 20,
 }
 const cardHeaderStyle = {
@@ -48,7 +48,7 @@ function FieldWrap({ label, required, error, hint, count, max, children }) {
 
 const inputBase = {
   width: '100%', boxSizing: 'border-box', background: 'var(--c-surface)',
-  borderRadius: 10, padding: '11px 12px', outline: 'none',
+  borderRadius: 4, padding: '11px 12px', outline: 'none',
   fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
 }
 
@@ -63,13 +63,13 @@ function Preview({ title, body }) {
       </div>
       <div style={{ padding: 20 }}>
         <div style={{
-          display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 12,
+          display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 8,
           background: 'var(--c-primary-light)', border: '1px solid var(--c-border)',
         }}>
           <div style={{
-            width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+            width: 32, height: 32, borderRadius: 4, flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--c-accent-tint)', color: '#8A6A23',
+            background: 'var(--c-accent-tint)', color: '#6B5B35',
           }}>
             <Megaphone size={15} />
           </div>
@@ -113,7 +113,7 @@ function ConfirmModal({ title, body, sending, onClose, onConfirm }) {
     <div
       onClick={() => !sending && onClose()}
       style={{
-        position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(20,32,50,0.5)',
+        position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(14,22,19,0.5)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
@@ -121,13 +121,13 @@ function ConfirmModal({ title, body, sending, onClose, onConfirm }) {
       <div
         role="dialog" aria-modal="true" aria-label="تأكيد إرسال إشعار عام"
         onClick={e => e.stopPropagation()}
-        style={{ width: 'min(460px, 100%)', background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card-lg)' }}
+        style={{ width: 'min(460px, 100%)', background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card-lg)' }}
       >
         <div style={{ padding: '26px 26px 20px', textAlign: 'center' }}>
           <div style={{
-            width: 60, height: 60, borderRadius: 16, margin: '0 auto 16px',
+            width: 60, height: 60, borderRadius: 8, margin: '0 auto 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--c-accent-tint)', color: '#8A6A23',
+            background: 'var(--c-accent-tint)', color: '#6B5B35',
           }}>
             <Megaphone size={26} />
           </div>
@@ -139,7 +139,7 @@ function ConfirmModal({ title, body, sending, onClose, onConfirm }) {
             على أجهزتهم. لا يمكن التراجع عن الإرسال.
           </p>
           <div style={{
-            marginTop: 16, padding: '12px 14px', borderRadius: 12, textAlign: 'start',
+            marginTop: 16, padding: '12px 14px', borderRadius: 8, textAlign: 'start',
             background: 'var(--c-surface)', border: '1px solid var(--c-border)',
           }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)', overflowWrap: 'anywhere' }}>{title}</div>
@@ -155,7 +155,7 @@ function ConfirmModal({ title, body, sending, onClose, onConfirm }) {
           <button
             onClick={onConfirm} disabled={sending}
             style={{
-              flex: 1, height: 44, borderRadius: 12, border: 0,
+              flex: 1, height: 44, borderRadius: 8, border: 0,
               background: 'var(--c-primary)', color: '#fff',
               fontFamily: 'var(--font-sans)', fontSize: 13.5, fontWeight: 700,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
@@ -168,7 +168,7 @@ function ConfirmModal({ title, body, sending, onClose, onConfirm }) {
           <button
             onClick={onClose} disabled={sending}
             style={{
-              flex: 1, height: 44, borderRadius: 12,
+              flex: 1, height: 44, borderRadius: 8,
               border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
               fontFamily: 'var(--font-sans)', fontSize: 13.5, fontWeight: 700,
               cursor: sending ? 'default' : 'pointer', opacity: sending ? 0.6 : 1,
@@ -188,7 +188,7 @@ function QueuedPanel({ result, onNew }) {
   return (
     <div style={{ ...cardStyle, padding: '32px 26px', textAlign: 'center' }}>
       <div style={{
-        width: 62, height: 62, borderRadius: 17, margin: '0 auto 16px',
+        width: 62, height: 62, borderRadius: 8, margin: '0 auto 16px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'var(--c-approved-bg)', color: 'var(--c-approved)',
       }}>
@@ -206,7 +206,7 @@ function QueuedPanel({ result, onNew }) {
       {result.recipients != null && (
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 16,
-          padding: '10px 16px', borderRadius: 12,
+          padding: '10px 16px', borderRadius: 8,
           background: 'var(--c-primary-light)', color: 'var(--c-primary)',
         }}>
           <Users size={16} />
@@ -227,7 +227,7 @@ function QueuedPanel({ result, onNew }) {
         <button
           onClick={onNew}
           style={{
-            height: 42, padding: '0 20px', borderRadius: 11,
+            height: 42, padding: '0 20px', borderRadius: 4,
             border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
             fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
           }}
@@ -310,8 +310,8 @@ export default function BroadcastPage() {
               <div style={{ padding: 20 }}>
 
                 <div style={{
-                  display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 12, marginBottom: 20,
-                  background: 'var(--c-accent-tint)', color: '#8A6A23',
+                  display: 'flex', gap: 10, padding: '12px 14px', borderRadius: 8, marginBottom: 20,
+                  background: 'var(--c-accent-tint)', color: '#6B5B35',
                 }}>
                   <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
                   <div style={{ fontSize: 12, lineHeight: 1.7 }}>
@@ -356,7 +356,7 @@ export default function BroadcastPage() {
                     <button
                       onClick={() => { setTitle(''); setBody(''); setErrors({}) }}
                       style={{
-                        height: 42, padding: '0 16px', borderRadius: 11,
+                        height: 42, padding: '0 16px', borderRadius: 4,
                         border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
                         fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
                         display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
@@ -369,7 +369,7 @@ export default function BroadcastPage() {
                   <button
                     onClick={openConfirm}
                     style={{
-                      height: 42, padding: '0 20px', borderRadius: 11, border: 'none',
+                      height: 42, padding: '0 20px', borderRadius: 4, border: 'none',
                       background: 'var(--c-primary)', color: '#fff',
                       fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
                       display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',

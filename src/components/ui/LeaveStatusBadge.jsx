@@ -23,7 +23,7 @@ export default function LeaveStatusBadge({ status }) {
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '5px 11px', borderRadius: 999,
       fontSize: 12, fontWeight: 700, color: meta.color,
-      background: meta.bg, border: `1px solid ${meta.color}22`,
+      background: meta.bg, border: `1px solid color-mix(in srgb, ${meta.color} 13%, transparent)`,
       whiteSpace: 'nowrap',
     }}>
       <Icon size={12} />

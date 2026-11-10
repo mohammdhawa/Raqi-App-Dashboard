@@ -20,7 +20,7 @@ const VARIANTS = {
   },
   info: {
     icon: Info,
-    bg: 'rgba(34,65,103,0.06)',
+    bg: 'rgba(29,84,70,0.06)',
     border: 'var(--c-primary)',
     color: 'var(--c-primary)',
     label: 'معلومة',
@@ -47,10 +47,10 @@ function ToastItem({ toast, onRemove }) {
     <div
       style={{
         display: 'flex', alignItems: 'flex-start', gap: 10,
-        padding: '12px 14px', borderRadius: 12, width: 340, maxWidth: 'calc(100vw - 48px)',
+        padding: '12px 14px', borderRadius: 8, width: 340, maxWidth: 'calc(100vw - 48px)',
         background: '#fff',
         border: `1px solid ${v.border}`,
-        boxShadow: '0 4px 16px rgba(27,42,65,0.13)',
+        boxShadow: '0 4px 16px rgba(14,22,19,0.13)',
         transform: visible ? 'translateX(0)' : 'translateX(30px)',
         opacity: visible ? 1 : 0,
         transition: 'transform .28s cubic-bezier(.22,.68,0,1.2), opacity .24s ease',
@@ -58,7 +58,7 @@ function ToastItem({ toast, onRemove }) {
       }}
     >
       <div style={{
-        width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+        width: 32, height: 32, borderRadius: 4, flexShrink: 0,
         background: v.bg, color: v.color,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
@@ -71,7 +71,7 @@ function ToastItem({ toast, onRemove }) {
       <button
         onClick={() => { setVisible(false); setTimeout(() => onRemove(toast.id), 320) }}
         style={{
-          width: 22, height: 22, borderRadius: 6, border: 0, background: 'transparent',
+          width: 22, height: 22, borderRadius: 3, border: 0, background: 'transparent',
           color: 'var(--c-text-3)', cursor: 'pointer', flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: 0,

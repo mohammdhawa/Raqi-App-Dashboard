@@ -20,7 +20,7 @@ const OVER_BALANCE_MESSAGE = 'Excuse exceeds the employee remaining annual leave
 const ATTENDANCE_MESSAGE = 'The employee has attendance on some of these days, so there is no absence to excuse. File the excuse for the days actually missed.'
 
 const inputStyle = {
-  width: '100%', height: 42, borderRadius: 10, border: '1px solid var(--c-border)',
+  width: '100%', height: 42, borderRadius: 4, border: '1px solid var(--c-border)',
   background: '#fff', padding: '0 12px', outline: 'none',
   fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
 }
@@ -164,29 +164,29 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
     <div onClick={() => !submitting && !forceData && !attended && onClose()} style={{
       position: 'fixed', inset: 0, zIndex: 60, padding: 20,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'rgba(20,32,50,0.52)', backdropFilter: 'blur(2px)',
+      background: 'rgba(14,22,19,0.52)', backdropFilter: 'blur(2px)',
     }}>
       <div role='dialog' aria-modal='true' aria-label='تسجيل عذر غياب'
         onClick={event => event.stopPropagation()}
-        style={{ width: 'min(560px, 100%)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', background: '#fff', borderRadius: 16, boxShadow: 'var(--sh-card-lg)' }}>
+        style={{ width: 'min(560px, 100%)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', background: '#fff', borderRadius: 8, boxShadow: 'var(--sh-card-lg)' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-primary)', background: 'var(--c-primary-light)' }}><ShieldCheck size={18} /></div>
+          <div style={{ width: 36, height: 36, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-primary)', background: 'var(--c-primary-light)' }}><ShieldCheck size={18} /></div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>تسجيل عذر غياب</div>
             <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>يُسجَّل العذر معتمداً مباشرة باسم الموارد البشرية.</div>
           </div>
-          <button type='button' onClick={onClose} disabled={submitting} title='إغلاق' style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
+          <button type='button' onClick={onClose} disabled={submitting} title='إغلاق' style={{ width: 34, height: 34, borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
         </div>
 
         <div style={{ padding: 20, display: 'grid', gap: 16 }}>
-          {formError && <div style={{ padding: '10px 12px', borderRadius: 10, color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)', fontSize: 12.5, fontWeight: 600, lineHeight: 1.7 }}>{formError}</div>}
+          {formError && <div style={{ padding: '10px 12px', borderRadius: 4, color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)', fontSize: 12.5, fontWeight: 600, lineHeight: 1.7 }}>{formError}</div>}
 
           {/* The employee attended some of these days — there is no absence to
               excuse, and `force` does not waive it. Offer the remaining days. */}
           {attended && (
             <div style={{
-              padding: '13px 15px', borderRadius: 12,
-              background: 'var(--c-pending-bg)', border: '1px solid var(--c-pending)33',
+              padding: '13px 15px', borderRadius: 8,
+              background: 'var(--c-pending-bg)', border: '1px solid color-mix(in srgb, var(--c-pending) 20%, transparent)',
             }}>
               <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start' }}>
                 <UserCheck size={16} style={{ color: 'var(--c-pending)', flexShrink: 0, marginTop: 2 }} />
@@ -201,7 +201,7 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
                     {attended.map(day => (
                       <span key={day} style={{
                         display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 999,
-                        background: '#fff', border: '1px solid var(--c-pending)44',
+                        background: '#fff', border: '1px solid color-mix(in srgb, var(--c-pending) 27%, transparent)',
                         fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap',
                       }}>
                         <Calendar size={11} style={{ color: 'var(--c-pending)' }} />
@@ -223,7 +223,7 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
                             onClick={() => applyRange(range)}
                             style={{
                               display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px',
-                              borderRadius: 9, border: 'none', background: 'var(--c-primary)', color: '#fff',
+                              borderRadius: 4, border: 'none', background: 'var(--c-primary)', color: '#fff',
                               fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
                             }}
                           >
@@ -243,7 +243,7 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
                 </div>
                 <button
                   type='button' onClick={() => setAttended(null)} title='إغلاق'
-                  style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--c-text-3)', cursor: 'pointer', flexShrink: 0 }}
+                  style={{ width: 28, height: 28, borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--c-text-3)', cursor: 'pointer', flexShrink: 0 }}
                 >
                   <X size={14} />
                 </button>
@@ -310,8 +310,8 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
         <div style={{ padding: '12px 20px', borderTop: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
           {leaveType && <DeductsBalanceBadge deducts={leaveType.deducts_balance} compact />}
           <div style={{ flex: 1 }} />
-          <button type='button' onClick={onClose} disabled={submitting} style={{ height: 38, padding: '0 16px', borderRadius: 10, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>إلغاء</button>
-          <button type='button' onClick={() => submit(false)} disabled={submitting} style={{ height: 38, padding: '0 18px', borderRadius: 10, border: 'none', background: 'var(--c-primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 7, opacity: submitting ? 0.7 : 1 }}>
+          <button type='button' onClick={onClose} disabled={submitting} style={{ height: 38, padding: '0 16px', borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>إلغاء</button>
+          <button type='button' onClick={() => submit(false)} disabled={submitting} style={{ height: 38, padding: '0 18px', borderRadius: 4, border: 'none', background: 'var(--c-primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 7, opacity: submitting ? 0.7 : 1 }}>
             {submitting ? <Loader2 size={14} className='animate-spin' /> : <Check size={14} />} تسجيل العذر
           </button>
         </div>
@@ -321,9 +321,9 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
           only ever be reached with a type that consumes balance. */}
       {forceData && (
         <div role='alertdialog' aria-modal='true' aria-label='تجاوز الرصيد' onClick={event => event.stopPropagation()}
-          style={{ position: 'fixed', zIndex: 70, width: 'min(430px, calc(100% - 40px))', background: '#fff', borderRadius: 16, boxShadow: '0 20px 60px rgba(20,32,50,.32)', overflow: 'hidden' }}>
+          style={{ position: 'fixed', zIndex: 70, width: 'min(430px, calc(100% - 40px))', background: '#fff', borderRadius: 8, boxShadow: '0 20px 60px rgba(14,22,19,.32)', overflow: 'hidden' }}>
           <div style={{ padding: '20px 20px 14px', textAlign: 'center' }}>
-            <div style={{ width: 46, height: 46, margin: '0 auto 12px', borderRadius: 13, background: 'var(--c-pending-bg)', color: 'var(--c-pending)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><AlertTriangle size={22} /></div>
+            <div style={{ width: 46, height: 46, margin: '0 auto 12px', borderRadius: 8, background: 'var(--c-pending-bg)', color: 'var(--c-pending)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><AlertTriangle size={22} /></div>
             <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--c-text)', marginBottom: 8 }}>تجاوز الرصيد</div>
             <p style={{ margin: 0, fontSize: 13.5, color: 'var(--c-text-2)', lineHeight: 1.8 }}>
               رصيد الموظف المتبقي {forceData.remainingDays} يوم، والعذر يحتاج {forceData.requestedDays} يوم.
@@ -331,8 +331,8 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
             </p>
           </div>
           <div style={{ padding: '12px 20px', borderTop: '1px solid var(--c-border)', display: 'flex', justifyContent: 'center', gap: 8 }}>
-            <button type='button' onClick={() => setForceData(null)} disabled={submitting} style={{ height: 38, padding: '0 16px', borderRadius: 10, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>إلغاء</button>
-            <button type='button' onClick={() => submit(true)} disabled={submitting} style={{ height: 38, padding: '0 18px', borderRadius: 10, border: 'none', background: 'var(--c-pending)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <button type='button' onClick={() => setForceData(null)} disabled={submitting} style={{ height: 38, padding: '0 16px', borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>إلغاء</button>
+            <button type='button' onClick={() => submit(true)} disabled={submitting} style={{ height: 38, padding: '0 18px', borderRadius: 4, border: 'none', background: 'var(--c-pending)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               {submitting ? <Loader2 size={14} className='animate-spin' /> : <ShieldCheck size={14} />} تسجيل رغم التجاوز
             </button>
           </div>

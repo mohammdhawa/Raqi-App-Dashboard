@@ -36,7 +36,7 @@ function SentRow({ doc, last, onView, onDelete }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
@@ -105,17 +105,17 @@ function WithdrawModal({ doc, onClose, onConfirm }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 50,
-      background: 'rgba(20,32,50,0.48)',
+      background: 'rgba(14,22,19,0.48)',
       backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div style={{
-        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
+        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 8,
         boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
       }}>
         <div style={{ padding: '26px 26px 22px', textAlign: 'center' }}>
           <div style={{
-            width: 60, height: 60, borderRadius: 16, margin: '0 auto 16px',
+            width: 60, height: 60, borderRadius: 8, margin: '0 auto 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
           }}>
@@ -129,7 +129,7 @@ function WithdrawModal({ doc, onClose, onConfirm }) {
           </p>
           {error && (
             <div style={{
-              marginTop: 12, padding: '9px 14px', borderRadius: 10,
+              marginTop: 12, padding: '9px 14px', borderRadius: 4,
               background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
               fontSize: 12.5, display: 'inline-block',
             }}>
@@ -141,7 +141,7 @@ function WithdrawModal({ doc, onClose, onConfirm }) {
           <button
             onClick={handleDelete} disabled={deleting}
             style={{
-              flex: 1, height: 44, borderRadius: 12, border: 0,
+              flex: 1, height: 44, borderRadius: 8, border: 0,
               background: 'var(--c-rejected)', color: '#fff',
               fontFamily: 'var(--font-sans)', fontSize: 13.5, fontWeight: 700,
               cursor: deleting ? 'default' : 'pointer', opacity: deleting ? 0.7 : 1,
@@ -152,7 +152,7 @@ function WithdrawModal({ doc, onClose, onConfirm }) {
           <button
             onClick={onClose} disabled={deleting}
             style={{
-              flex: 1, height: 44, borderRadius: 12,
+              flex: 1, height: 44, borderRadius: 8,
               border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
               fontFamily: 'var(--font-sans)', fontSize: 13.5, fontWeight: 700,
               cursor: deleting ? 'default' : 'pointer',
@@ -249,7 +249,7 @@ export default function DocumentSentPage() {
       {/* Main card */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
 
         {/* Toolbar */}
@@ -283,7 +283,7 @@ export default function DocumentSentPage() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 9,
             background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-            borderRadius: 10, padding: '0 12px', height: 38, minWidth: 220,
+            borderRadius: 4, padding: '0 12px', height: 38, minWidth: 220,
           }}>
             <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
             <input

@@ -105,14 +105,14 @@ export default function CorrectCheckoutModal({ target, onClose, onDone }) {
     <div
       onClick={() => { if (!submitting) onClose() }}
       style={{
-        position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(20,32,50,0.5)',
+        position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(14,22,19,0.5)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ width: 'min(440px, 100%)', background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card-lg)' }}
+        style={{ width: 'min(440px, 100%)', background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card-lg)' }}
       >
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -124,7 +124,7 @@ export default function CorrectCheckoutModal({ target, onClose, onDone }) {
           </div>
           <button
             onClick={onClose}
-            style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 34, height: 34, borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
             <X size={16} />
           </button>
@@ -133,8 +133,8 @@ export default function CorrectCheckoutModal({ target, onClose, onDone }) {
         {/* Body */}
         <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{
-            display: 'flex', gap: 9, padding: '10px 12px', borderRadius: 10,
-            background: 'var(--c-pending-bg)', border: '1px solid var(--c-pending)22',
+            display: 'flex', gap: 9, padding: '10px 12px', borderRadius: 4,
+            background: 'var(--c-pending-bg)', border: '1px solid color-mix(in srgb, var(--c-pending) 13%, transparent)',
           }}>
             <AlertTriangle size={15} style={{ color: 'var(--c-pending)', flexShrink: 0, marginTop: 1 }} />
             <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: 'var(--c-text-2)' }}>
@@ -151,7 +151,7 @@ export default function CorrectCheckoutModal({ target, onClose, onDone }) {
               type="datetime-local" value={datetime} min={minAttribute(target?.checkInTime)}
               onChange={e => setDatetime(e.target.value)}
               style={{
-                width: '100%', height: 40, borderRadius: 10, border: '1px solid var(--c-border)',
+                width: '100%', height: 40, borderRadius: 4, border: '1px solid var(--c-border)',
                 background: '#fff', padding: '0 12px', fontSize: 13, fontFamily: 'var(--font-sans)',
                 color: 'var(--c-text)', outline: 'none',
               }}
@@ -171,7 +171,7 @@ export default function CorrectCheckoutModal({ target, onClose, onDone }) {
               value={note} onChange={e => setNote(e.target.value)} rows={2}
               placeholder="سبب التصحيح أو مرجعه..."
               style={{
-                width: '100%', borderRadius: 10, border: '1px solid var(--c-border)',
+                width: '100%', borderRadius: 4, border: '1px solid var(--c-border)',
                 background: '#fff', padding: '10px 12px', fontSize: 13, fontFamily: 'var(--font-sans)',
                 color: 'var(--c-text)', outline: 'none', resize: 'vertical', lineHeight: 1.6,
               }}
@@ -179,7 +179,7 @@ export default function CorrectCheckoutModal({ target, onClose, onDone }) {
           </div>
 
           {error && (
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)', padding: '8px 12px', borderRadius: 9 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)', padding: '8px 12px', borderRadius: 4 }}>
               {error}
             </div>
           )}
@@ -190,7 +190,7 @@ export default function CorrectCheckoutModal({ target, onClose, onDone }) {
           <button
             onClick={submit} disabled={disabled}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 18px', borderRadius: 10,
+              display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 18px', borderRadius: 4,
               background: 'var(--c-primary)', color: '#fff', border: 'none',
               fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
               cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.7 : 1,
@@ -203,7 +203,7 @@ export default function CorrectCheckoutModal({ target, onClose, onDone }) {
           <button
             onClick={onClose} disabled={submitting}
             style={{
-              height: 40, padding: '0 18px', borderRadius: 10, background: '#fff', border: '1px solid var(--c-border)',
+              height: 40, padding: '0 18px', borderRadius: 4, background: '#fff', border: '1px solid var(--c-border)',
               fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: 'var(--c-text-2)',
               cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,
             }}

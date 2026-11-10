@@ -89,7 +89,7 @@ function InitialsTag({ name, size = 34 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: 'linear-gradient(135deg, var(--c-primary), #1C3A5E)',
+      background: 'linear-gradient(135deg, var(--c-primary), #1D5446)',
       color: '#fff', fontWeight: 800, fontSize: size * 0.34,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
@@ -107,7 +107,7 @@ function StatusBadge({ status }) {
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '5px 11px', borderRadius: 999,
       fontSize: 12, fontWeight: 700, color: m.color,
-      background: m.bg, border: `1px solid ${m.color}22`, whiteSpace: 'nowrap',
+      background: m.bg, border: `1px solid color-mix(in srgb, ${m.color} 13%, transparent)`, whiteSpace: 'nowrap',
     }}>
       <Icon size={12} />
       {m.label}
@@ -168,7 +168,7 @@ function SelfieThumb({ url, onClick }) {
   if (err) {
     return (
       <span style={{
-        width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+        width: 30, height: 30, borderRadius: 4, flexShrink: 0,
         background: 'var(--c-surface-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <ImageOff size={13} style={{ color: 'var(--c-text-3)' }} />
@@ -179,7 +179,7 @@ function SelfieThumb({ url, onClick }) {
     <button
       onClick={onClick} title="عرض الصورة"
       style={{
-        width: 30, height: 30, borderRadius: 8, padding: 0, flexShrink: 0,
+        width: 30, height: 30, borderRadius: 4, padding: 0, flexShrink: 0,
         border: '1px solid var(--c-border)', cursor: 'pointer', overflow: 'hidden', background: 'none',
       }}
     >
@@ -199,7 +199,7 @@ function PunchCell({ time, selfie, loc, onViewSelfie, label, missing }) {
       <span style={{
         display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700,
         color: 'var(--c-pending)', background: 'var(--c-pending-bg)', padding: '4px 9px', borderRadius: 999,
-        border: '1px solid var(--c-pending)22', whiteSpace: 'nowrap',
+        border: '1px solid color-mix(in srgb, var(--c-pending) 13%, transparent)', whiteSpace: 'nowrap',
       }}>
         <AlertTriangle size={11} />
         لم يُسجَّل
@@ -263,7 +263,7 @@ function RejectionCell({ rejection }) {
 
 const rowActionStyle = (bg, color) => ({
   display: 'inline-flex', alignItems: 'center', gap: 6,
-  height: 32, padding: '0 12px', borderRadius: 9, border: 'none',
+  height: 32, padding: '0 12px', borderRadius: 4, border: 'none',
   background: bg, color, fontFamily: 'var(--font-sans)',
   fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
 })
@@ -286,8 +286,8 @@ function AttendanceRow({
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
         background: rejection
-          ? 'rgba(192,57,43,0.045)'
-          : isMissing ? 'rgba(200,163,107,0.05)' : hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+          ? 'rgba(179,38,30,0.045)'
+          : isMissing ? 'rgba(133,114,69,0.05)' : hov ? 'rgba(29,84,70,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
@@ -374,7 +374,7 @@ function LeaveReportRow({ row, last, showExcuse, onUndoExcuse, onReturnToWork })
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent', transition: 'background .1s',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent', transition: 'background .1s',
       }}
     >
       <td style={{ padding: '12px 16px' }}><EmployeeCell name={row.name} email={row.email} /></td>
@@ -423,7 +423,7 @@ function LeaveReportRow({ row, last, showExcuse, onUndoExcuse, onReturnToWork })
                 onClick={() => onUndoExcuse(row)} title={LEAVE_COPY.undoExcuseTitle}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
-                  borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff',
+                  borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
                   fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
                   color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
                 }}
@@ -445,7 +445,7 @@ function LeaveReportRow({ row, last, showExcuse, onUndoExcuse, onReturnToWork })
               onClick={() => onReturnToWork(row)} title={LEAVE_COPY.returnToWorkTitle}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
-                borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff',
+                borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
                 fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
                 color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
               }}
@@ -481,15 +481,15 @@ function SummaryTile({ meta, count, active, onClick }) {
       onClick={onClick} title={meta.title}
       style={{
         flex: 1, minWidth: 150, display: 'flex', alignItems: 'center', gap: 12,
-        padding: '13px 15px', borderRadius: 12, cursor: 'pointer', textAlign: 'right',
+        padding: '13px 15px', borderRadius: 8, cursor: 'pointer', textAlign: 'right',
         background: '#fff', fontFamily: 'var(--font-sans)',
         border: active ? `1.5px solid ${meta.color}` : '1px solid var(--c-border)',
-        boxShadow: active ? `0 0 0 3px ${meta.color}1a` : 'none',
+        boxShadow: active ? `0 0 0 3px color-mix(in srgb, ${meta.color} 10%, transparent)` : 'none',
         transition: 'border-color .14s, box-shadow .14s',
       }}
     >
       <div style={{
-        width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+        width: 40, height: 40, borderRadius: 4, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: meta.bg, color: meta.color,
       }}>
@@ -518,12 +518,12 @@ function SelfiePreview({ data, onClose }) {
     <div
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(20,32,50,0.5)',
+        position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(14,22,19,0.5)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
     >
-      <div onClick={e => e.stopPropagation()} style={{ width: 'min(420px, 100%)', background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card-lg)' }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 'min(420px, 100%)', background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card-lg)' }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>{data.label ?? 'الصورة'}</div>
@@ -533,14 +533,14 @@ function SelfiePreview({ data, onClose }) {
             {status === 'loaded' && (
               <button
                 onClick={() => window.open(data.url, '_blank', 'noopener,noreferrer')} title="فتح في تبويب جديد"
-                style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                style={{ width: 34, height: 34, borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <ExternalLink size={15} />
               </button>
             )}
             <button
               onClick={onClose}
-              style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              style={{ width: 34, height: 34, borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             >
               <X size={16} />
             </button>
@@ -572,7 +572,7 @@ function SelfiePreview({ data, onClose }) {
 
 // ── Main page ────────────────────────────────────────────────────────────────
 const dateInputStyle = {
-  height: 38, borderRadius: 10, border: '1px solid var(--c-border)', background: '#fff',
+  height: 38, borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
   padding: '0 10px', fontSize: 12, fontFamily: 'var(--font-sans)', color: 'var(--c-text-2)', outline: 'none', cursor: 'pointer',
 }
 
@@ -752,7 +752,7 @@ export default function AttendanceReportPage() {
           <button
             onClick={() => { setDate(''); setDepartmentId(''); setSectionId(''); setSearch('') }}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6, height: 38, padding: '0 12px', borderRadius: 10,
+              display: 'inline-flex', alignItems: 'center', gap: 6, height: 38, padding: '0 12px', borderRadius: 4,
               background: 'var(--c-surface)', border: '1px solid var(--c-border)',
               fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', cursor: 'pointer',
             }}
@@ -785,7 +785,7 @@ export default function AttendanceReportPage() {
         /* Non-working day per the server's `working_day` (a configured
            holiday) — no attendance expected */
         <div style={{
-          background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16,
+          background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8,
           boxShadow: 'var(--sh-card)', padding: '56px 24px', textAlign: 'center',
         }}>
           <CalendarOff size={36} style={{ color: 'var(--c-text-3)', marginBottom: 14 }} />
@@ -809,11 +809,11 @@ export default function AttendanceReportPage() {
       </div>
 
       {/* Active section table */}
-      <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
+      <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
         {/* Section heading */}
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
           {activeMeta && (
-            <span style={{ width: 30, height: 30, borderRadius: 9, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: activeMeta.bg, color: activeMeta.color, flexShrink: 0 }}>
+            <span style={{ width: 30, height: 30, borderRadius: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: activeMeta.bg, color: activeMeta.color, flexShrink: 0 }}>
               <activeMeta.icon size={16} />
             </span>
           )}

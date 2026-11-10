@@ -18,7 +18,7 @@ const CAMERA_ERRORS = {
 }
 
 const btnBase = {
-  height: 42, padding: '0 18px', borderRadius: 11,
+  height: 42, padding: '0 18px', borderRadius: 4,
   fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
   cursor: 'pointer', border: 'none',
@@ -198,7 +198,7 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
     <div
       onClick={() => !submitting && onCancel()}
       style={{
-        position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(20,32,50,0.55)',
+        position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(14,22,19,0.55)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
@@ -206,7 +206,7 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: 'min(460px, 100%)', background: '#fff', borderRadius: 16,
+          width: 'min(460px, 100%)', background: '#fff', borderRadius: 8,
           overflow: 'hidden', boxShadow: 'var(--sh-card-lg)', direction: 'rtl',
         }}
       >
@@ -224,7 +224,7 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
           <button
             onClick={onCancel} disabled={submitting} title="إلغاء"
             style={{
-              width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+              width: 34, height: 34, borderRadius: 4, flexShrink: 0,
               border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.5 : 1,
@@ -235,7 +235,7 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
         </div>
 
         {/* Viewport */}
-        <div style={{ position: 'relative', aspectRatio: '1 / 1', background: '#101A28', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', aspectRatio: '1 / 1', background: '#0E1613', overflow: 'hidden' }}>
           {/* `contain`, not `cover`: the stored frame is never cropped, so a
               cropped preview would frame the face differently from the photo
               that actually gets saved. Letterboxing here is the honest view. */}
@@ -264,7 +264,7 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
               style={{
                 position: 'absolute', top: 12, insetInlineStart: 12,
                 width: 42, height: 42, borderRadius: '50%', border: 'none',
-                background: 'rgba(16,26,40,0.55)', color: '#fff',
+                background: 'rgba(14,22,19,0.55)', color: '#fff',
                 backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: !ready || busy ? 'default' : 'pointer',
@@ -300,7 +300,7 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
 
           {submitting && (
             <div style={{
-              position: 'absolute', inset: 0, background: 'rgba(16,26,40,0.55)',
+              position: 'absolute', inset: 0, background: 'rgba(14,22,19,0.55)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               gap: 10, color: '#fff',
             }}>
@@ -313,7 +313,7 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
         {/* Error */}
         {error && (
           <div style={{
-            margin: '12px 18px 0', padding: '10px 12px', borderRadius: 10,
+            margin: '12px 18px 0', padding: '10px 12px', borderRadius: 4,
             background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
             fontSize: 12.5, fontWeight: 700, lineHeight: 1.7,
           }}>

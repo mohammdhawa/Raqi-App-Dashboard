@@ -33,7 +33,7 @@ const TYPE_META = {
 }
 
 const dateInputStyle = {
-  height: 38, borderRadius: 10, border: '1px solid var(--c-border)',
+  height: 38, borderRadius: 4, border: '1px solid var(--c-border)',
   background: '#fff', padding: '0 10px', fontSize: 12, fontFamily: 'var(--font-sans)',
   color: 'var(--c-text-2)', outline: 'none', cursor: 'pointer',
 }
@@ -90,7 +90,7 @@ function countedHours(records) {
 function SelfieThumb({ url }) {
   const [failed, setFailed] = useState(false)
   const box = {
-    width: 42, height: 42, borderRadius: 11, flexShrink: 0, overflow: 'hidden',
+    width: 42, height: 42, borderRadius: 4, flexShrink: 0, overflow: 'hidden',
     background: 'var(--c-surface-2)', color: 'var(--c-text-3)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   }
@@ -119,7 +119,7 @@ function RecordRow({ record, last }) {
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 18px',
       borderBottom: last ? 'none' : '1px solid var(--c-border)',
-      background: rejected ? 'rgba(192,57,43,0.04)' : 'transparent',
+      background: rejected ? 'rgba(179,38,30,0.04)' : 'transparent',
     }}>
       <SelfieThumb url={record.selfie_url} />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -139,7 +139,7 @@ function RecordRow({ record, last }) {
               padding: '2px 8px', borderRadius: 999,
               fontSize: 10.5, fontWeight: 800, lineHeight: 1.5, whiteSpace: 'nowrap',
               color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)',
-              border: '1px solid rgba(192,57,43,0.22)',
+              border: '1px solid rgba(179,38,30,0.22)',
             }}>
               {REJECTION_COPY.badge}
             </span>
@@ -306,7 +306,7 @@ export default function MyAttendanceHistoryPage() {
         <Link
           to="/attendance"
           style={{
-            height: 38, padding: '0 14px', borderRadius: 10, flexShrink: 0,
+            height: 38, padding: '0 14px', borderRadius: 4, flexShrink: 0,
             background: '#fff', border: '1px solid var(--c-border)', color: 'var(--c-text-2)',
             fontSize: 12.5, fontWeight: 700, textDecoration: 'none',
             display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -320,7 +320,7 @@ export default function MyAttendanceHistoryPage() {
       {/* Card */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
 
         {/* Filter bar */}
@@ -357,7 +357,7 @@ export default function MyAttendanceHistoryPage() {
               onClick={() => updateQuery({ from: '', to: '', rejected: '' })}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 38, padding: '0 12px', borderRadius: 10,
+                height: 38, padding: '0 12px', borderRadius: 4,
                 background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                 fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
                 color: 'var(--c-text-2)', cursor: 'pointer',
@@ -383,7 +383,7 @@ export default function MyAttendanceHistoryPage() {
           <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[0, 1, 2, 3].map(i => (
               <div key={i} style={{
-                height: 42, borderRadius: 11, background: 'var(--c-surface-2)',
+                height: 42, borderRadius: 4, background: 'var(--c-surface-2)',
                 animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.08}s`,
               }} />
             ))}
@@ -451,7 +451,7 @@ export default function MyAttendanceHistoryPage() {
             <button
               onClick={() => setPage(Math.max(1, page - 1))} disabled={page <= 1}
               style={{
-                height: 34, padding: '0 14px', borderRadius: 9,
+                height: 34, padding: '0 14px', borderRadius: 4,
                 border: '1px solid var(--c-border)', background: '#fff',
                 fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700,
                 color: page <= 1 ? 'var(--c-text-3)' : 'var(--c-text-2)',
@@ -466,7 +466,7 @@ export default function MyAttendanceHistoryPage() {
             <button
               onClick={() => setPage(Math.min(lastPage, page + 1))} disabled={page >= lastPage}
               style={{
-                height: 34, padding: '0 14px', borderRadius: 9,
+                height: 34, padding: '0 14px', borderRadius: 4,
                 border: '1px solid var(--c-border)', background: '#fff',
                 fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700,
                 color: page >= lastPage ? 'var(--c-text-3)' : 'var(--c-text-2)',

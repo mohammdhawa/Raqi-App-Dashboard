@@ -19,7 +19,7 @@ function RowBtn({ children, danger, onClick, title }) {
       onClick={onClick} title={title}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        width: 32, height: 32, borderRadius: 9,
+        width: 32, height: 32, borderRadius: 4,
         border: `1px solid ${danger && hov ? '#F4C9C6' : 'var(--c-border)'}`,
         background: danger && hov ? 'var(--c-rejected-bg)' : '#fff',
         color: danger && hov ? 'var(--c-rejected)' : 'var(--c-text-2)',
@@ -59,7 +59,7 @@ function TextInput({ placeholder, value, onChange }) {
     <div style={{
       display: 'flex', alignItems: 'center', height: 42,
       background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-      borderRadius: 10, padding: '0 12px',
+      borderRadius: 4, padding: '0 12px',
     }}>
       <input
         placeholder={placeholder} value={value} onChange={onChange}
@@ -79,7 +79,7 @@ function SelectInput({ placeholder, value, onChange, options, disabled }) {
       value={value} onChange={onChange} disabled={disabled}
       style={{
         width: '100%', height: 42, border: '1.5px solid var(--c-border)',
-        borderRadius: 10, padding: '0 12px', background: 'var(--c-surface)',
+        borderRadius: 4, padding: '0 12px', background: 'var(--c-surface)',
         fontFamily: 'var(--font-sans)', fontSize: 13,
         color: value ? 'var(--c-text)' : 'var(--c-text-3)',
         outline: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
@@ -108,7 +108,7 @@ function StampPreviewModal({ section, onClose }) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 50,
-        background: 'rgba(20,32,50,0.48)',
+        background: 'rgba(14,22,19,0.48)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
       }}
@@ -116,7 +116,7 @@ function StampPreviewModal({ section, onClose }) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: 'min(380px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
+          width: 'min(380px, calc(100vw - 32px))', background: '#fff', borderRadius: 8,
           boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
         }}
       >
@@ -137,7 +137,7 @@ function StampPreviewModal({ section, onClose }) {
           <button
             onClick={onClose} title="إغلاق"
             style={{
-              width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+              width: 32, height: 32, borderRadius: 4, flexShrink: 0,
               border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
             }}
@@ -200,9 +200,9 @@ function StampUpload({ file, existingUrl, onChange }) {
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         style={{
-          height: 110, borderRadius: 12, cursor: 'pointer',
+          height: 110, borderRadius: 8, cursor: 'pointer',
           border: `2px dashed ${dragOver ? 'var(--c-accent)' : 'var(--c-border)'}`,
-          background: dragOver ? 'rgba(200,163,107,0.05)' : 'var(--c-surface)',
+          background: dragOver ? 'rgba(133,114,69,0.05)' : 'var(--c-surface)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           gap: 8, transition: 'border-color .15s, background .15s',
         }}
@@ -210,12 +210,12 @@ function StampUpload({ file, existingUrl, onChange }) {
         {preview ? (
           <img
             src={preview} alt=""
-            style={{ maxHeight: 76, maxWidth: '80%', objectFit: 'contain', borderRadius: 8 }}
+            style={{ maxHeight: 76, maxWidth: '80%', objectFit: 'contain', borderRadius: 4 }}
           />
         ) : (
           <>
             <div style={{
-              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+              width: 36, height: 36, borderRadius: 4, flexShrink: 0,
               background: 'var(--c-surface-2)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'var(--c-text-3)',
@@ -324,14 +324,14 @@ function SectionDrawer({ mode, section, departments, onClose, onSave }) {
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 39,
-          background: 'rgba(20,32,50,0.42)',
+          background: 'rgba(14,22,19,0.42)',
           backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         }}
       />
       <div style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
         width: 'min(520px, 100vw)', background: '#fff', zIndex: 40,
-        boxShadow: '-14px 0 40px rgba(20,32,50,0.22)',
+        boxShadow: '-14px 0 40px rgba(14,22,19,0.22)',
         display: 'flex', flexDirection: 'column',
         borderInlineEnd: '1px solid var(--c-border)',
       }}>
@@ -352,7 +352,7 @@ function SectionDrawer({ mode, section, departments, onClose, onSave }) {
             onClick={onClose}
             style={{
               position: 'absolute', insetInlineStart: 18, top: 18,
-              width: 34, height: 34, borderRadius: 10,
+              width: 34, height: 34, borderRadius: 4,
               background: 'var(--c-surface)', border: '1px solid var(--c-border)',
               color: 'var(--c-text-2)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -378,8 +378,8 @@ function SectionDrawer({ mode, section, departments, onClose, onSave }) {
           {departmentMoved && (
             <div style={{
               display: 'flex', gap: 10, alignItems: 'flex-start',
-              padding: '12px 14px', borderRadius: 12, marginTop: -4, marginBottom: 14,
-              background: 'var(--c-accent-tint)', fontSize: 12, lineHeight: 1.7, color: '#8A6A23',
+              padding: '12px 14px', borderRadius: 8, marginTop: -4, marginBottom: 14,
+              background: 'var(--c-accent-tint)', fontSize: 12, lineHeight: 1.7, color: '#6B5B35',
             }}>
               <AlertTriangle size={15} style={{ color: 'var(--c-accent)', flexShrink: 0, marginTop: 1 }} />
               <span>
@@ -458,20 +458,20 @@ function DeleteSectionModal({ section, onClose, onDeleted }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 50,
-      background: 'rgba(20,32,50,0.48)',
+      background: 'rgba(14,22,19,0.48)',
       backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 16,
     }}>
       <div style={{
-        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
+        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 8,
         boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
       }}>
         {phase === 'blocked' ? (
           <>
             <div style={{ padding: '28px 24px 20px', textAlign: 'center' }}>
               <div style={{
-                width: 60, height: 60, borderRadius: 16, margin: '0 auto 16px',
+                width: 60, height: 60, borderRadius: 8, margin: '0 auto 16px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'var(--c-accent-tint)', color: 'var(--c-accent)',
               }}>
@@ -513,7 +513,7 @@ function DeleteSectionModal({ section, onClose, onDeleted }) {
           <>
             <div style={{ padding: '28px 24px 20px', textAlign: 'center' }}>
               <div style={{
-                width: 60, height: 60, borderRadius: 16, margin: '0 auto 16px',
+                width: 60, height: 60, borderRadius: 8, margin: '0 auto 16px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
               }}>
@@ -554,7 +554,7 @@ function DeleteSectionModal({ section, onClose, onDeleted }) {
 // ── Skeleton row ──────────────────────────────────────────────────────────────
 
 function SkeletonRow() {
-  const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)', borderRadius: 7 }
+  const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)', borderRadius: 3 }
   return (
     <tr>
       {[130, 110, 60, 70, 80].map((w, i) => (
@@ -577,7 +577,7 @@ function SectionRow({ section, last, onEdit, onDelete, onPreview }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
@@ -599,7 +599,7 @@ function SectionRow({ section, last, onEdit, onDelete, onPreview }) {
         {section.department ? (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
-            padding: '4px 10px', borderRadius: 8,
+            padding: '4px 10px', borderRadius: 4,
             background: 'var(--c-surface)', border: '1px solid var(--c-border)',
             fontSize: 12, fontWeight: 600, color: 'var(--c-text-2)',
             whiteSpace: 'nowrap',
@@ -659,7 +659,7 @@ function PagBtn({ children, active, disabled, onClick }) {
     <button
       onClick={onClick} disabled={disabled}
       style={{
-        width: 32, height: 32, borderRadius: 8,
+        width: 32, height: 32, borderRadius: 4,
         cursor: disabled ? 'default' : 'pointer',
         border: active ? 'none' : '1px solid var(--c-border)',
         background: active ? 'var(--c-primary)' : '#fff',
@@ -801,10 +801,10 @@ export default function SectionsPage() {
             <div key={label} style={{
               display: 'inline-flex', alignItems: 'center', gap: 9,
               background: '#fff', border: '1px solid var(--c-border)',
-              borderRadius: 12, padding: '9px 14px',
+              borderRadius: 8, padding: '9px 14px',
             }}>
               <div style={{
-                width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                width: 30, height: 30, borderRadius: 4, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'var(--c-surface)', color: 'var(--c-primary)',
               }}>
@@ -824,7 +824,7 @@ export default function SectionsPage() {
       {/* ── Main card ────────────────────────────────────────────────────────── */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
 
         {/* Toolbar */}
@@ -851,7 +851,7 @@ export default function SectionsPage() {
               value={deptFilter}
               onChange={e => setDeptFilter(e.target.value)}
               style={{
-                height: 38, paddingRight: 10, paddingLeft: 32, borderRadius: 10,
+                height: 38, paddingRight: 10, paddingLeft: 32, borderRadius: 4,
                 background: '#fff', border: '1px solid var(--c-border)',
                 fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
                 color: deptFilter ? 'var(--c-text)' : 'var(--c-text-2)',
@@ -871,7 +871,7 @@ export default function SectionsPage() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 9,
             background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-            borderRadius: 10, padding: '0 12px', height: 38, minWidth: 200,
+            borderRadius: 4, padding: '0 12px', height: 38, minWidth: 200,
           }}>
             <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
             <input

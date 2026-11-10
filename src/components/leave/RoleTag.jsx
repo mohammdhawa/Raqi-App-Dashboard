@@ -11,8 +11,8 @@ export default function RoleTag({ role }) {
     <span style={{
       fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '2px 7px', flexShrink: 0,
       whiteSpace: 'nowrap',
-      background: role === 'chief' ? 'var(--c-accent-tint)' : 'rgba(34,65,103,0.09)',
-      color: role === 'chief' ? '#8A6A23' : 'var(--c-primary)',
+      background: role === 'chief' ? 'var(--c-accent-tint)' : 'rgba(29,84,70,0.09)',
+      color: role === 'chief' ? '#6B5B35' : 'var(--c-primary)',
     }}>
       {leaveRoleLabel(role)}
     </span>

@@ -84,20 +84,20 @@ const STATUS_CHOICES = [
 ]
 
 const selectStyle = {
-  height: 38, padding: '0 10px', borderRadius: 10, minWidth: 150,
+  height: 38, padding: '0 10px', borderRadius: 4, minWidth: 150,
   background: '#fff', border: '1px solid var(--c-border)',
   fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
   cursor: 'pointer', direction: 'rtl', outline: 'none',
 }
 
 const dateInputStyle = {
-  height: 38, borderRadius: 10, border: '1px solid var(--c-border)', background: '#fff',
+  height: 38, borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
   padding: '0 10px', fontSize: 12, fontFamily: 'var(--font-sans)',
   color: 'var(--c-text-2)', outline: 'none', cursor: 'pointer',
 }
 
 const presetBtnStyle = (active) => ({
-  height: 38, padding: '0 12px', borderRadius: 10, whiteSpace: 'nowrap',
+  height: 38, padding: '0 12px', borderRadius: 4, whiteSpace: 'nowrap',
   border: active ? 'none' : '1px solid var(--c-border)',
   background: active ? 'var(--c-primary)' : '#fff',
   color: active ? '#fff' : 'var(--c-text-2)',
@@ -111,7 +111,7 @@ function InitialsTag({ name, size = 34 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: 'linear-gradient(135deg, var(--c-primary), #1C3A5E)',
+      background: 'linear-gradient(135deg, var(--c-primary), #1D5446)',
       color: '#fff', fontWeight: 800, fontSize: size * 0.34,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
@@ -144,10 +144,10 @@ function SummaryTile({ icon: Icon, label, value, accent, hint }) {
   return (
     <div style={{
       flex: 1, minWidth: 160, display: 'flex', alignItems: 'center', gap: 12,
-      padding: '13px 15px', borderRadius: 12, background: '#fff', border: '1px solid var(--c-border)',
+      padding: '13px 15px', borderRadius: 8, background: '#fff', border: '1px solid var(--c-border)',
     }}>
       <div style={{
-        width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+        width: 40, height: 40, borderRadius: 4, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center', background: accent.bg, color: accent.color,
       }}>
         <Icon size={19} />
@@ -174,7 +174,7 @@ function TypeBreakdown({ types, totalDays }) {
   return (
     <div style={{
       display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18,
-      padding: '12px 14px', background: '#fff', border: '1px solid var(--c-border)', borderRadius: 12,
+      padding: '12px 14px', background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8,
     }}>
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
         <Tags size={13} style={{ color: 'var(--c-text-3)' }} />
@@ -232,7 +232,7 @@ function PagBtn({ children, active, disabled, onClick }) {
     <button
       onClick={onClick} disabled={disabled}
       style={{
-        width: 32, height: 32, borderRadius: 8,
+        width: 32, height: 32, borderRadius: 4,
         cursor: disabled ? 'default' : 'pointer',
         border: active ? 'none' : '1px solid var(--c-border)',
         background: active ? 'var(--c-primary)' : '#fff',
@@ -253,7 +253,7 @@ function SkeletonRow({ count }) {
     <tr style={{ borderBottom: '1px solid var(--c-border)' }}>
       {Array.from({ length: count }, (_, i) => (
         <td key={i} style={{ padding: '14px 16px' }}>
-          <div style={{ height: 12, borderRadius: 6, background: 'var(--c-surface-2)' }} />
+          <div style={{ height: 12, borderRadius: 3, background: 'var(--c-surface-2)' }} />
         </td>
       ))}
     </tr>
@@ -270,7 +270,7 @@ function LeaveRow({ row, last }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.025)' : 'transparent', transition: 'background .1s',
+        background: hov ? 'rgba(29,84,70,0.025)' : 'transparent', transition: 'background .1s',
       }}
     >
       <td style={{ padding: '12px 16px' }}>
@@ -551,7 +551,7 @@ export default function LeaveRegisterPage() {
             onClick={clearFilters}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              height: 38, padding: '0 12px', borderRadius: 10,
+              height: 38, padding: '0 12px', borderRadius: 4,
               background: 'var(--c-surface)', border: '1px solid var(--c-border)',
               fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
               color: 'var(--c-text-2)', cursor: 'pointer',
@@ -615,7 +615,7 @@ export default function LeaveRegisterPage() {
       {!rangeError && <TypeBreakdown types={summary.by_type} totalDays={summary.days ?? 0} />}
 
       {/* Table */}
-      <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
+      <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
         {rangeError ? (
           <div style={{ padding: '56px 24px', textAlign: 'center' }}>
             <CalendarRange size={36} style={{ color: 'var(--c-text-3)', marginBottom: 14 }} />

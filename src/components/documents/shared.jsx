@@ -83,7 +83,7 @@ export function StatusBadge({ status }) {
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '5px 11px', borderRadius: 999,
       fontSize: 12, fontWeight: 700, color: meta.color,
-      background: meta.bg, border: `1px solid ${meta.color}22`,
+      background: meta.bg, border: `1px solid color-mix(in srgb, ${meta.color} 13%, transparent)`,
       whiteSpace: 'nowrap',
     }}>
       <Icon size={12} />
@@ -150,9 +150,9 @@ function Pill({ icon: Icon, label, color, bg, emphasis }) {
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '5px 11px', borderRadius: 999,
       fontSize: 12, fontWeight: 700, color,
-      background: bg, border: `1px solid ${color}22`,
+      background: bg, border: `1px solid color-mix(in srgb, ${color} 13%, transparent)`,
       whiteSpace: 'nowrap',
-      ...(emphasis ? { boxShadow: `0 0 0 3px ${color}1a` } : {}),
+      ...(emphasis ? { boxShadow: `0 0 0 3px color-mix(in srgb, ${color} 10%, transparent)` } : {}),
     }}>
       {Icon && <Icon size={12} />}
       {label}
@@ -188,7 +188,7 @@ export const chevronStyle = {
 
 export function selectStyle(value) {
   return {
-    height: 38, paddingRight: 10, paddingLeft: 32, borderRadius: 10,
+    height: 38, paddingRight: 10, paddingLeft: 32, borderRadius: 4,
     background: '#fff', border: '1px solid var(--c-border)',
     fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
     color: value ? 'var(--c-text)' : 'var(--c-text-2)',
@@ -206,7 +206,7 @@ export function RowBtn({ children, onClick, title, danger, disabled }) {
       onClick={onClick} title={title} disabled={disabled}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        width: 32, height: 32, borderRadius: 9,
+        width: 32, height: 32, borderRadius: 4,
         border: `1px solid ${danger ? (hov ? '#F4C9C6' : 'var(--c-border)') : (hov ? 'var(--c-primary)' : 'var(--c-border)')}`,
         background: danger ? (hov ? 'var(--c-rejected-bg)' : '#fff') : (hov ? 'var(--c-primary)' : '#fff'),
         color: danger ? (hov ? 'var(--c-rejected)' : 'var(--c-text-2)') : (hov ? '#fff' : 'var(--c-text-2)'),
@@ -227,7 +227,7 @@ export function PagBtn({ children, active, disabled, onClick }) {
     <button
       onClick={onClick} disabled={disabled}
       style={{
-        width: 32, height: 32, borderRadius: 8,
+        width: 32, height: 32, borderRadius: 4,
         cursor: disabled ? 'default' : 'pointer',
         border: active ? 'none' : '1px solid var(--c-border)',
         background: active ? 'var(--c-primary)' : '#fff',
@@ -246,7 +246,7 @@ export function PagBtn({ children, active, disabled, onClick }) {
 // ── Skeleton table row ────────────────────────────────────────────────────────
 
 export function SkeletonRow({ widths }) {
-  const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)', borderRadius: 7 }
+  const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)', borderRadius: 3 }
   return (
     <tr>
       {widths.map(([w, h], i) => (

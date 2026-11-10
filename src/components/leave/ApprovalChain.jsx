@@ -27,8 +27,8 @@ function Step({ step, current, compact }) {
         padding: compact ? '2px 7px 2px 3px' : '4px 9px 4px 4px',
         borderRadius: 999, maxWidth: '100%',
         background: meta.bg, color: meta.color,
-        border: `1px solid ${meta.color}22`,
-        ...(current ? { boxShadow: `0 0 0 2px ${meta.color}33` } : {}),
+        border: `1px solid color-mix(in srgb, ${meta.color} 13%, transparent)`,
+        ...(current ? { boxShadow: `0 0 0 2px color-mix(in srgb, ${meta.color} 20%, transparent)` } : {}),
       }}
     >
       <span style={{

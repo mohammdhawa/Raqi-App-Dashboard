@@ -26,7 +26,7 @@ const SELF_APPROVAL_MESSAGE = 'لا يمكنك اعتماد إجازتك بنف�
 const inputStyle = {
   width: '100%', boxSizing: 'border-box', height: 42,
   background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-  borderRadius: 10, padding: '0 12px', outline: 'none',
+  borderRadius: 4, padding: '0 12px', outline: 'none',
   fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
 }
 
@@ -175,7 +175,7 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
     <div
       onClick={() => !submitting && onClose()}
       style={{
-        position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(20,32,50,0.5)',
+        position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(14,22,19,0.5)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
@@ -185,7 +185,7 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
         onClick={e => e.stopPropagation()}
         style={{
           width: 'min(520px, 100%)', maxHeight: 'calc(100vh - 40px)', background: '#fff',
-          borderRadius: 16, boxShadow: 'var(--sh-card-lg)', display: 'flex', flexDirection: 'column',
+          borderRadius: 8, boxShadow: 'var(--sh-card-lg)', display: 'flex', flexDirection: 'column',
         }}
       >
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 9 }}>
@@ -202,7 +202,7 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
 
           {formError && (
             <div style={{
-              display: 'flex', gap: 9, padding: '11px 13px', borderRadius: 11, marginBottom: 16,
+              display: 'flex', gap: 9, padding: '11px 13px', borderRadius: 4, marginBottom: 16,
               background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
             }}>
               <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
@@ -243,7 +243,7 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
                computed server-side, so it isn't derivable here. */
             <div style={{
               display: 'flex', alignItems: 'center', gap: 7, padding: '9px 12px',
-              borderRadius: 10, marginBottom: 16,
+              borderRadius: 4, marginBottom: 16,
               background: 'var(--c-primary-light)', color: 'var(--c-primary)',
             }}>
               <span style={{ fontSize: 12.5, fontWeight: 700 }}>مدة الإجازة: {span} يوم تقويمي</span>
@@ -313,7 +313,7 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
           <button
             onClick={onClose} disabled={submitting}
             style={{
-              height: 40, padding: '0 16px', borderRadius: 10,
+              height: 40, padding: '0 16px', borderRadius: 4,
               background: 'transparent', border: '1px solid var(--c-border)',
               fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
               color: 'var(--c-text-2)', cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,
@@ -324,7 +324,7 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
           <button
             onClick={submit} disabled={submitting}
             style={{
-              height: 40, padding: '0 18px', borderRadius: 10, border: 'none',
+              height: 40, padding: '0 18px', borderRadius: 4, border: 'none',
               background: 'var(--c-primary)', color: '#fff',
               fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
               display: 'inline-flex', alignItems: 'center', gap: 7,

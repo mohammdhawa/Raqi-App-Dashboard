@@ -59,7 +59,7 @@ function TextInput({ placeholder, value, onChange, mono, disabled }) {
     <div style={{
       display: 'flex', alignItems: 'center', height: 42,
       background: disabled ? 'var(--c-surface-2)' : 'var(--c-surface)',
-      border: '1.5px solid var(--c-border)', borderRadius: 10, padding: '0 12px',
+      border: '1.5px solid var(--c-border)', borderRadius: 4, padding: '0 12px',
       opacity: disabled ? 0.7 : 1,
     }}>
       <input
@@ -78,7 +78,7 @@ function TextareaInput({ placeholder, value, onChange, rows = 3 }) {
   return (
     <div style={{
       background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-      borderRadius: 10, padding: '10px 12px',
+      borderRadius: 4, padding: '10px 12px',
     }}>
       <textarea
         placeholder={placeholder} value={value} onChange={onChange} rows={rows}
@@ -122,7 +122,7 @@ function RowBtn({ children, danger, onClick, title }) {
       onClick={onClick} title={title}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        width: 32, height: 32, borderRadius: 9,
+        width: 32, height: 32, borderRadius: 4,
         border: `1px solid ${danger && hov ? '#F4C9C6' : 'var(--c-border)'}`,
         background: danger && hov ? 'var(--c-rejected-bg)' : '#fff',
         color: danger && hov ? 'var(--c-rejected)' : 'var(--c-text-2)',
@@ -166,14 +166,14 @@ function SortableField({ field, onEdit, onDelete }) {
         style={{
           width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'grab', border: 'none', background: 'transparent',
-          color: 'var(--c-text-3)', borderRadius: 6, flexShrink: 0, padding: 0,
+          color: 'var(--c-text-3)', borderRadius: 3, flexShrink: 0, padding: 0,
         }}
       >
         <GripVertical size={15} />
       </button>
 
       <div style={{
-        width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+        width: 38, height: 38, borderRadius: 4, flexShrink: 0,
         background: 'var(--c-accent-tint)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: 'var(--c-accent)',
@@ -192,13 +192,13 @@ function SortableField({ field, onEdit, onDelete }) {
 
       <span style={{
         fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
-        background: 'var(--c-surface)', borderRadius: 7, padding: '3px 9px', whiteSpace: 'nowrap',
+        background: 'var(--c-surface)', borderRadius: 3, padding: '3px 9px', whiteSpace: 'nowrap',
       }}>
         {ft?.label ?? field.type}
       </span>
 
       <span style={{
-        fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 7, whiteSpace: 'nowrap',
+        fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 3, whiteSpace: 'nowrap',
         color: field.required ? 'var(--c-rejected)' : 'var(--c-text-3)',
         background: field.required ? 'var(--c-rejected-bg)' : 'var(--c-surface)',
       }}>
@@ -248,7 +248,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
   if (step === 'pick') {
     return (
       <div style={{
-        border: '1.5px dashed var(--c-border)', borderRadius: 12,
+        border: '1.5px dashed var(--c-border)', borderRadius: 8,
         background: 'var(--c-surface)', padding: 16,
       }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 12 }}>
@@ -263,7 +263,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
                 onClick={() => { setType(ft); setStep('form') }}
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                  padding: '12px 8px', borderRadius: 10,
+                  padding: '12px 8px', borderRadius: 4,
                   border: '1.5px solid var(--c-border)', background: '#fff',
                   cursor: 'pointer', transition: 'all .14s', fontFamily: 'var(--font-sans)',
                 }}
@@ -277,7 +277,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
                 }}
               >
                 <div style={{
-                  width: 32, height: 32, borderRadius: 8,
+                  width: 32, height: 32, borderRadius: 4,
                   background: 'var(--c-accent-tint)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: 'var(--c-accent)',
@@ -308,13 +308,13 @@ function FieldPanel({ initial, onSave, onCancel }) {
   const Icon = selectedType?.icon ?? Type
   return (
     <div style={{
-      border: '1.5px solid var(--c-accent)', borderRadius: 12,
+      border: '1.5px solid var(--c-accent)', borderRadius: 8,
       background: 'var(--c-accent-tint)', padding: 16,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         <div style={{
-          width: 28, height: 28, borderRadius: 7,
-          background: 'rgba(200,163,107,0.2)',
+          width: 28, height: 28, borderRadius: 3,
+          background: 'rgba(133,114,69,0.2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--c-accent)',
         }}>
@@ -364,7 +364,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
               <div style={{
                 flex: 1, display: 'flex', alignItems: 'center', height: 38,
                 background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-                borderRadius: 10, padding: '0 10px',
+                borderRadius: 4, padding: '0 10px',
               }}>
                 <input
                   placeholder={`خيار ${i + 1}`}
@@ -383,7 +383,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
                 <button
                   onClick={() => setOptions(options.filter((_, j) => j !== i))}
                   style={{
-                    width: 38, height: 38, borderRadius: 9, flexShrink: 0,
+                    width: 38, height: 38, borderRadius: 4, flexShrink: 0,
                     border: '1px solid var(--c-border)', background: '#fff',
                     color: 'var(--c-text-3)', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -397,7 +397,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
           <button
             onClick={() => setOptions([...options, ''])}
             style={{
-              width: '100%', height: 34, borderRadius: 8,
+              width: '100%', height: 34, borderRadius: 4,
               border: '1.5px dashed var(--c-border)', background: 'transparent',
               cursor: 'pointer', fontFamily: 'var(--font-sans)',
               fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)',
@@ -417,7 +417,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
               <div style={{
                 flex: 1, display: 'flex', alignItems: 'center', height: 38,
                 background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-                borderRadius: 10, padding: '0 10px',
+                borderRadius: 4, padding: '0 10px',
               }}>
                 <input
                   placeholder={`اسم العمود ${i + 1}`}
@@ -438,7 +438,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
                 <button
                   onClick={() => setColumns(columns.filter((_, j) => j !== i))}
                   style={{
-                    width: 38, height: 38, borderRadius: 9, flexShrink: 0,
+                    width: 38, height: 38, borderRadius: 4, flexShrink: 0,
                     border: '1px solid var(--c-border)', background: '#fff',
                     color: 'var(--c-text-3)', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -452,7 +452,7 @@ function FieldPanel({ initial, onSave, onCancel }) {
           <button
             onClick={() => setColumns([...columns, { key: '', label: '' }])}
             style={{
-              width: '100%', height: 34, borderRadius: 8,
+              width: '100%', height: 34, borderRadius: 4,
               border: '1.5px dashed var(--c-border)', background: 'transparent',
               cursor: 'pointer', fontFamily: 'var(--font-sans)',
               fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)',
@@ -490,11 +490,11 @@ function EditFieldModal({ field, onSave, onClose }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 50,
-      background: 'rgba(20,32,50,0.42)', backdropFilter: 'blur(2px)',
+      background: 'rgba(14,22,19,0.42)', backdropFilter: 'blur(2px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div style={{
-        width: 'min(460px, calc(100vw - 32px))', background: '#fff', borderRadius: 16,
+        width: 'min(460px, calc(100vw - 32px))', background: '#fff', borderRadius: 8,
         boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
       }}>
         <div style={{
@@ -530,7 +530,7 @@ function LivePreview({ name, fields }) {
   return (
     <div style={{
       background: '#fff', border: '1px solid var(--c-border)',
-      borderRadius: 14, overflow: 'hidden',
+      borderRadius: 8, overflow: 'hidden',
     }}>
       <div style={{
         padding: '14px 16px', borderBottom: '1px solid var(--c-border)',
@@ -543,8 +543,8 @@ function LivePreview({ name, fields }) {
       <div style={{ padding: 20 }}>
         <div style={{
           background: '#fff', border: '1px solid var(--c-border)',
-          borderRadius: 10, padding: '18px 16px',
-          boxShadow: '0 1px 4px rgba(27,42,65,0.05)',
+          borderRadius: 4, padding: '18px 16px',
+          boxShadow: '0 1px 4px rgba(14,22,19,0.05)',
         }}>
           {/* Doc header */}
           <div style={{ marginBottom: 18 }}>
@@ -577,7 +577,7 @@ function LivePreview({ name, fields }) {
                 {field.type === 'textarea' && (
                   <div style={{
                     height: 72, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-                    borderRadius: 8, padding: '8px 10px',
+                    borderRadius: 4, padding: '8px 10px',
                     fontSize: 11.5, color: 'var(--c-text-3)', direction: 'rtl',
                   }}>
                     فقرة نصية...
@@ -585,7 +585,7 @@ function LivePreview({ name, fields }) {
                 )}
 
                 {field.type === 'table' && (
-                  <div style={{ border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden' }}>
+                  <div style={{ border: '1px solid var(--c-border)', borderRadius: 4, overflow: 'hidden' }}>
                     {(field.columns?.length > 0) ? (
                       <>
                         <div style={{
@@ -615,7 +615,7 @@ function LivePreview({ name, fields }) {
                 {field.type === 'select' && (
                   <div style={{
                     height: 36, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-                    borderRadius: 8, padding: '0 10px',
+                    borderRadius: 4, padding: '0 10px',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
                     <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>
@@ -628,7 +628,7 @@ function LivePreview({ name, fields }) {
                 {field.type === 'date' && (
                   <div style={{
                     height: 36, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-                    borderRadius: 8, padding: '0 10px',
+                    borderRadius: 4, padding: '0 10px',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
                     <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>يوم / شهر / سنة</span>
@@ -639,7 +639,7 @@ function LivePreview({ name, fields }) {
                 {(field.type === 'text' || field.type === 'number') && (
                   <div style={{
                     height: 36, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-                    borderRadius: 8, padding: '0 10px', display: 'flex', alignItems: 'center',
+                    borderRadius: 4, padding: '0 10px', display: 'flex', alignItems: 'center',
                   }}>
                     <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>
                       {field.type === 'number' ? '0.00' : 'سطر نصي قصير'}
@@ -660,37 +660,37 @@ function LivePreview({ name, fields }) {
 function BuilderSkeleton() {
   const p = {
     animation: 'pulse 1.5s ease-in-out infinite',
-    background: 'var(--c-surface-2)', borderRadius: 8,
+    background: 'var(--c-surface-2)', borderRadius: 4,
   }
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px]" style={{ gap: 24, alignItems: 'start' }}>
       <div>
-        <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 14, padding: 24, marginBottom: 20 }}>
+        <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, padding: 24, marginBottom: 20 }}>
           <div style={{ ...p, height: 16, width: 140, marginBottom: 20 }} />
           {[1, 2, 3, 4].map(i => (
             <div key={i} style={{ ...p, height: 42, marginBottom: 14, animationDelay: `${i * 0.08}s` }} />
           ))}
         </div>
-        <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden' }}>
           <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border)' }}>
             <div style={{ ...p, height: 16, width: 100 }} />
           </div>
           {[0, 1, 2].map(i => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--c-border)' }}>
-              <div style={{ ...p, width: 24, height: 24, borderRadius: 6 }} />
-              <div style={{ ...p, width: 38, height: 38, borderRadius: 10 }} />
+              <div style={{ ...p, width: 24, height: 24, borderRadius: 3 }} />
+              <div style={{ ...p, width: 38, height: 38, borderRadius: 4 }} />
               <div style={{ flex: 1 }}>
                 <div style={{ ...p, height: 13, width: 120, marginBottom: 6 }} />
                 <div style={{ ...p, height: 10, width: 80 }} />
               </div>
-              <div style={{ ...p, height: 26, width: 48, borderRadius: 7 }} />
-              <div style={{ ...p, height: 26, width: 56, borderRadius: 7 }} />
+              <div style={{ ...p, height: 26, width: 48, borderRadius: 3 }} />
+              <div style={{ ...p, height: 26, width: 56, borderRadius: 3 }} />
             </div>
           ))}
         </div>
       </div>
       <div style={{ position: 'sticky', top: 84 }}>
-        <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 14, padding: 24 }}>
+        <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, padding: 24 }}>
           <div style={{ ...p, height: 16, width: 120, marginBottom: 20 }} />
           {[1, 2, 3, 4].map(i => (
             <div key={i} style={{ ...p, height: 36, marginBottom: 12, animationDelay: `${i * 0.08}s` }} />
@@ -850,7 +850,7 @@ export default function TemplateBuilderPage() {
             <span style={{
               fontFamily: "'Courier New', monospace",
               fontSize: 12, fontWeight: 700, color: 'var(--c-primary)',
-              background: 'var(--c-primary-light)', borderRadius: 8, padding: '3px 10px',
+              background: 'var(--c-primary-light)', borderRadius: 4, padding: '3px 10px',
             }}>
               v{template.version}
             </span>
@@ -884,7 +884,7 @@ export default function TemplateBuilderPage() {
           display: 'flex', gap: 9, alignItems: 'flex-start',
           padding: '10px 16px', marginBottom: 16,
           background: 'var(--c-rejected-bg)', border: '1px solid #F4C9C6',
-          borderRadius: 10, fontSize: 12.5, color: 'var(--c-rejected)', lineHeight: 1.6,
+          borderRadius: 4, fontSize: 12.5, color: 'var(--c-rejected)', lineHeight: 1.6,
         }}>
           <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
           {saveError}
@@ -911,7 +911,7 @@ export default function TemplateBuilderPage() {
             {/* Settings card */}
             <div style={{
               background: '#fff', border: '1px solid var(--c-border)',
-              borderRadius: 14, overflow: 'hidden',
+              borderRadius: 8, overflow: 'hidden',
               boxShadow: 'var(--sh-card)', marginBottom: 20,
             }}>
               <div style={{
@@ -987,8 +987,8 @@ export default function TemplateBuilderPage() {
                     display: 'flex', gap: 9, alignItems: 'flex-start', marginTop: 16,
                     padding: '10px 12px',
                     background: 'var(--c-accent-tint)',
-                    border: '1px solid rgba(200,163,107,0.3)',
-                    borderRadius: 10, fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.65,
+                    border: '1px solid rgba(133,114,69,0.3)',
+                    borderRadius: 4, fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.65,
                   }}>
                     <Info size={14} style={{ flexShrink: 0, marginTop: 1, color: 'var(--c-accent)' }} />
                     أي تعديل على الحقول يرفع رقم النسخة تلقائياً إلى v{nextVersion} مع الحفاظ على المستندات المرتبطة بالنسخ السابقة.
@@ -1000,7 +1000,7 @@ export default function TemplateBuilderPage() {
             {/* Fields card */}
             <div style={{
               background: '#fff', border: '1px solid var(--c-border)',
-              borderRadius: 14, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+              borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
             }}>
               <div style={{
                 padding: '14px 20px', borderBottom: '1px solid var(--c-border)',
@@ -1055,7 +1055,7 @@ export default function TemplateBuilderPage() {
                   <button
                     onClick={() => setShowAdd(true)}
                     style={{
-                      width: '100%', height: 44, borderRadius: 10,
+                      width: '100%', height: 44, borderRadius: 4,
                       border: '1.5px dashed var(--c-border)', background: 'transparent',
                       cursor: 'pointer', fontFamily: 'var(--font-sans)',
                       fontSize: 13, fontWeight: 700, color: 'var(--c-text-2)',

@@ -20,7 +20,7 @@ export default function AdminLayout() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(20,32,50,0.45)',
+            background: 'rgba(14,22,19,0.45)',
             backdropFilter: 'blur(2px)',
             zIndex: 25,
           }}

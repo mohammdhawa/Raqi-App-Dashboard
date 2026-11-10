@@ -40,7 +40,7 @@ const ACTION_LABELS = {
 const IconBtn = ({ children, ...props }) => (
   <button
     style={{
-      width: 34, height: 34, borderRadius: 9,
+      width: 34, height: 34, borderRadius: 4,
       border: '1px solid var(--c-border)',
       background: '#fff', color: 'var(--c-text-2)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -235,7 +235,7 @@ function NotificationsPanel() {
       {unreadCount > 0 && (
         <span style={{
           position: 'absolute', top: -5, insetInlineEnd: -5,
-          minWidth: 16, height: 16, padding: '0 4px', borderRadius: 8,
+          minWidth: 16, height: 16, padding: '0 4px', borderRadius: 4,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 9.5, fontWeight: 800, lineHeight: 1, color: '#fff',
           background: 'var(--c-rejected)', border: '1.5px solid #fff',
@@ -249,7 +249,7 @@ function NotificationsPanel() {
           position: 'absolute', top: 'calc(100% + 10px)', insetInlineEnd: 0, zIndex: 30,
           width: 360, maxWidth: '90vw', maxHeight: 440,
           display: 'flex', flexDirection: 'column',
-          background: '#fff', borderRadius: 14,
+          background: '#fff', borderRadius: 8,
           border: '1px solid var(--c-border)', boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
         }}>
           <div style={{
@@ -311,7 +311,7 @@ function NotificationsPanel() {
                   }} />
                   {Icon && (
                     <span style={{
-                      flexShrink: 0, width: 26, height: 26, borderRadius: 8,
+                      flexShrink: 0, width: 26, height: 26, borderRadius: 4,
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       background: meta.bg, color: meta.color,
                     }}>

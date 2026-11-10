@@ -17,12 +17,12 @@ const PERMISSION_KEYS = ['role', 'attendance_check', 'can_view_attendance', 'dep
 // ── Primitive components ──────────────────────────────────────────────────────
 
 const AVATAR_PALETTE = [
-  { bg: '#224167', fg: '#fff' },
-  { bg: '#1E8F5E', fg: '#fff' },
+  { bg: '#1D5446', fg: '#fff' },
+  { bg: '#857245', fg: '#fff' },
   { bg: '#9B59B6', fg: '#fff' },
   { bg: '#0077B6', fg: '#fff' },
   { bg: '#E67E22', fg: '#fff' },
-  { bg: '#C0392B', fg: '#fff' },
+  { bg: '#B3261E', fg: '#fff' },
 ]
 
 function Avatar({ name, size = 40 }) {
@@ -41,8 +41,8 @@ function Avatar({ name, size = 40 }) {
 
 const ROLE_META = {
   admin:    { label: 'مدير النظام',   bg: 'var(--c-primary)',     color: '#fff',             border: 'none' },
-  chief:    { label: 'الرئيس الأعلى', bg: 'var(--c-accent-tint)', color: '#8A6A23',          border: '1px solid var(--c-accent-soft)' },
-  manager:  { label: 'مدير',          bg: 'rgba(34,65,103,0.09)', color: 'var(--c-primary)', border: '1px solid rgba(34,65,103,0.18)' },
+  chief:    { label: 'الرئيس الأعلى', bg: 'var(--c-accent-tint)', color: '#6B5B35',          border: '1px solid var(--c-accent-soft)' },
+  manager:  { label: 'مدير',          bg: 'rgba(29,84,70,0.09)', color: 'var(--c-primary)', border: '1px solid rgba(29,84,70,0.18)' },
   employee: { label: 'موظف',          bg: 'var(--c-surface-2)',   color: 'var(--c-text-2)',  border: 'none' },
 }
 
@@ -86,7 +86,7 @@ function RowBtn({ children, danger, onClick, title, disabled }) {
       onClick={onClick} title={title} disabled={disabled}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        width: 32, height: 32, borderRadius: 9,
+        width: 32, height: 32, borderRadius: 4,
         border: `1px solid ${active ? '#F4C9C6' : 'var(--c-border)'}`,
         background: active ? 'var(--c-rejected-bg)' : '#fff',
         color: active ? 'var(--c-rejected)' : 'var(--c-text-2)',
@@ -116,7 +116,7 @@ function Toggle({ on, onChange }) {
         position: 'absolute', top: 3,
         insetInlineEnd: on ? 21 : 3,
         width: 18, height: 18, borderRadius: '50%', background: '#fff',
-        boxShadow: '0 1px 3px rgba(27,42,65,0.25)',
+        boxShadow: '0 1px 3px rgba(14,22,19,0.25)',
         transition: 'inset-inline-end .16s ease',
         display: 'block',
       }} />
@@ -155,7 +155,7 @@ function TextInput({ icon: Icon, type = 'text', placeholder, value, onChange, su
     <div style={{
       display: 'flex', alignItems: 'center', gap: 9, height: 42,
       background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-      borderRadius: 10, padding: '0 12px',
+      borderRadius: 4, padding: '0 12px',
     }}>
       {Icon && <Icon size={15} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />}
       <input
@@ -177,7 +177,7 @@ function SelectInput({ placeholder, value, onChange, options, error }) {
       value={value} onChange={onChange}
       style={{
         width: '100%', height: 42, border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
-        borderRadius: 10, padding: '0 12px', background: 'var(--c-surface)',
+        borderRadius: 4, padding: '0 12px', background: 'var(--c-surface)',
         fontFamily: 'var(--font-sans)', fontSize: 13,
         color: value ? 'var(--c-text)' : 'var(--c-text-3)',
         outline: 'none', cursor: 'pointer', direction: 'rtl',
@@ -208,17 +208,17 @@ function RoleCard({ role, selected, onSelect }) {
       onClick={() => onSelect(key)}
       style={{
         display: 'flex', alignItems: 'flex-start', gap: 10, padding: 12,
-        borderRadius: 12, cursor: 'pointer',
-        background: accentChief ? 'rgba(200,163,107,0.03)' : active ? 'rgba(34,65,103,0.03)' : '#fff',
+        borderRadius: 8, cursor: 'pointer',
+        background: accentChief ? 'rgba(133,114,69,0.03)' : active ? 'rgba(29,84,70,0.03)' : '#fff',
         border: `1.5px solid ${accentChief ? 'var(--c-accent)' : active ? 'var(--c-primary)' : 'var(--c-border)'}`,
-        boxShadow: accentChief ? '0 0 0 3px var(--c-accent-tint)' : active ? '0 0 0 3px rgba(34,65,103,0.07)' : 'none',
+        boxShadow: accentChief ? '0 0 0 3px var(--c-accent-tint)' : active ? '0 0 0 3px rgba(29,84,70,0.07)' : 'none',
         transition: 'all .14s',
       }}
     >
       <div style={{
-        width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+        width: 32, height: 32, borderRadius: 4, flexShrink: 0,
         background: accentChief ? 'var(--c-accent)' : 'var(--c-surface)',
-        color: accentChief ? '#2A2010' : 'var(--c-primary)',
+        color: accentChief ? '#FFFFFF' : 'var(--c-primary)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <Icon size={15} />
@@ -232,7 +232,7 @@ function RoleCard({ role, selected, onSelect }) {
         border: `1.5px solid ${accentChief ? 'var(--c-accent)' : active ? 'var(--c-primary)' : 'var(--c-border-strong)'}`,
         background: accentChief ? 'var(--c-accent)' : active ? 'var(--c-primary)' : 'transparent',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: accentChief ? '#2A2010' : '#fff',
+        color: accentChief ? '#FFFFFF' : '#fff',
       }}>
         {active && (
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -356,7 +356,7 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 39,
-          background: 'rgba(20,32,50,0.42)',
+          background: 'rgba(14,22,19,0.42)',
           backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         }}
       />
@@ -365,7 +365,7 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
       <div style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
         width: 'min(520px, 100vw)', background: '#fff', zIndex: 40,
-        boxShadow: '-14px 0 40px rgba(20,32,50,0.22)',
+        boxShadow: '-14px 0 40px rgba(14,22,19,0.22)',
         display: 'flex', flexDirection: 'column',
         borderInlineEnd: '1px solid var(--c-border)',
       }}>
@@ -387,7 +387,7 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
             onClick={onClose}
             style={{
               position: 'absolute', insetInlineStart: 18, top: 18,
-              width: 34, height: 34, borderRadius: 10,
+              width: 34, height: 34, borderRadius: 4,
               background: 'var(--c-surface)', border: '1px solid var(--c-border)',
               color: 'var(--c-text-2)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -404,7 +404,7 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
           {isEdit && user && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 14, padding: 14,
-              borderRadius: 14, marginBottom: 18,
+              borderRadius: 8, marginBottom: 18,
               background: 'linear-gradient(120deg, var(--c-surface) 0%, #fff 80%)',
               border: '1px solid var(--c-border)',
             }}>
@@ -467,8 +467,8 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
           {chiefTaken && (
             <div style={{
               display: 'flex', gap: 10, alignItems: 'flex-start',
-              padding: '12px 14px', borderRadius: 12, marginTop: 10,
-              background: 'var(--c-accent-tint)', fontSize: 12, lineHeight: 1.6, color: '#8A6A23',
+              padding: '12px 14px', borderRadius: 8, marginTop: 10,
+              background: 'var(--c-accent-tint)', fontSize: 12, lineHeight: 1.6, color: '#6B5B35',
             }}>
               <AlertCircle size={15} style={{ color: 'var(--c-accent)', flexShrink: 0, marginTop: 1 }} />
               <span>تم تعيين رئيس أعلى بالفعل. لا يمكن أن يكون هناك أكثر من رئيس أعلى واحد في النظام.</span>
@@ -510,7 +510,7 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
           <DrawerSection icon={null} label="تسجيل الحضور" />
           <div style={{
             display: 'flex', alignItems: 'center', gap: 14, padding: '13px 15px',
-            borderRadius: 12, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+            borderRadius: 8, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
           }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>تسجيل الحضور</div>
@@ -523,7 +523,7 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
 
           <div style={{
             display: 'flex', alignItems: 'center', gap: 14, padding: '13px 15px',
-            borderRadius: 12, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+            borderRadius: 8, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
             marginTop: 10,
           }}>
             <div style={{ flex: 1 }}>
@@ -595,17 +595,17 @@ function DeleteModal({ user, onClose, onConfirm }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 50,
-      background: 'rgba(20,32,50,0.48)',
+      background: 'rgba(14,22,19,0.48)',
       backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div style={{
-        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
+        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 8,
         boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
       }}>
         <div style={{ padding: '26px 26px 22px', textAlign: 'center' }}>
           <div style={{
-            width: 60, height: 60, borderRadius: 16, margin: '0 auto 16px',
+            width: 60, height: 60, borderRadius: 8, margin: '0 auto 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
           }}>
@@ -619,7 +619,7 @@ function DeleteModal({ user, onClose, onConfirm }) {
           </p>
           {error && (
             <div style={{
-              marginTop: 12, padding: '9px 14px', borderRadius: 10,
+              marginTop: 12, padding: '9px 14px', borderRadius: 4,
               background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
               fontSize: 12.5, display: 'inline-block',
             }}>
@@ -650,11 +650,11 @@ function SkeletonRow() {
   return (
     <tr>
       <td style={{ padding: '14px 16px', width: 40 }}>
-        <div style={{ width: 16, height: 16, borderRadius: 4, background: 'var(--c-surface-2)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ width: 16, height: 16, borderRadius: 2, background: 'var(--c-surface-2)', animation: 'pulse 1.5s ease-in-out infinite' }} />
       </td>
       {widths.map((w, i) => (
         <td key={i} style={{ padding: '14px 16px' }}>
-          <div style={{ height: 14, borderRadius: 7, background: 'var(--c-surface-2)', width: w, animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />
+          <div style={{ height: 14, borderRadius: 3, background: 'var(--c-surface-2)', width: w, animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />
         </td>
       ))}
     </tr>
@@ -805,10 +805,10 @@ export default function UsersPage() {
             <div key={label} style={{
               display: 'inline-flex', alignItems: 'center', gap: 9,
               background: '#fff', border: '1px solid var(--c-border)',
-              borderRadius: 12, padding: '9px 14px',
+              borderRadius: 8, padding: '9px 14px',
             }}>
               <div style={{
-                width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                width: 30, height: 30, borderRadius: 4, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'var(--c-surface)', color: 'var(--c-primary)',
               }}>
@@ -828,7 +828,7 @@ export default function UsersPage() {
       {/* ── Main card ───────────────────────────────────────────────────────── */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
 
         {/* Toolbar */}
@@ -851,14 +851,14 @@ export default function UsersPage() {
           {/* Tabs */}
           <div style={{
             display: 'flex', gap: 4, alignItems: 'center',
-            background: 'var(--c-surface)', borderRadius: 10, padding: 4,
+            background: 'var(--c-surface)', borderRadius: 4, padding: 4,
           }}>
             {tabs.map(t => (
               <button
                 key={t.key} onClick={() => setTab(t.key)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
-                  height: 30, padding: '0 12px', borderRadius: 8, border: 0,
+                  height: 30, padding: '0 12px', borderRadius: 4, border: 0,
                   background: tab === t.key ? 'var(--c-primary)' : 'transparent',
                   color: tab === t.key ? '#fff' : 'var(--c-text-2)',
                   fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700,
@@ -883,7 +883,7 @@ export default function UsersPage() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 9,
             background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-            borderRadius: 10, padding: '0 12px', height: 38, minWidth: 220,
+            borderRadius: 4, padding: '0 12px', height: 38, minWidth: 220,
           }}>
             <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
             <input
@@ -900,7 +900,7 @@ export default function UsersPage() {
           <select
             value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
             style={{
-              height: 38, padding: '0 10px', borderRadius: 10,
+              height: 38, padding: '0 10px', borderRadius: 4,
               background: '#fff', border: '1px solid var(--c-border)',
               fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
               color: roleFilter ? 'var(--c-text)' : 'var(--c-text-2)',
@@ -918,7 +918,7 @@ export default function UsersPage() {
           <select
             value={deptFilter} onChange={e => setDeptFilter(e.target.value)}
             style={{
-              height: 38, padding: '0 10px', borderRadius: 10,
+              height: 38, padding: '0 10px', borderRadius: 4,
               background: '#fff', border: '1px solid var(--c-border)',
               fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
               color: deptFilter ? 'var(--c-text)' : 'var(--c-text-2)',
@@ -1021,7 +1021,7 @@ function UserRow({ user: u, last, isSelf, onEdit, onDelete }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
@@ -1072,7 +1072,7 @@ function PagBtn({ children, active, disabled, onClick }) {
     <button
       onClick={onClick} disabled={disabled}
       style={{
-        width: 32, height: 32, borderRadius: 8,
+        width: 32, height: 32, borderRadius: 4,
         cursor: disabled ? 'default' : 'pointer',
         border: active ? 'none' : '1px solid var(--c-border)',
         background: active ? 'var(--c-primary)' : '#fff',

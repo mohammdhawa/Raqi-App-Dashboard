@@ -57,13 +57,13 @@ function dayBefore(key) {
 
 function Note({ icon: Icon, tone = 'info', children }) {
   const tones = {
-    warn: { bg: 'var(--c-pending-bg)',    border: 'var(--c-pending)22',   color: 'var(--c-pending)' },
-    info: { bg: 'var(--c-primary-light)', border: 'rgba(34,65,103,0.16)', color: 'var(--c-primary)' },
+    warn: { bg: 'var(--c-pending-bg)',    border: 'color-mix(in srgb, var(--c-pending) 13%, transparent)',   color: 'var(--c-pending)' },
+    info: { bg: 'var(--c-primary-light)', border: 'rgba(29,84,70,0.16)', color: 'var(--c-primary)' },
   }
   const t = tones[tone]
   return (
     <div style={{
-      display: 'flex', gap: 9, padding: '10px 12px', borderRadius: 10,
+      display: 'flex', gap: 9, padding: '10px 12px', borderRadius: 4,
       background: t.bg, border: `1px solid ${t.border}`,
     }}>
       <Icon size={15} style={{ color: t.color, flexShrink: 0, marginTop: 1 }} />
@@ -194,7 +194,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
     <div
       onClick={() => { if (!submitting) onClose() }}
       style={{
-        position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(20,32,50,0.5)',
+        position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(14,22,19,0.5)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
@@ -204,7 +204,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
         onClick={e => e.stopPropagation()}
         style={{
           width: 'min(460px, 100%)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto',
-          background: '#fff', borderRadius: 16, boxShadow: 'var(--sh-card-lg)',
+          background: '#fff', borderRadius: 8, boxShadow: 'var(--sh-card-lg)',
         }}
       >
         {/* Header */}
@@ -227,7 +227,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
           <button
             type='button' onClick={onClose} disabled={submitting} title='إغلاق'
             style={{
-              width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+              width: 34, height: 34, borderRadius: 4, flexShrink: 0,
               border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
             }}
@@ -242,8 +242,8 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
           {/* The leave being ended, and who granted it — the decision that is
               deliberately NOT being undone here. */}
           <div style={{
-            padding: '11px 13px', borderRadius: 10,
-            background: 'var(--c-primary-light)', border: '1px solid rgba(34,65,103,0.16)',
+            padding: '11px 13px', borderRadius: 4,
+            background: 'var(--c-primary-light)', border: '1px solid rgba(29,84,70,0.16)',
             display: 'flex', flexDirection: 'column', gap: 6,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
@@ -272,7 +272,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
               type='date' value={returnedOn} min={start} max={end}
               onChange={e => { setReturnedOn(e.target.value); setError('') }}
               style={{
-                width: '100%', height: 40, borderRadius: 10, background: '#fff',
+                width: '100%', height: 40, borderRadius: 4, background: '#fff',
                 border: `1px solid ${inRange ? 'var(--c-border)' : 'var(--c-rejected)'}`,
                 padding: '0 12px', fontSize: 13, fontFamily: 'var(--font-sans)',
                 color: 'var(--c-text)', outline: 'none',
@@ -315,7 +315,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
               onChange={e => { setReason(e.target.value); setReasonError('') }}
               placeholder={LEAVE_COPY.returnToWorkReasonPlaceholder}
               style={{
-                width: '100%', borderRadius: 10, background: '#fff',
+                width: '100%', borderRadius: 4, background: '#fff',
                 border: `1px solid ${reasonError ? 'var(--c-rejected)' : 'var(--c-border)'}`,
                 padding: '10px 12px', fontSize: 13, fontFamily: 'var(--font-sans)',
                 color: 'var(--c-text)', outline: 'none', resize: 'vertical', lineHeight: 1.6,
@@ -329,7 +329,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
           {error && (
             <div style={{
               fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)', lineHeight: 1.7,
-              background: 'var(--c-rejected-bg)', padding: '9px 12px', borderRadius: 9,
+              background: 'var(--c-rejected-bg)', padding: '9px 12px', borderRadius: 4,
             }}>
               {error}
             </div>
@@ -344,7 +344,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
           <button
             type='button' onClick={submit} disabled={submitting || !canSubmit}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 18px', borderRadius: 10,
+              display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 18px', borderRadius: 4,
               background: 'var(--c-primary)', color: '#fff', border: 'none',
               fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
               cursor: (submitting || !canSubmit) ? 'default' : 'pointer',
@@ -358,7 +358,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
           <button
             type='button' onClick={onClose} disabled={submitting}
             style={{
-              height: 40, padding: '0 18px', borderRadius: 10, background: '#fff',
+              height: 40, padding: '0 18px', borderRadius: 4, background: '#fff',
               border: '1px solid var(--c-border)', fontFamily: 'var(--font-sans)',
               fontSize: 13, fontWeight: 700, color: 'var(--c-text-2)',
               cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,

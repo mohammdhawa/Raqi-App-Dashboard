@@ -30,7 +30,7 @@ const EMPTY_FORM = {
 }
 
 const filterSelectStyle = {
-  height: 38, padding: '0 10px', borderRadius: 10, minWidth: 150,
+  height: 38, padding: '0 10px', borderRadius: 4, minWidth: 150,
   background: '#fff', border: '1px solid var(--c-border)',
   fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
   cursor: 'pointer', direction: 'rtl', outline: 'none',
@@ -39,7 +39,7 @@ const filterSelectStyle = {
 const inputStyle = {
   width: '100%', boxSizing: 'border-box', height: 42,
   background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-  borderRadius: 10, padding: '0 12px', outline: 'none',
+  borderRadius: 4, padding: '0 12px', outline: 'none',
   fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
 }
 
@@ -52,7 +52,7 @@ function RowBtn({ children, danger, disabled, onClick, title }) {
       onClick={onClick} title={title} disabled={disabled}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        width: 32, height: 32, borderRadius: 9,
+        width: 32, height: 32, borderRadius: 4,
         border: `1px solid ${danger && hov && !disabled ? '#F4C9C6' : 'var(--c-border)'}`,
         background: danger && hov && !disabled ? 'var(--c-rejected-bg)' : '#fff',
         color: disabled ? 'var(--c-text-3)' : danger && hov ? 'var(--c-rejected)' : 'var(--c-text-2)',
@@ -74,7 +74,7 @@ function StatePill({ active }) {
       fontSize: 11, fontWeight: 800,
       color: active ? 'var(--c-approved)' : 'var(--c-text-3)',
       background: active ? 'var(--c-approved-bg)' : 'var(--c-surface-2)',
-      border: `1px solid ${active ? 'var(--c-approved)22' : 'var(--c-border)'}`,
+      border: `1px solid ${active ? 'color-mix(in srgb, var(--c-approved) 13%, transparent)' : 'var(--c-border)'}`,
     }}>
       <span style={{
         width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
@@ -104,7 +104,7 @@ function Toggle({ checked, onChange, label, hint, disabled }) {
   return (
     <label style={{
       display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px',
-      borderRadius: 11, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+      borderRadius: 4, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
       cursor: disabled ? 'not-allowed' : 'pointer', marginBottom: 10, opacity: disabled ? 0.6 : 1,
     }}>
       <input
@@ -143,7 +143,7 @@ function TypeRow({ type, last, onEdit, onDelete }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent', transition: 'background .1s',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent', transition: 'background .1s',
         opacity: type.is_active ? 1 : 0.72,
       }}
     >
@@ -159,7 +159,7 @@ function TypeRow({ type, last, onEdit, onDelete }) {
         <span style={{
           fontFamily: "'Courier New', Courier, monospace", direction: 'ltr', display: 'inline-block',
           fontSize: 11.5, color: 'var(--c-text-2)', background: 'var(--c-surface)',
-          border: '1px solid var(--c-border)', borderRadius: 7, padding: '2px 8px',
+          border: '1px solid var(--c-border)', borderRadius: 3, padding: '2px 8px',
         }}>
           {type.code}
         </span>
@@ -278,13 +278,13 @@ function TypeDrawer({ mode, type, onClose, onSaved }) {
   return (
     <>
       <div onClick={() => !saving && onClose()} style={{
-        position: 'fixed', inset: 0, zIndex: 39, background: 'rgba(20,32,50,0.42)',
+        position: 'fixed', inset: 0, zIndex: 39, background: 'rgba(14,22,19,0.42)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
       }} />
       <div style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
         width: 'min(520px, 100vw)', background: '#fff', zIndex: 40,
-        boxShadow: '-14px 0 40px rgba(20,32,50,0.22)',
+        boxShadow: '-14px 0 40px rgba(14,22,19,0.22)',
         display: 'flex', flexDirection: 'column', borderInlineEnd: '1px solid var(--c-border)',
       }}>
         <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid var(--c-border)', flexShrink: 0, position: 'relative' }}>
@@ -304,7 +304,7 @@ function TypeDrawer({ mode, type, onClose, onSaved }) {
             type="button" onClick={onClose} disabled={saving}
             title={saving ? 'جارٍ الحفظ…' : 'إغلاق'}
             style={{
-              position: 'absolute', insetInlineStart: 18, top: 18, width: 34, height: 34, borderRadius: 10,
+              position: 'absolute', insetInlineStart: 18, top: 18, width: 34, height: 34, borderRadius: 4,
               background: 'var(--c-surface)', border: '1px solid var(--c-border)', color: 'var(--c-text-2)',
               cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.5 : 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -382,8 +382,8 @@ function TypeDrawer({ mode, type, onClose, onSaved }) {
           {deductsChanged && (
             <div style={{
               display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px',
-              borderRadius: 12, marginBottom: 14, background: 'var(--c-accent-tint)',
-              fontSize: 12, lineHeight: 1.7, color: '#8A6A23',
+              borderRadius: 8, marginBottom: 14, background: 'var(--c-accent-tint)',
+              fontSize: 12, lineHeight: 1.7, color: '#6B5B35',
             }}>
               <AlertTriangle size={15} style={{ color: 'var(--c-accent)', flexShrink: 0, marginTop: 1 }} />
               <span>{LEAVE_COPY.deductsChangeWarning}</span>
@@ -443,13 +443,13 @@ function TypeDrawer({ mode, type, onClose, onSaved }) {
 
       {confirmDeducts && (
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(20,32,50,0.5)',
+          position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(14,22,19,0.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
         }}>
-          <div style={{ width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 18, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden' }}>
+          <div style={{ width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 8, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden' }}>
             <div style={{ padding: '26px 24px 18px', textAlign: 'center' }}>
               <div style={{
-                width: 56, height: 56, borderRadius: 16, margin: '0 auto 14px',
+                width: 56, height: 56, borderRadius: 8, margin: '0 auto 14px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'var(--c-accent-tint)', color: 'var(--c-accent)',
               }}>
@@ -503,14 +503,14 @@ function DeleteTypeModal({ type, onClose, onDone }) {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(20,32,50,0.48)',
+      position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(14,22,19,0.48)',
       backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
-      <div style={{ width: 'min(460px, calc(100vw - 32px))', background: '#fff', borderRadius: 18, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden' }}>
+      <div style={{ width: 'min(460px, calc(100vw - 32px))', background: '#fff', borderRadius: 8, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden' }}>
         <div style={{ padding: '28px 24px 20px', textAlign: 'center' }}>
           <div style={{
-            width: 60, height: 60, borderRadius: 16, margin: '0 auto 16px',
+            width: 60, height: 60, borderRadius: 8, margin: '0 auto 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
           }}>
@@ -531,7 +531,7 @@ function DeleteTypeModal({ type, onClose, onDone }) {
             {type.name_ar}
           </div>
           {error && (
-            <div style={{ marginTop: 14, padding: '9px 12px', borderRadius: 10, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 600 }}>
+            <div style={{ marginTop: 14, padding: '9px 12px', borderRadius: 4, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 600 }}>
               {error}
             </div>
           )}
@@ -676,7 +676,7 @@ export default function LeaveTypesPage() {
         <button
           onClick={() => setDrawer({ mode: 'create' })}
           style={{
-            height: 42, padding: '0 18px', borderRadius: 11, border: 'none', flexShrink: 0,
+            height: 42, padding: '0 18px', borderRadius: 4, border: 'none', flexShrink: 0,
             background: 'var(--c-primary)', color: '#fff',
             fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
             display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
@@ -689,7 +689,7 @@ export default function LeaveTypesPage() {
 
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
         {/* Tabs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 12px', borderBottom: '1px solid var(--c-border)' }}>
@@ -704,7 +704,7 @@ export default function LeaveTypesPage() {
                 key={t.key} onClick={() => changeView(() => setTab(t.key))}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 7,
-                  height: 36, padding: '0 14px', borderRadius: 9, border: 'none',
+                  height: 36, padding: '0 14px', borderRadius: 4, border: 'none',
                   background: isActive ? 'var(--c-primary)' : 'transparent',
                   color: isActive ? '#fff' : 'var(--c-text-2)',
                   fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
@@ -752,7 +752,7 @@ export default function LeaveTypesPage() {
             <button
               onClick={() => changeView(() => { setForFilter(''); setDeductsFilter('') })}
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6, height: 38, padding: '0 12px', borderRadius: 10,
+                display: 'inline-flex', alignItems: 'center', gap: 6, height: 38, padding: '0 12px', borderRadius: 4,
                 background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                 fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', cursor: 'pointer',
               }}
@@ -764,7 +764,7 @@ export default function LeaveTypesPage() {
         </div>
 
         {error && (
-          <div style={{ margin: 14, padding: '10px 12px', borderRadius: 10, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 700 }}>
+          <div style={{ margin: 14, padding: '10px 12px', borderRadius: 4, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 700 }}>
             {error}
           </div>
         )}
@@ -790,7 +790,7 @@ export default function LeaveTypesPage() {
                       {COLS.map((col, cell) => (
                         <td key={col} style={{ padding: '12px 16px' }}>
                           <div style={{
-                            height: 16, width: cell === 0 ? 140 : 80, borderRadius: 7,
+                            height: 16, width: cell === 0 ? 140 : 80, borderRadius: 3,
                             background: 'var(--c-surface-2)', animation: 'pulse 1.5s ease-in-out infinite',
                             animationDelay: `${cell * 0.08}s`,
                           }} />

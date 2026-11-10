@@ -17,7 +17,7 @@ const variants = {
 }
 
 const hoverClasses = {
-  primary: 'hover:opacity-90',
+  primary: 'hover:!bg-[var(--c-primary-hover)]',
   ghost: 'hover:border-[var(--c-border-strong)] hover:text-[var(--c-text)]',
   danger: 'hover:border-[#F4C9C6]',
 }
@@ -32,8 +32,8 @@ export default function Button({
   return (
     <button
       style={{
-        borderRadius: '10px',
-        fontWeight: 700,
+        borderRadius: '4px',
+        fontWeight: 600,
         fontFamily: 'var(--font-sans)',
         fontSize: 13,
         padding: '0 16px',
@@ -44,7 +44,6 @@ export default function Button({
         gap: 7,
         cursor: 'pointer',
         transition: 'all 0.15s',
-        outline: 'none',
         whiteSpace: 'nowrap',
         ...variants[variant],
         ...style,

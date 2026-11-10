@@ -18,7 +18,7 @@ import {
 // ── Layout primitives ────────────────────────────────────────────────────────
 
 const cardStyle = {
-  background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16,
+  background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8,
   boxShadow: 'var(--sh-card)', overflow: 'hidden', marginBottom: 20,
 }
 
@@ -151,7 +151,7 @@ function PdfCard({ document, fileMime, hasDecisions }) {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
-                border: '1px solid var(--c-border)', borderRadius: 9,
+                border: '1px solid var(--c-border)', borderRadius: 4,
                 padding: '6px 11px', background: '#fff', cursor: 'pointer',
               }}
             >
@@ -165,7 +165,7 @@ function PdfCard({ document, fileMime, hasDecisions }) {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontSize: 12, fontWeight: 700, color: 'var(--c-primary)',
-                border: '1px solid var(--c-primary)', borderRadius: 9,
+                border: '1px solid var(--c-primary)', borderRadius: 4,
                 padding: '6px 11px', background: '#fff',
                 cursor: downloading ? 'default' : 'pointer',
                 opacity: downloading ? 0.6 : 1,
@@ -216,7 +216,7 @@ function PdfCard({ document, fileMime, hasDecisions }) {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontSize: 12.5, fontWeight: 700, color: '#fff',
-                background: 'var(--c-primary)', borderRadius: 9,
+                background: 'var(--c-primary)', borderRadius: 4,
                 padding: '8px 16px', border: 0, cursor: 'pointer',
               }}
             >
@@ -264,7 +264,7 @@ function AttachmentsCard({ documentId, attachments }) {
             key={a.id} onClick={() => handleOpen(a.id)}
             style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-              border: '1px solid var(--c-border)', borderRadius: 10, background: 'var(--c-surface)',
+              border: '1px solid var(--c-border)', borderRadius: 4, background: 'var(--c-surface)',
               width: '100%', textAlign: 'right', cursor: 'pointer', fontFamily: 'var(--font-sans)',
             }}
           >
@@ -365,7 +365,7 @@ function CommentsCard({ docId }) {
               </div>
               <div style={{
                 fontSize: 13, color: 'var(--c-text-2)', lineHeight: 1.7,
-                background: 'var(--c-surface)', borderRadius: 10, padding: '9px 12px',
+                background: 'var(--c-surface)', borderRadius: 4, padding: '9px 12px',
                 whiteSpace: 'pre-wrap', wordBreak: 'break-word',
               }}>
                 {c.comment}
@@ -379,7 +379,7 @@ function CommentsCard({ docId }) {
           <div style={{ flex: 1 }}>
             <div style={{
               background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-              borderRadius: 10, padding: '8px 10px',
+              borderRadius: 4, padding: '8px 10px',
             }}>
               <textarea
                 value={text} onChange={e => setText(e.target.value)} rows={2} maxLength={2000}
@@ -456,7 +456,7 @@ function WorkflowStep({ w, isLast, isMe }) {
           width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
           background: meta.bg, color: meta.color,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: `1.5px solid ${meta.color}33`,
+          border: `1.5px solid color-mix(in srgb, ${meta.color} 20%, transparent)`,
         }}>
           <Icon size={14} />
         </div>
@@ -482,7 +482,7 @@ function WorkflowStep({ w, isLast, isMe }) {
         {w.note && (
           <div style={{
             marginTop: 8, fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.6,
-            background: 'var(--c-surface)', borderRadius: 8, padding: '8px 10px',
+            background: 'var(--c-surface)', borderRadius: 4, padding: '8px 10px',
             whiteSpace: 'pre-wrap', wordBreak: 'break-word',
           }}>
             {w.note}
@@ -555,7 +555,7 @@ function ApprovalCard({ docId, onDone }) {
       <div style={{ padding: 20 }}>
         <div style={{
           background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-          borderRadius: 10, padding: '8px 10px', marginBottom: 12,
+          borderRadius: 4, padding: '8px 10px', marginBottom: 12,
         }}>
           <textarea
             value={note} onChange={e => setNote(e.target.value)} rows={3} maxLength={2000}

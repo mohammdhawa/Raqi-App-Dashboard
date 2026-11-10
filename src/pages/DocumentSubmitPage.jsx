@@ -36,7 +36,7 @@ const WORKFLOW_MODES = [
 ]
 
 const cardStyle = {
-  background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16,
+  background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8,
   boxShadow: 'var(--sh-card)', overflow: 'hidden', marginBottom: 20,
 }
 const cardHeaderStyle = {
@@ -100,7 +100,7 @@ function TextInput({ value, onChange, placeholder, type = 'text', error, maxLeng
       display: 'flex', alignItems: 'center', height: 42,
       background: 'var(--c-surface)',
       border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
-      borderRadius: 10, padding: '0 12px', boxSizing: 'border-box',
+      borderRadius: 4, padding: '0 12px', boxSizing: 'border-box',
     }}>
       <input
         type={type} value={value ?? ''} onChange={e => onChange(e.target.value)}
@@ -121,7 +121,7 @@ function TextareaInput({ value, onChange, placeholder, rows = 4, maxLength, erro
     <div style={{
       background: 'var(--c-surface)',
       border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
-      borderRadius: 10, padding: '10px 12px', boxSizing: 'border-box',
+      borderRadius: 4, padding: '10px 12px', boxSizing: 'border-box',
     }}>
       <textarea
         value={value ?? ''} onChange={e => onChange(e.target.value)} rows={rows} maxLength={maxLength}
@@ -143,7 +143,7 @@ function TabButton({ active, icon: Icon, label, onClick, disabled, title }) {
     <button
       type="button" onClick={onClick} disabled={disabled} title={title}
       style={{
-        display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 10,
+        display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 4,
         border: `1.5px solid ${active ? 'var(--c-primary)' : 'var(--c-border)'}`,
         background: active ? 'var(--c-primary)' : '#fff',
         color: active ? '#fff' : 'var(--c-text-2)',
@@ -165,10 +165,10 @@ function WorkflowModeCard({ mode, active, onSelect }) {
     <div
       onClick={onSelect}
       style={{
-        flex: 1, padding: 14, borderRadius: 12, cursor: 'pointer',
-        background: active ? 'rgba(34,65,103,0.03)' : '#fff',
+        flex: 1, padding: 14, borderRadius: 8, cursor: 'pointer',
+        background: active ? 'rgba(29,84,70,0.03)' : '#fff',
         border: `1.5px solid ${active ? 'var(--c-primary)' : 'var(--c-border)'}`,
-        boxShadow: active ? '0 0 0 3px rgba(34,65,103,0.07)' : 'none',
+        boxShadow: active ? '0 0 0 3px rgba(29,84,70,0.07)' : 'none',
         transition: 'all .14s',
       }}
     >
@@ -213,7 +213,7 @@ function FileDropzone({ file, onSelect, onRemove, accept, hint, error }) {
         onDrop={handleDrop}
         style={{
           border: `1.5px dashed ${error ? 'var(--c-rejected)' : dragOver ? 'var(--c-primary)' : 'var(--c-border)'}`,
-          borderRadius: 12, padding: '30px 16px', textAlign: 'center', cursor: 'pointer',
+          borderRadius: 8, padding: '30px 16px', textAlign: 'center', cursor: 'pointer',
           background: dragOver ? 'var(--c-accent-tint)' : 'var(--c-surface)',
           transition: 'all .14s',
         }}
@@ -231,7 +231,7 @@ function FileDropzone({ file, onSelect, onRemove, accept, hint, error }) {
         ) : (
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
             <div style={{
-              width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+              width: 40, height: 40, borderRadius: 4, flexShrink: 0,
               background: 'var(--c-accent-tint)', color: 'var(--c-accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
@@ -244,7 +244,7 @@ function FileDropzone({ file, onSelect, onRemove, accept, hint, error }) {
             <button
               type="button" onClick={e => { e.stopPropagation(); onRemove() }}
               style={{
-                width: 28, height: 28, borderRadius: 8, border: '1px solid var(--c-border)',
+                width: 28, height: 28, borderRadius: 4, border: '1px solid var(--c-border)',
                 background: '#fff', color: 'var(--c-text-3)', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}
@@ -266,16 +266,16 @@ function TemplateCard({ tpl, active, onSelect }) {
     <div
       onClick={onSelect}
       style={{
-        display: 'flex', flexDirection: 'column', gap: 10, padding: 14, borderRadius: 12, cursor: 'pointer',
+        display: 'flex', flexDirection: 'column', gap: 10, padding: 14, borderRadius: 8, cursor: 'pointer',
         border: `1.5px solid ${active ? 'var(--c-primary)' : 'var(--c-border)'}`,
-        background: active ? 'rgba(34,65,103,0.03)' : '#fff',
-        boxShadow: active ? '0 0 0 3px rgba(34,65,103,0.07)' : 'none',
+        background: active ? 'rgba(29,84,70,0.03)' : '#fff',
+        boxShadow: active ? '0 0 0 3px rgba(29,84,70,0.07)' : 'none',
         transition: 'all .14s',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{
-          width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+          width: 38, height: 38, borderRadius: 4, flexShrink: 0,
           background: 'var(--c-accent-tint)', color: 'var(--c-accent)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
@@ -699,7 +699,7 @@ export default function DocumentSubmitPage() {
                     type="button"
                     onClick={() => setSelectedTemplateId(null)}
                     style={{
-                      border: '1px solid var(--c-border)', background: '#fff', borderRadius: 8,
+                      border: '1px solid var(--c-border)', background: '#fff', borderRadius: 4,
                       padding: '5px 12px', fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
                       cursor: 'pointer', fontFamily: 'var(--font-sans)',
                     }}
@@ -715,7 +715,7 @@ export default function DocumentSubmitPage() {
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 9,
                     background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-                    borderRadius: 10, padding: '0 12px', height: 40, marginBottom: 16,
+                    borderRadius: 4, padding: '0 12px', height: 40, marginBottom: 16,
                   }}>
                     <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
                     <input
@@ -824,7 +824,7 @@ export default function DocumentSubmitPage() {
           <div
             onClick={() => attachInputRef.current?.click()}
             style={{
-              border: '1.5px dashed var(--c-border)', borderRadius: 12, padding: '20px 16px',
+              border: '1.5px dashed var(--c-border)', borderRadius: 8, padding: '20px 16px',
               textAlign: 'center', cursor: 'pointer', background: 'var(--c-surface)', marginBottom: 12,
             }}
           >
@@ -850,7 +850,7 @@ export default function DocumentSubmitPage() {
               {attachments.map((f, i) => (
                 <div key={i} style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-                  border: '1px solid var(--c-border)', borderRadius: 10, background: '#fff',
+                  border: '1px solid var(--c-border)', borderRadius: 4, background: '#fff',
                 }}>
                   <FileText size={16} style={{ color: 'var(--c-accent)', flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -865,7 +865,7 @@ export default function DocumentSubmitPage() {
                   <button
                     type="button" onClick={() => removeAttachment(i)}
                     style={{
-                      width: 26, height: 26, borderRadius: 7, border: '1px solid var(--c-border)',
+                      width: 26, height: 26, borderRadius: 3, border: '1px solid var(--c-border)',
                       background: '#fff', color: 'var(--c-text-3)', cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}
@@ -902,7 +902,7 @@ export default function DocumentSubmitPage() {
               {staleApproverIds.length > 0 && (
                 <div style={{
                   display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10,
-                  padding: '10px 12px', borderRadius: 10,
+                  padding: '10px 12px', borderRadius: 4,
                   background: 'var(--c-pending-bg)', color: 'var(--c-text-2)',
                   fontSize: 11.5, lineHeight: 1.7,
                 }}>
@@ -914,7 +914,7 @@ export default function DocumentSubmitPage() {
                       <button
                         type="button" onClick={() => setStaleApproverIds([])}
                         style={{
-                          height: 30, padding: '0 12px', borderRadius: 8,
+                          height: 30, padding: '0 12px', borderRadius: 4,
                           border: '1px solid var(--c-border)', background: '#fff',
                           fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 700,
                           color: 'var(--c-text)', cursor: 'pointer',
@@ -940,7 +940,7 @@ export default function DocumentSubmitPage() {
       {/* Submit */}
       {submitError && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', borderRadius: 10,
+          display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', borderRadius: 4,
           background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 600,
           marginBottom: 16,
         }}>

@@ -31,13 +31,13 @@ function StatCard({ icon: Icon, label, value, sub, iconBg, iconColor, loading })
   return (
     <div style={{
       background: '#fff', border: '1px solid var(--c-border)',
-      borderRadius: 16, padding: '20px 20px 18px',
+      borderRadius: 8, padding: '20px 20px 18px',
       boxShadow: 'var(--sh-card)',
       display: 'flex', flexDirection: 'column', gap: 14,
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div style={{
-          width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+          width: 42, height: 42, borderRadius: 8, flexShrink: 0,
           background: iconBg ?? 'var(--c-surface)',
           color: iconColor ?? 'var(--c-primary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -76,7 +76,7 @@ function ChartCard({ title, sub, height = 180, loading, empty, emptyText, childr
   return (
     <div style={{
       background: '#fff', border: '1px solid var(--c-border)',
-      borderRadius: 16, padding: '20px', boxShadow: 'var(--sh-card)',
+      borderRadius: 8, padding: '20px', boxShadow: 'var(--sh-card)',
     }}>
       <div style={{ marginBottom: 16 }}>
         {loading ? (
@@ -92,10 +92,10 @@ function ChartCard({ title, sub, height = 180, loading, empty, emptyText, childr
         )}
       </div>
       {loading ? (
-        <div style={{ height, background: 'var(--c-surface)', borderRadius: 12, animation: 'pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ height, background: 'var(--c-surface)', borderRadius: 8, animation: 'pulse 1.5s ease-in-out infinite' }} />
       ) : empty ? (
         <div style={{
-          height, borderRadius: 12, background: 'var(--c-surface)',
+          height, borderRadius: 8, background: 'var(--c-surface)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{emptyText}</span>
@@ -109,7 +109,7 @@ function RecentActivityItem({ label, sub, status, loading }) {
   const STATUS_META = {
     approved: { color: 'var(--c-approved)', bg: 'var(--c-approved-bg)', label: 'معتمد' },
     rejected: { color: 'var(--c-rejected)', bg: 'var(--c-rejected-bg)', label: 'مرفوض' },
-    pending:  { color: '#D4900A',           bg: '#FFF8E1',              label: 'قيد الاعتماد' },
+    pending:  { color: '#8A5A0B',           bg: '#FBF1D9',              label: 'قيد الاعتماد' },
   }
   const meta = STATUS_META[status] ?? STATUS_META.pending
   if (loading) {
@@ -127,7 +127,7 @@ function RecentActivityItem({ label, sub, status, loading }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 0', borderBottom: '1px solid var(--c-border)' }}>
       <div style={{
-        width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+        width: 32, height: 32, borderRadius: 4, flexShrink: 0,
         background: 'var(--c-surface)', color: 'var(--c-primary)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
@@ -202,30 +202,33 @@ export default function DashboardPage() {
 
       {/* ── Welcome banner ─────────────────────────────────────────────────── */}
       <div className="px-5 py-6 sm:px-8 sm:py-7" style={{
-        background: 'linear-gradient(120deg, var(--c-primary) 0%, #1C3A5E 100%)',
-        borderRadius: 18, marginBottom: 28,
+        background: 'var(--c-primary)',
+        borderRadius: 8, marginBottom: 28,
         position: 'relative', overflow: 'hidden',
-        boxShadow: '0 8px 24px rgba(34,65,103,0.22)',
+        /* Sunaa signature 05: bronze base rule under a dark block */
+        borderBottom: '4px solid var(--c-accent)',
       }}>
-        <div style={{
-          position: 'absolute', top: -50, left: -50,
-          width: 200, height: 200, borderRadius: '50%',
-          background: 'rgba(200,163,107,0.1)', pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: -30, right: 60,
-          width: 120, height: 120, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.04)', pointerEvents: 'none',
-        }} />
+        {/* Signature 02: hairline site grid */}
+        <div className="site-grid-dark" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
+        {/* Signature 03: cropped Kufic monogram */}
+        <img
+          src="/assets/sunaa-mark-on-dark.png" alt="" aria-hidden="true"
+          className="hidden sm:block"
+          style={{
+            position: 'absolute', left: 24, top: -18, height: 190, width: 190,
+            objectFit: 'contain', opacity: 0.16, pointerEvents: 'none',
+          }}
+        />
         <div style={{ position: 'relative' }}>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, fontWeight: 600, color: 'var(--c-accent-on-dark)', marginBottom: 8 }}>
+            <span style={{ width: 8, height: 8, background: 'var(--c-accent)', flexShrink: 0 }} />
             {greeting}
           </div>
-          <h1 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: -0.4 }}>
+          <h1 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 700, color: '#fff', letterSpacing: -0.4 }}>
             {user?.name ?? 'مرحباً بك'}
           </h1>
-          <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.62)', lineHeight: 1.6 }}>
-            مرحباً في لوحة إدارة الراقي للاعتمادات. هنا نظرة سريعة على حالة المنظومة.
+          <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6 }}>
+            مرحباً في لوحة إدارة صنع للإنشاءات. هنا نظرة سريعة على حالة المنظومة.
           </p>
         </div>
       </div>
@@ -237,7 +240,7 @@ export default function DashboardPage() {
           label="إجمالي المستخدمين"
           value={stats?.totalUsers}
           sub="حسابات نشطة في النظام"
-          iconBg="rgba(34,65,103,0.08)" iconColor="var(--c-primary)"
+          iconBg="rgba(29,84,70,0.08)" iconColor="var(--c-primary)"
           loading={loading}
         />
         <StatCard
@@ -245,7 +248,7 @@ export default function DashboardPage() {
           label="الإدارات"
           value={stats?.totalDepartments}
           sub="وحدات تنظيمية مفعّلة"
-          iconBg="rgba(200,163,107,0.12)" iconColor="#8A6A23"
+          iconBg="var(--c-accent-tint)" iconColor="var(--c-accent-text)"
           loading={loading}
         />
         <StatCard
@@ -253,7 +256,7 @@ export default function DashboardPage() {
           label="الأقسام"
           value={stats?.totalSections}
           sub="أقسام تابعة للإدارات"
-          iconBg="rgba(30,143,94,0.1)" iconColor="var(--c-approved)"
+          iconBg="rgba(46,125,91,0.1)" iconColor="var(--c-approved)"
           loading={loading}
         />
         <StatCard
@@ -280,14 +283,14 @@ export default function DashboardPage() {
         >
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={activity} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <CartesianGrid stroke="#E2E6EF" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: '#9AABBE' }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9AABBE' }} axisLine={false} tickLine={false} width={32} />
-              <Tooltip labelFormatter={formatShortDate} contentStyle={{ borderRadius: 10, border: '1px solid #E2E6EF', fontSize: 12 }} />
+              <CartesianGrid stroke="#D6D1C6" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: '#6F7873' }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6F7873' }} axisLine={false} tickLine={false} width={32} />
+              <Tooltip labelFormatter={formatShortDate} contentStyle={{ borderRadius: 4, border: '1px solid #D6D1C6', fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Area type="monotone" dataKey="submitted" name="مُرسلة" stroke="#224167" fill="#224167" fillOpacity={0.12} strokeWidth={2} />
-              <Area type="monotone" dataKey="approved"  name="معتمدة"  stroke="#1E8F5E" fill="#1E8F5E" fillOpacity={0.12} strokeWidth={2} />
-              <Area type="monotone" dataKey="rejected"  name="مرفوضة" stroke="#C0392B" fill="#C0392B" fillOpacity={0.1} strokeWidth={2} />
+              <Area type="monotone" dataKey="submitted" name="مُرسلة" stroke="#1D5446" fill="#1D5446" fillOpacity={0.12} strokeWidth={2} />
+              <Area type="monotone" dataKey="approved"  name="معتمدة"  stroke="#857245" fill="#857245" fillOpacity={0.12} strokeWidth={2} />
+              <Area type="monotone" dataKey="rejected"  name="مرفوضة" stroke="#B3261E" fill="#B3261E" fillOpacity={0.1} strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -295,7 +298,7 @@ export default function DashboardPage() {
         {/* Right: document status breakdown */}
         <div style={{
           background: '#fff', border: '1px solid var(--c-border)',
-          borderRadius: 16, padding: '20px', boxShadow: 'var(--sh-card)',
+          borderRadius: 8, padding: '20px', boxShadow: 'var(--sh-card)',
         }}>
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>توزيع حالات المستندات</div>
@@ -303,14 +306,14 @@ export default function DashboardPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { key: 'pending',  label: 'قيد الاعتماد', icon: Clock,        bg: '#FFF8E1', color: '#D4900A' },
+              { key: 'pending',  label: 'قيد الاعتماد', icon: Clock,        bg: '#FBF1D9', color: '#8A5A0B' },
               { key: 'approved', label: 'معتمدة',      icon: CheckCircle2,  bg: 'var(--c-approved-bg)', color: 'var(--c-approved)' },
               { key: 'rejected', label: 'مرفوضة',     icon: XCircle,       bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)' },
             ].map(({ key, label, icon: Icon, bg, color }) => (
               <div key={key} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 12px', borderRadius: 11,
-                background: bg, border: `1px solid ${color}22`,
+                padding: '10px 12px', borderRadius: 4,
+                background: bg, border: `1px solid color-mix(in srgb, ${color} 13%, transparent)`,
               }}>
                 <Icon size={16} style={{ color, flexShrink: 0 }} />
                 <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>{label}</span>
@@ -322,7 +325,7 @@ export default function DashboardPage() {
           </div>
           {!loading && statusTotal === 0 && (
             <div style={{
-              marginTop: 14, padding: '10px 12px', borderRadius: 10,
+              marginTop: 14, padding: '10px 12px', borderRadius: 4,
               background: 'var(--c-surface)', border: '1px solid var(--c-border)',
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
@@ -348,11 +351,11 @@ export default function DashboardPage() {
         >
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={staffDistribution} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <CartesianGrid stroke="#E2E6EF" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9AABBE' }} axisLine={false} tickLine={false} interval={0} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9AABBE' }} axisLine={false} tickLine={false} width={32} />
-              <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #E2E6EF', fontSize: 12 }} />
-              <Bar dataKey="userCount" name="عدد الموظفين" fill="#224167" radius={[6, 6, 0, 0]} />
+              <CartesianGrid stroke="#D6D1C6" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6F7873' }} axisLine={false} tickLine={false} interval={0} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6F7873' }} axisLine={false} tickLine={false} width={32} />
+              <Tooltip contentStyle={{ borderRadius: 4, border: '1px solid #D6D1C6', fontSize: 12 }} />
+              <Bar dataKey="userCount" name="عدد الموظفين" fill="#1D5446" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -360,7 +363,7 @@ export default function DashboardPage() {
         {/* Recent documents list */}
         <div style={{
           background: '#fff', border: '1px solid var(--c-border)',
-          borderRadius: 16, padding: '20px', boxShadow: 'var(--sh-card)',
+          borderRadius: 8, padding: '20px', boxShadow: 'var(--sh-card)',
         }}>
           <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
             <TrendingUp size={16} style={{ color: 'var(--c-primary)', flexShrink: 0 }} />
@@ -380,7 +383,7 @@ export default function DashboardPage() {
               ))
             ) : (
               <div style={{
-                marginTop: 6, padding: '24px 12px', borderRadius: 10,
+                marginTop: 6, padding: '24px 12px', borderRadius: 4,
                 background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                 textAlign: 'center',
               }}>

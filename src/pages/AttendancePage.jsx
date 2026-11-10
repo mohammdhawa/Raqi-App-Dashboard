@@ -63,8 +63,8 @@ const TYPE_META = {
 
 const ROLE_META = {
   admin:    { label: 'مدير النظام',   bg: 'var(--c-primary)',     color: '#fff' },
-  chief:    { label: 'الرئيس الأعلى', bg: 'var(--c-accent-tint)', color: '#8A6A23' },
-  manager:  { label: 'مدير',          bg: 'rgba(34,65,103,0.09)', color: 'var(--c-primary)' },
+  chief:    { label: 'الرئيس الأعلى', bg: 'var(--c-accent-tint)', color: '#6B5B35' },
+  manager:  { label: 'مدير',          bg: 'rgba(29,84,70,0.09)', color: 'var(--c-primary)' },
   employee: { label: 'موظف',          bg: 'var(--c-surface-2)',   color: 'var(--c-text-2)' },
 }
 
@@ -103,13 +103,13 @@ const TABLE_COLS_LEAVE = [
 ]
 
 const dateInputStyle = {
-  height: 38, borderRadius: 10, border: '1px solid var(--c-border)',
+  height: 38, borderRadius: 4, border: '1px solid var(--c-border)',
   background: '#fff', padding: '0 10px', fontSize: 12, fontFamily: 'var(--font-sans)',
   color: 'var(--c-text-2)', outline: 'none', cursor: 'pointer',
 }
 
 const deptSelectStyle = {
-  height: 38, padding: '0 10px', borderRadius: 10, minWidth: 140,
+  height: 38, padding: '0 10px', borderRadius: 4, minWidth: 140,
   background: '#fff', border: '1px solid var(--c-border)',
   fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
   cursor: 'pointer', direction: 'rtl', outline: 'none',
@@ -126,7 +126,7 @@ function TypeBadge({ type }) {
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '5px 11px', borderRadius: 999,
       fontSize: 12, fontWeight: 700, color: meta.color,
-      background: meta.bg, border: `1px solid ${meta.color}22`,
+      background: meta.bg, border: `1px solid color-mix(in srgb, ${meta.color} 13%, transparent)`,
       whiteSpace: 'nowrap',
     }}>
       <Icon size={12} />
@@ -154,7 +154,7 @@ function AbsentBadge() {
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '5px 11px', borderRadius: 999,
       fontSize: 12, fontWeight: 700, color: 'var(--c-rejected)',
-      background: 'var(--c-rejected-bg)', border: '1px solid var(--c-rejected)22',
+      background: 'var(--c-rejected-bg)', border: '1px solid color-mix(in srgb, var(--c-rejected) 13%, transparent)',
       whiteSpace: 'nowrap',
     }}>
       <UserX size={12} />
@@ -168,7 +168,7 @@ function InitialsTag({ name, size = 34 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: 'linear-gradient(135deg, var(--c-primary), #1C3A5E)',
+      background: 'linear-gradient(135deg, var(--c-primary), #1D5446)',
       color: '#fff', fontWeight: 800, fontSize: size * 0.34,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
@@ -237,7 +237,7 @@ function SelfiePreviewModal({ record, onClose }) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 50,
-        background: 'rgba(20,32,50,0.5)',
+        background: 'rgba(14,22,19,0.5)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
@@ -245,7 +245,7 @@ function SelfiePreviewModal({ record, onClose }) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: 'min(420px, 100%)', background: '#fff', borderRadius: 16,
+          width: 'min(420px, 100%)', background: '#fff', borderRadius: 8,
           overflow: 'hidden', boxShadow: 'var(--sh-card-lg)',
         }}
       >
@@ -270,7 +270,7 @@ function SelfiePreviewModal({ record, onClose }) {
               <button
                 onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} title="فتح في تبويب جديد"
                 style={{
-                  width: 34, height: 34, borderRadius: 9,
+                  width: 34, height: 34, borderRadius: 4,
                   border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                 }}
@@ -281,7 +281,7 @@ function SelfiePreviewModal({ record, onClose }) {
             <button
               onClick={onClose} title="إغلاق"
               style={{
-                width: 34, height: 34, borderRadius: 9,
+                width: 34, height: 34, borderRadius: 4,
                 border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
               }}
@@ -369,8 +369,8 @@ function RecordRow({ record, last, onViewSelfie, onReject, onUndoReject, canReje
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
         background: rejected
-          ? 'rgba(192,57,43,0.045)'
-          : hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+          ? 'rgba(179,38,30,0.045)'
+          : hov ? 'rgba(29,84,70,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
@@ -424,7 +424,7 @@ function RecordRow({ record, last, onViewSelfie, onReject, onUndoReject, canReje
             onClick={() => onUndoReject(record)}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px',
-              borderRadius: 9, border: 'none', background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
+              borderRadius: 4, border: 'none', background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
               fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer',
             }}
           >
@@ -436,7 +436,7 @@ function RecordRow({ record, last, onViewSelfie, onReject, onUndoReject, canReje
             title="رفض تسجيل غير مطابق — الموقع أو الصورة"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px',
-              borderRadius: 9, border: 'none', background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
+              borderRadius: 4, border: 'none', background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
               fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer',
             }}
           >
@@ -457,7 +457,7 @@ function AbsentRow({ user, last, onExcuse }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
@@ -487,7 +487,7 @@ function AbsentRow({ user, last, onExcuse }) {
         <AbsentBadge />
       </td>
       <td style={{ padding: '12px 16px' }}>
-        <button onClick={() => onExcuse(user)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}>
+        <button onClick={() => onExcuse(user)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 4, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}>
           <ShieldPlus size={13} /> تسجيل عذر / إجازة
         </button>
       </td>
@@ -558,7 +558,7 @@ function LeaveRow({ item, last, onUndoExcuse, onReturnToWork }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
@@ -611,7 +611,7 @@ function LeaveRow({ item, last, onUndoExcuse, onReturnToWork }) {
             onClick={() => onUndoExcuse(item)} title={LEAVE_COPY.undoExcuseTitle}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
-              borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff',
+              borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
               fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
               color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
             }}
@@ -623,7 +623,7 @@ function LeaveRow({ item, last, onUndoExcuse, onReturnToWork }) {
             onClick={() => onReturnToWork(item)} title={LEAVE_COPY.returnToWorkTitle}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
-              borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff',
+              borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
               fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
               color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
             }}
@@ -643,7 +643,7 @@ function PagBtn({ children, active, disabled, onClick }) {
     <button
       onClick={onClick} disabled={disabled}
       style={{
-        width: 32, height: 32, borderRadius: 8,
+        width: 32, height: 32, borderRadius: 4,
         cursor: disabled ? 'default' : 'pointer',
         border: active ? 'none' : '1px solid var(--c-border)',
         background: active ? 'var(--c-primary)' : '#fff',
@@ -704,7 +704,7 @@ function SingleDateFilters({
             onClick={() => setDate('')} title="العودة إلى اليوم"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              height: 38, padding: '0 12px', borderRadius: 10,
+              height: 38, padding: '0 12px', borderRadius: 4,
               background: 'var(--c-surface)', border: '1px solid var(--c-border)',
               fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
               color: 'var(--c-text-2)', cursor: 'pointer',
@@ -1115,7 +1115,7 @@ export default function AttendancePage() {
       {/* ── Main card ───────────────────────────────────────────────────── */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
 
         {/* Tabs */}
@@ -1135,7 +1135,7 @@ export default function AttendancePage() {
                 key={t.key} onClick={() => setView(t.key)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 7,
-                  height: 36, padding: '0 14px', borderRadius: 9, border: 'none',
+                  height: 36, padding: '0 14px', borderRadius: 4, border: 'none',
                   background: active ? 'var(--c-primary)' : 'transparent',
                   color: active ? '#fff' : 'var(--c-text-2)',
                   fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
@@ -1314,7 +1314,7 @@ export default function AttendancePage() {
                   onClick={clearFilters}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
-                    height: 38, padding: '0 12px', borderRadius: 10,
+                    height: 38, padding: '0 12px', borderRadius: 4,
                     background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                     fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
                     color: 'var(--c-text-2)', cursor: 'pointer',

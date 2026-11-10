@@ -58,7 +58,7 @@ function StatusCard({ status, loading }) {
   if (loading) {
     return (
       <div style={{
-        height: 96, borderRadius: 16, marginBottom: 16,
+        height: 96, borderRadius: 8, marginBottom: 16,
         background: 'var(--c-surface-2)', animation: 'pulse 1.5s ease-in-out infinite',
       }} />
     )
@@ -69,11 +69,11 @@ function StatusCard({ status, loading }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16,
-      padding: '18px 20px', borderRadius: 16,
+      padding: '18px 20px', borderRadius: 8,
       background: '#fff', border: '1px solid var(--c-border)', boxShadow: 'var(--sh-card)',
     }}>
       <div style={{
-        width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+        width: 48, height: 48, borderRadius: 8, flexShrink: 0,
         background: v.bg, color: v.color,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
@@ -91,15 +91,15 @@ function StatusCard({ status, loading }) {
 
 function Notice({ icon: Icon, tone = 'warn', children }) {
   const tones = {
-    warn:   { bg: 'var(--c-pending-bg)',  color: '#8A6A23',            border: 'var(--c-accent-soft)' },
-    error:  { bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',  border: 'rgba(192,57,43,0.22)' },
-    info:   { bg: 'var(--c-primary-light)', color: 'var(--c-primary)', border: 'rgba(34,65,103,0.16)' },
+    warn:   { bg: 'var(--c-pending-bg)',  color: '#6B5B35',            border: 'var(--c-accent-soft)' },
+    error:  { bg: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',  border: 'rgba(179,38,30,0.22)' },
+    info:   { bg: 'var(--c-primary-light)', color: 'var(--c-primary)', border: 'rgba(29,84,70,0.16)' },
   }
   const t = tones[tone]
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14,
-      padding: '12px 14px', borderRadius: 12,
+      padding: '12px 14px', borderRadius: 8,
       background: t.bg, border: `1px solid ${t.border}`, color: t.color,
     }}>
       <Icon size={16} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -151,8 +151,8 @@ const PERMISSION_STEPS = {
 function ServerPolicyPanel({ features }) {
   return (
     <div style={{
-      marginBottom: 16, padding: '16px 18px', borderRadius: 14,
-      background: 'var(--c-rejected-bg)', border: '1px solid rgba(192,57,43,0.22)',
+      marginBottom: 16, padding: '16px 18px', borderRadius: 8,
+      background: 'var(--c-rejected-bg)', border: '1px solid rgba(179,38,30,0.22)',
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10,
@@ -165,7 +165,7 @@ function ServerPolicyPanel({ features }) {
         إعدادات المتصفح لن تحلّ هذه المشكلة — الخادم يرسل ترويسة
         {' '}<code style={{
           fontFamily: 'monospace', fontSize: 11.5, direction: 'ltr', display: 'inline-block',
-          background: 'var(--c-surface-2)', borderRadius: 5, padding: '1px 5px',
+          background: 'var(--c-surface-2)', borderRadius: 3, padding: '1px 5px',
         }}>Permissions-Policy</code>{' '}
         تمنع استخدام الموقع والكاميرا في هذه الصفحة.
         <br />
@@ -190,8 +190,8 @@ function LocationBlockedPanel({ onRetry }) {
   const note = PERMISSION_NOTES[family]
   return (
     <div style={{
-      marginBottom: 16, padding: '16px 18px', borderRadius: 14,
-      background: 'var(--c-rejected-bg)', border: '1px solid rgba(192,57,43,0.22)',
+      marginBottom: 16, padding: '16px 18px', borderRadius: 8,
+      background: 'var(--c-rejected-bg)', border: '1px solid rgba(179,38,30,0.22)',
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10,
@@ -210,7 +210,7 @@ function LocationBlockedPanel({ onRetry }) {
       </ol>
       {note && (
         <p style={{
-          margin: '0 0 14px', padding: '10px 12px', borderRadius: 10,
+          margin: '0 0 14px', padding: '10px 12px', borderRadius: 4,
           background: 'rgba(255,255,255,0.55)',
           fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.9,
         }}>
@@ -220,7 +220,7 @@ function LocationBlockedPanel({ onRetry }) {
       <button
         onClick={onRetry}
         style={{
-          height: 38, padding: '0 16px', borderRadius: 10, border: 'none',
+          height: 38, padding: '0 16px', borderRadius: 4, border: 'none',
           background: 'var(--c-rejected)', color: '#fff',
           fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700,
           display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
@@ -250,7 +250,7 @@ function RecordTile({ record, last }) {
       opacity: rejected ? 0.75 : 1,
     }}>
       <div style={{
-        width: 36, height: 36, borderRadius: 11, flexShrink: 0,
+        width: 36, height: 36, borderRadius: 4, flexShrink: 0,
         background: rejected ? 'var(--c-rejected-bg)' : (meta?.bg ?? 'var(--c-surface-2)'),
         color: rejected ? 'var(--c-rejected)' : (meta?.color ?? 'var(--c-text-2)'),
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -483,7 +483,7 @@ export default function MyAttendancePage() {
           <Link
             to="/attendance/history"
             style={{
-              height: 38, padding: '0 14px', borderRadius: 10, flexShrink: 0,
+              height: 38, padding: '0 14px', borderRadius: 4, flexShrink: 0,
               background: '#fff', border: '1px solid var(--c-border)', color: 'var(--c-text-2)',
               fontSize: 12.5, fontWeight: 700, textDecoration: 'none',
               display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -542,7 +542,7 @@ export default function MyAttendancePage() {
       <button
         onClick={startCapture} disabled={disabled}
         style={{
-          width: '100%', height: 72, borderRadius: 18, border: 'none', marginBottom: 22,
+          width: '100%', height: 72, borderRadius: 8, border: 'none', marginBottom: 22,
           background: disabled
             ? 'var(--c-surface-2)'
             : nextType === 'check_out' ? 'var(--c-rejected)' : 'var(--c-approved)',
@@ -601,7 +601,7 @@ export default function MyAttendancePage() {
       {/* Today's records */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
         <div style={{
           padding: '13px 18px', borderBottom: '1px solid var(--c-border)',
@@ -619,7 +619,7 @@ export default function MyAttendancePage() {
           <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[0, 1].map(i => (
               <div key={i} style={{
-                height: 36, borderRadius: 10, background: 'var(--c-surface-2)',
+                height: 36, borderRadius: 4, background: 'var(--c-surface-2)',
                 animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.08}s`,
               }} />
             ))}

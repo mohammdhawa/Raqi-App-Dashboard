@@ -52,7 +52,7 @@ function InitialsTag({ name, size = 34 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: 'linear-gradient(135deg, var(--c-primary), #1C3A5E)',
+      background: 'linear-gradient(135deg, var(--c-primary), #1D5446)',
       color: '#fff', fontWeight: 800, fontSize: size * 0.34,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
@@ -123,7 +123,7 @@ function PagBtn({ children, active, disabled, onClick }) {
     <button
       onClick={onClick} disabled={disabled}
       style={{
-        width: 32, height: 32, borderRadius: 8,
+        width: 32, height: 32, borderRadius: 4,
         cursor: disabled ? 'default' : 'pointer',
         border: active ? 'none' : '1px solid var(--c-border)',
         background: active ? 'var(--c-primary)' : '#fff',
@@ -145,11 +145,11 @@ function BalanceTile({ icon: Icon, label, value, accent, title }) {
   return (
     <div title={title} style={{
       flex: 1, minWidth: 150, display: 'flex', alignItems: 'center', gap: 12,
-      padding: '14px 16px', borderRadius: 12, cursor: title ? 'help' : undefined,
+      padding: '14px 16px', borderRadius: 8, cursor: title ? 'help' : undefined,
       background: '#fff', border: '1px solid var(--c-border)',
     }}>
       <div style={{
-        width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+        width: 40, height: 40, borderRadius: 4, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: accent.bg, color: accent.color,
       }}>
@@ -172,7 +172,7 @@ function BalanceWidget({ balance, loading }) {
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 22 }}>
         {[0, 1, 2, 3].map(i => (
           <div key={i} style={{
-            flex: 1, minWidth: 150, height: 68, borderRadius: 12,
+            flex: 1, minWidth: 150, height: 68, borderRadius: 8,
             background: 'var(--c-surface-2)', animation: 'pulse 1.5s ease-in-out infinite',
             animationDelay: `${i * 0.08}s`,
           }} />
@@ -206,7 +206,7 @@ function BalanceWidget({ balance, loading }) {
       />
       </div>
       {Number(balance?.overBalance ?? 0) > 0 && (
-        <div style={{ marginTop: 10, padding: '10px 13px', borderRadius: 10, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 800 }}>
+        <div style={{ marginTop: 10, padding: '10px 13px', borderRadius: 4, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 800 }}>
           تجاوز الرصيد بـ {balance.overBalance} يوم
         </div>
       )}
@@ -279,14 +279,14 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
     <div
       onClick={() => !submitting && onClose()}
       style={{
-        position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(20,32,50,0.5)',
+        position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(14,22,19,0.5)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ width: 'min(460px, 100%)', background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card-lg)' }}
+        style={{ width: 'min(460px, 100%)', background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card-lg)' }}
       >
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--c-border)' }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>
@@ -302,7 +302,7 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
         <div style={{ padding: '16px 20px' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
-            borderRadius: 12, background: 'var(--c-surface)', marginBottom: 14,
+            borderRadius: 8, background: 'var(--c-surface)', marginBottom: 14,
           }}>
             <InitialsTag name={u?.name} />
             <div style={{ minWidth: 0, flex: 1 }}>
@@ -326,7 +326,7 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
           {endsChain && (
             <div style={{
               display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 14,
-              padding: '10px 12px', borderRadius: 10,
+              padding: '10px 12px', borderRadius: 4,
               background: 'var(--c-pending-bg)', color: 'var(--c-text-2)',
               fontSize: 11.5, lineHeight: 1.7,
             }}>
@@ -341,7 +341,7 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
                 سبب الطلب
               </div>
               <div style={{
-                borderRadius: 10, padding: '10px 12px', background: 'var(--c-surface)',
+                borderRadius: 4, padding: '10px 12px', background: 'var(--c-surface)',
                 fontSize: 12.5, color: 'var(--c-text-2)', lineHeight: 1.6,
               }}>
                 {getLeaveReason(item)}
@@ -357,7 +357,7 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
           <button
             onClick={onClose} disabled={submitting}
             style={{
-              height: 38, padding: '0 16px', borderRadius: 10,
+              height: 38, padding: '0 16px', borderRadius: 4,
               background: 'transparent', border: '1px solid var(--c-border)',
               fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
               color: 'var(--c-text-2)', cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,
@@ -368,7 +368,7 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
           <button
             onClick={confirm} disabled={submitting}
             style={{
-              height: 38, padding: '0 18px', borderRadius: 10, border: 'none',
+              height: 38, padding: '0 18px', borderRadius: 4, border: 'none',
               background: isApprove ? 'var(--c-approved)' : 'var(--c-rejected)', color: '#fff',
               fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
               display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -442,7 +442,7 @@ function ReassignButton({ onClick }) {
       onClick={onClick} title={LEAVE_COPY.reassignHint}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 11px',
-        borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff',
+        borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
         fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 700,
         color: 'var(--c-text-2)', cursor: 'pointer', whiteSpace: 'nowrap',
       }}
@@ -470,7 +470,7 @@ function ApprovalRow({ item, last, onReview, supervisor, onReassign }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent', transition: 'background .1s',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent', transition: 'background .1s',
       }}
     >
       <td style={{ padding: '12px 16px' }}>
@@ -507,7 +507,7 @@ function ApprovalRow({ item, last, onReview, supervisor, onReassign }) {
                     title={selfAssigned ? SELF_APPROVAL_BLOCKED : 'موافقة'}
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px',
-                      borderRadius: 9, border: 'none', background: 'var(--c-approved-bg)', color: 'var(--c-approved)',
+                      borderRadius: 4, border: 'none', background: 'var(--c-approved-bg)', color: 'var(--c-approved)',
                       fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
                       cursor: selfAssigned ? 'not-allowed' : 'pointer', opacity: selfAssigned ? 0.45 : 1,
                     }}
@@ -518,7 +518,7 @@ function ApprovalRow({ item, last, onReview, supervisor, onReassign }) {
                     onClick={() => onReview(item, 'reject')} title="رفض"
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 12px',
-                      borderRadius: 9, border: 'none', background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
+                      borderRadius: 4, border: 'none', background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
                       fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
                     }}
                   >
@@ -556,7 +556,7 @@ function MineRow({ item, last }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent', transition: 'background .1s',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent', transition: 'background .1s',
       }}
     >
       <td style={{ padding: '12px 16px' }}><LeaveTypePill item={item} /></td>
@@ -588,7 +588,7 @@ function SkeletonRow({ count }) {
     <tr>
       {Array.from({ length: count }, (_, i) => (
         <td key={i} style={{ padding: '12px 16px' }}>
-          <div style={{ ...pulse, height: 16, width: i === 0 ? 150 : 90, borderRadius: 7, animationDelay: `${i * 0.08}s` }} />
+          <div style={{ ...pulse, height: 16, width: i === 0 ? 150 : 90, borderRadius: 3, animationDelay: `${i * 0.08}s` }} />
         </td>
       ))}
     </tr>
@@ -635,14 +635,14 @@ const STATUS_OPTIONS = [
 ]
 
 const filterSelectStyle = {
-  height: 38, padding: '0 10px', borderRadius: 10, minWidth: 140,
+  height: 38, padding: '0 10px', borderRadius: 4, minWidth: 140,
   background: '#fff', border: '1px solid var(--c-border)',
   fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
   cursor: 'pointer', direction: 'rtl', outline: 'none',
 }
 
 const filterDateStyle = {
-  height: 38, borderRadius: 10, border: '1px solid var(--c-border)',
+  height: 38, borderRadius: 4, border: '1px solid var(--c-border)',
   background: '#fff', padding: '0 10px', fontSize: 12, fontFamily: 'var(--font-sans)',
   color: 'var(--c-text-2)', outline: 'none', cursor: 'pointer',
 }
@@ -855,7 +855,7 @@ export default function LeavePage() {
           <button
             onClick={() => setSubmitting(true)}
             style={{
-              height: 42, padding: '0 18px', borderRadius: 11, border: 'none', flexShrink: 0,
+              height: 42, padding: '0 18px', borderRadius: 4, border: 'none', flexShrink: 0,
               background: 'var(--c-primary)', color: '#fff',
               fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
               display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
@@ -873,7 +873,7 @@ export default function LeavePage() {
       {/* Main card */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
 
         {/* Tabs */}
@@ -892,7 +892,7 @@ export default function LeavePage() {
                 key={t.key} onClick={() => setTab(t.key)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 7,
-                  height: 36, padding: '0 14px', borderRadius: 9, border: 'none',
+                  height: 36, padding: '0 14px', borderRadius: 4, border: 'none',
                   background: active ? 'var(--c-primary)' : 'transparent',
                   color: active ? '#fff' : 'var(--c-text-2)',
                   fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
@@ -990,7 +990,7 @@ export default function LeavePage() {
               onClick={clearFilters}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 38, padding: '0 12px', borderRadius: 10,
+                height: 38, padding: '0 12px', borderRadius: 4,
                 background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                 fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
                 color: 'var(--c-text-2)', cursor: 'pointer',

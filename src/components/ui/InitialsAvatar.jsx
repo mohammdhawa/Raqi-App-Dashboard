@@ -10,7 +10,7 @@ export default function InitialsAvatar({ name, size = 30, gradient }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: gradient ?? 'linear-gradient(135deg, var(--c-primary), #1C3A5E)',
+      background: gradient ?? 'var(--c-primary)',
       color: '#fff', fontWeight: 800, fontSize: size * 0.38,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
