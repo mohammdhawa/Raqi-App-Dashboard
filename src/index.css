@@ -149,3 +149,23 @@ select[style*="background: transparent"]:focus-visible {
 }
 /* Icons are block-level under the CSS reset, so text-align cannot centre them */
 .site-grid-light > svg { margin-inline: auto; }
+
+/* Page chunk loading: three blocks, laid one by one */
+.page-loading {
+  display: flex; gap: 5px; justify-content: center; padding: 96px 0;
+  opacity: 0; animation: page-loading-in .2s ease .25s forwards;
+}
+.page-loading span {
+  width: 22px; height: 6px; background: var(--c-concrete);
+  animation: page-loading-block 1.2s ease-in-out infinite;
+}
+.page-loading span:nth-child(2) { animation-delay: .15s; }
+.page-loading span:nth-child(3) { animation-delay: .3s; }
+@keyframes page-loading-in { to { opacity: 1; } }
+@keyframes page-loading-block {
+  0%, 100% { background: var(--c-concrete); }
+  40%      { background: var(--c-accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-loading span { animation: none; }
+}

@@ -3,28 +3,33 @@ import { AuthProvider, RequireAuth, RequireAttendanceAccess, RequireAttendanceCh
 import { ToastProvider } from './components/ui/Toast'
 import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/LoginPage'
-import DashboardPage from './pages/DashboardPage'
-import DocumentsPage from './pages/DocumentsPage'
-import UsersPage from './pages/UsersPage'
-import DepartmentsPage from './pages/DepartmentsPage'
-import SectionsPage from './pages/SectionsPage'
-import TemplatesPage from './pages/TemplatesPage'
-import TemplateBuilderPage from './pages/TemplateBuilderPage'
-import AttendancePage from './pages/AttendancePage'
-import AttendanceReportPage from './pages/AttendanceReportPage'
-import AttendanceMonthlyReportPage from './pages/AttendanceMonthlyReportPage'
-import AttendanceEmployeeReportPage from './pages/AttendanceEmployeeReportPage'
-import LeavePage from './pages/LeavePage'
-import LeaveRegisterPage from './pages/LeaveRegisterPage'
-import LeaveBalancesPage from './pages/LeaveBalancesPage'
-import LeaveTypesPage from './pages/LeaveTypesPage'
-import BroadcastPage from './pages/BroadcastPage'
-import DocumentInboxPage from './pages/DocumentInboxPage'
-import DocumentSentPage from './pages/DocumentSentPage'
-import DocumentSubmitPage from './pages/DocumentSubmitPage'
-import DocumentDetailPage from './pages/DocumentDetailPage'
-import MyAttendancePage from './pages/MyAttendancePage'
-import MyAttendanceHistoryPage from './pages/MyAttendanceHistoryPage'
+import lazyPage from './utils/lazyPage'
+
+// Every signed-in page is its own chunk, fetched on first visit. The login
+// page and the layout shell stay in the entry bundle: they are what a visitor
+// sees first, and the shell is what holds the screen while a page loads.
+const DashboardPage = lazyPage(() => import('./pages/DashboardPage'))
+const DocumentsPage = lazyPage(() => import('./pages/DocumentsPage'))
+const UsersPage = lazyPage(() => import('./pages/UsersPage'))
+const DepartmentsPage = lazyPage(() => import('./pages/DepartmentsPage'))
+const SectionsPage = lazyPage(() => import('./pages/SectionsPage'))
+const TemplatesPage = lazyPage(() => import('./pages/TemplatesPage'))
+const TemplateBuilderPage = lazyPage(() => import('./pages/TemplateBuilderPage'))
+const AttendancePage = lazyPage(() => import('./pages/AttendancePage'))
+const AttendanceReportPage = lazyPage(() => import('./pages/AttendanceReportPage'))
+const AttendanceMonthlyReportPage = lazyPage(() => import('./pages/AttendanceMonthlyReportPage'))
+const AttendanceEmployeeReportPage = lazyPage(() => import('./pages/AttendanceEmployeeReportPage'))
+const LeavePage = lazyPage(() => import('./pages/LeavePage'))
+const LeaveRegisterPage = lazyPage(() => import('./pages/LeaveRegisterPage'))
+const LeaveBalancesPage = lazyPage(() => import('./pages/LeaveBalancesPage'))
+const LeaveTypesPage = lazyPage(() => import('./pages/LeaveTypesPage'))
+const BroadcastPage = lazyPage(() => import('./pages/BroadcastPage'))
+const DocumentInboxPage = lazyPage(() => import('./pages/DocumentInboxPage'))
+const DocumentSentPage = lazyPage(() => import('./pages/DocumentSentPage'))
+const DocumentSubmitPage = lazyPage(() => import('./pages/DocumentSubmitPage'))
+const DocumentDetailPage = lazyPage(() => import('./pages/DocumentDetailPage'))
+const MyAttendancePage = lazyPage(() => import('./pages/MyAttendancePage'))
+const MyAttendanceHistoryPage = lazyPage(() => import('./pages/MyAttendanceHistoryPage'))
 
 function HomeRedirect() {
   const { user } = useAuth()
