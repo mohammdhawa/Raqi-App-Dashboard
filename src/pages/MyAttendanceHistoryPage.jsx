@@ -137,7 +137,7 @@ function RecordRow({ record, last }) {
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
               padding: '2px 8px', borderRadius: 2,
-              fontSize: 10.5, fontWeight: 800, lineHeight: 1.5, whiteSpace: 'nowrap',
+              fontSize: 12, fontWeight: 800, lineHeight: 1.5, whiteSpace: 'nowrap',
               color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)',
               border: '1px solid rgba(179,38,30,0.22)',
             }}>
@@ -146,16 +146,16 @@ function RecordRow({ record, last }) {
           )}
         </div>
         {rejected ? (
-          <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 3, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 3, lineHeight: 1.6 }}>
             {readRejectionMessage(record)}
             {rejection?.at && (
-              <span style={{ display: 'block', fontSize: 10.5, color: 'var(--c-text-3)', marginTop: 2 }}>
+              <span style={{ display: 'block', fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
                 {REJECTION_COPY.badge} — {formatDate(rejection.at)}
               </span>
             )}
           </div>
         ) : (
-          <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 3 }}>
+          <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 3 }}>
             {record.type === 'check_out' && record.work_hours != null
               ? `ساعات العمل: ${record.work_hours_formatted ?? record.work_hours}`
               : record.type === 'check_in' && record.missing_checkout
@@ -329,7 +329,7 @@ export default function MyAttendanceHistoryPage() {
           display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
         }}>
           <span style={{
-            fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
+            fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
             background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
           }}>
             {total} سجلاً
@@ -419,7 +419,7 @@ export default function MyAttendanceHistoryPage() {
                 padding: '9px 18px', background: 'var(--c-surface)',
                 borderBottom: '1px solid var(--c-border)',
                 display: 'flex', alignItems: 'center', gap: 8,
-                fontSize: 11.5, fontWeight: 800, color: 'var(--c-text-2)',
+                fontSize: 12, fontWeight: 800, color: 'var(--c-text-2)',
               }}>
                 {dayHeading(group.key, today, yesterday)}
                 {/* Refused rows are excluded — the server counts none of them,
@@ -427,7 +427,7 @@ export default function MyAttendanceHistoryPage() {
                 {hours && (
                   <span style={{
                     marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5,
-                    fontSize: 11, fontWeight: 700, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums',
+                    fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums',
                   }}>
                     <Clock size={11} />
                     {hours}

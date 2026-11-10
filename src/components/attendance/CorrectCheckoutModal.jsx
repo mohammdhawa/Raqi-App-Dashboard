@@ -137,7 +137,7 @@ export default function CorrectCheckoutModal({ target, onClose, onDone }) {
             background: 'var(--c-pending-bg)', border: '1px solid color-mix(in srgb, var(--c-pending) 13%, transparent)',
           }}>
             <AlertTriangle size={15} style={{ color: 'var(--c-pending)', flexShrink: 0, marginTop: 1 }} />
-            <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: 'var(--c-text-2)' }}>
+            <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: 'var(--c-text-2)' }}>
               لم يُسجِّل الموظف خروجه وأُغلق اليوم تلقائياً. حدّد وقت الخروج الفعلي ليُحتسب وقت العمل،
               وسيُسجَّل اسمك ووقت التصحيح في سجل المراجعة.
             </p>
@@ -157,7 +157,7 @@ export default function CorrectCheckoutModal({ target, onClose, onDone }) {
               }}
             />
             {liveError && (
-              <p style={{ margin: '6px 0 0', fontSize: 11.5, fontWeight: 600, color: 'var(--c-rejected)' }}>
+              <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)' }}>
                 {liveError}
               </p>
             )}

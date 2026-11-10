@@ -96,7 +96,7 @@ export default function LoginPage() {
           </h1>
           <div style={{
             color: 'var(--c-accent-on-dark)', fontFamily: 'var(--font-mono)',
-            fontSize: 11, fontWeight: 500, letterSpacing: 3, marginBottom: 22,
+            fontSize: 12, fontWeight: 500, letterSpacing: 3, marginBottom: 22,
           }}>
             SUNAA CONSTRUCTION
           </div>

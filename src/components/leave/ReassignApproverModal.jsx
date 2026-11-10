@@ -33,8 +33,8 @@ function Field({ label, required, error, hint, children }) {
         {required && <span style={{ color: 'var(--c-rejected)', marginInlineStart: 3 }}>*</span>}
       </label>
       {children}
-      {hint && !error && <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
-      {error && <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
+      {hint && !error && <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
     </div>
   )
 }
@@ -165,7 +165,7 @@ export default function ReassignApproverModal({ item, onClose, onDone }) {
                         <span style={{
                           width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
                           background: 'var(--c-primary)', color: '#fff',
-                          fontSize: 10.5, fontWeight: 800,
+                          fontSize: 12, fontWeight: 800,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
                           {step.order}
@@ -174,7 +174,7 @@ export default function ReassignApproverModal({ item, onClose, onDone }) {
                           {step.name ?? `#${step.userId}`}
                         </span>
                         {isCurrent && (
-                          <span style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--c-pending)', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--c-pending)', whiteSpace: 'nowrap' }}>
                             {LEAVE_COPY.currentApprover}
                           </span>
                         )}

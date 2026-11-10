@@ -185,20 +185,20 @@ function SortableField({ field, onEdit, onDelete }) {
         <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)', marginBottom: 2 }}>
           {field.label}
         </div>
-        <div style={{ fontFamily: "'Courier New', monospace", fontSize: 11, color: 'var(--c-text-3)' }}>
+        <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: 'var(--c-text-3)' }}>
           {field.key}
         </div>
       </div>
 
       <span style={{
-        fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
+        fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
         background: 'var(--c-surface)', borderRadius: 3, padding: '3px 9px', whiteSpace: 'nowrap',
       }}>
         {ft?.label ?? field.type}
       </span>
 
       <span style={{
-        fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 3, whiteSpace: 'nowrap',
+        fontSize: 12, fontWeight: 700, padding: '3px 9px', borderRadius: 3, whiteSpace: 'nowrap',
         color: field.required ? 'var(--c-rejected)' : 'var(--c-text-3)',
         background: field.required ? 'var(--c-rejected-bg)' : 'var(--c-surface)',
       }}>
@@ -284,8 +284,8 @@ function FieldPanel({ initial, onSave, onCancel }) {
                 }}>
                   <Icon size={15} />
                 </div>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text)' }}>{ft.label}</span>
-                <span style={{ fontSize: 10, color: 'var(--c-text-3)', textAlign: 'center', lineHeight: 1.4 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text)' }}>{ft.label}</span>
+                <span style={{ fontSize: 12, color: 'var(--c-text-3)', textAlign: 'center', lineHeight: 1.4 }}>
                   {ft.hint}
                 </span>
               </button>
@@ -567,7 +567,7 @@ function LivePreview({ name, fields }) {
               <div key={field.key} style={{ marginBottom: 13 }}>
                 <label style={{
                   display: 'flex', alignItems: 'center', gap: 4,
-                  fontSize: 11.5, fontWeight: 700, color: 'var(--c-text)', marginBottom: 5,
+                  fontSize: 12, fontWeight: 700, color: 'var(--c-text)', marginBottom: 5,
                 }}>
                   <Icon size={11} style={{ color: 'var(--c-text-3)' }} />
                   {field.label}
@@ -578,7 +578,7 @@ function LivePreview({ name, fields }) {
                   <div style={{
                     height: 72, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                     borderRadius: 4, padding: '8px 10px',
-                    fontSize: 11.5, color: 'var(--c-text-3)', direction: 'rtl',
+                    fontSize: 12, color: 'var(--c-text-3)', direction: 'rtl',
                   }}>
                     فقرة نصية...
                   </div>
@@ -595,7 +595,7 @@ function LivePreview({ name, fields }) {
                         }}>
                           {field.columns.map(col => (
                             <div key={col.key} style={{
-                              padding: '6px 10px', fontSize: 10.5, fontWeight: 700,
+                              padding: '6px 10px', fontSize: 12, fontWeight: 700,
                               color: 'var(--c-text-2)', textAlign: 'center',
                             }}>
                               {col.label}
@@ -605,7 +605,7 @@ function LivePreview({ name, fields }) {
                         <div style={{ height: 32, background: '#fff' }} />
                       </>
                     ) : (
-                      <div style={{ padding: '10px', fontSize: 11, color: 'var(--c-text-3)', textAlign: 'center' }}>
+                      <div style={{ padding: '10px', fontSize: 12, color: 'var(--c-text-3)', textAlign: 'center' }}>
                         لم تُحدَّد أعمدة بعد
                       </div>
                     )}
@@ -618,7 +618,7 @@ function LivePreview({ name, fields }) {
                     borderRadius: 4, padding: '0 10px',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
-                    <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>
+                    <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
                       {field.options?.length ? field.options[0] : `اختر ${field.label}...`}
                     </span>
                     <ChevronDown size={12} style={{ color: 'var(--c-text-3)' }} />
@@ -631,7 +631,7 @@ function LivePreview({ name, fields }) {
                     borderRadius: 4, padding: '0 10px',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
-                    <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>يوم / شهر / سنة</span>
+                    <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>يوم / شهر / سنة</span>
                     <CalendarDays size={12} style={{ color: 'var(--c-text-3)' }} />
                   </div>
                 )}
@@ -641,7 +641,7 @@ function LivePreview({ name, fields }) {
                     height: 36, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                     borderRadius: 4, padding: '0 10px', display: 'flex', alignItems: 'center',
                   }}>
-                    <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>
+                    <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
                       {field.type === 'number' ? '0.00' : 'سطر نصي قصير'}
                     </span>
                   </div>
@@ -974,7 +974,7 @@ export default function TemplateBuilderPage() {
                 }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>القالب فعّال</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
                       يظهر القالب للمنشئين عند إنشاء مستند جديد
                     </div>
                   </div>
@@ -1008,7 +1008,7 @@ export default function TemplateBuilderPage() {
               }}>
                 <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>حقول القالب</span>
                 <span style={{
-                  fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
+                  fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
                   background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
                 }}>
                   {fields.length} حقول

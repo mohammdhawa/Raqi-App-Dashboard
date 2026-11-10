@@ -46,7 +46,7 @@ function Warning({ icon: Icon, tone = 'warn', children }) {
       background: t.bg, border: `1px solid ${t.border}`,
     }}>
       <Icon size={15} style={{ color: t.color, flexShrink: 0, marginTop: 1 }} />
-      <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.7, color: 'var(--c-text-2)' }}>{children}</p>
+      <p style={{ margin: 0, fontSize: 12, lineHeight: 1.7, color: 'var(--c-text-2)' }}>{children}</p>
     </div>
   )
 }
@@ -207,11 +207,11 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
               <DeductsBalanceBadge deducts={deducts} compact short />
             </div>
             {target?.reason && (
-              <span style={{ fontSize: 11.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
+              <span style={{ fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
                 {target.reason}
               </span>
             )}
-            <span style={{ fontSize: 10.5, color: 'var(--c-text-3)' }}>
+            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
               سجّلها: {target?.recordedBy ?? 'الموارد البشرية'}
             </span>
           </div>
@@ -233,7 +233,7 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
               fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 6,
             }}>
               {LEAVE_COPY.undoExcuseReason}
-              <span style={{ marginInlineStart: 'auto', fontSize: 10.5, fontWeight: 600, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{ marginInlineStart: 'auto', fontSize: 12, fontWeight: 600, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums' }}>
                 {reason.length}/{REASON_MAX}
               </span>
             </label>
@@ -249,8 +249,8 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
               }}
             />
             {reasonError
-              ? <p style={{ margin: '6px 0 0', fontSize: 11.5, fontWeight: 600, color: 'var(--c-rejected)' }}>{reasonError}</p>
-              : <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--c-text-3)', lineHeight: 1.6 }}>{LEAVE_COPY.undoExcuseReasonHint}</p>}
+              ? <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)' }}>{reasonError}</p>
+              : <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--c-text-3)', lineHeight: 1.6 }}>{LEAVE_COPY.undoExcuseReasonHint}</p>}
           </div>
 
           {error && (

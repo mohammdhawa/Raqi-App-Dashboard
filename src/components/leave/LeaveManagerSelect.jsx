@@ -60,7 +60,7 @@ export default function LeaveManagerSelect({
           {selected ? selected.name : placeholder}
         </span>
         {selected && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-3)', flexShrink: 0 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)', flexShrink: 0 }}>
             {leaveRoleLabel(selected.role)}
           </span>
         )}
@@ -110,7 +110,7 @@ export default function LeaveManagerSelect({
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>{m.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
                       {m.email}
                       {m.department?.name && ` · ${m.department.name}`}
                     </div>

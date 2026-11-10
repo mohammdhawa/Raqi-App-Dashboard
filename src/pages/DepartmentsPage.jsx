@@ -49,7 +49,7 @@ function FieldWrap({ label, required, hint, children }) {
       </label>
       {children}
       {hint && (
-        <div style={{ marginTop: 5, fontSize: 11.5, color: 'var(--c-text-3)', lineHeight: 1.5 }}>
+        <div style={{ marginTop: 5, fontSize: 12, color: 'var(--c-text-3)', lineHeight: 1.5 }}>
           {hint}
         </div>
       )}
@@ -130,7 +130,7 @@ function DeptCard({ dept, onEdit, onDelete, onSections }) {
         <div style={{
           position: 'absolute', top: 12, left: 12,
           fontFamily: 'var(--font-mono)',
-          fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3,
+          fontSize: 12, fontWeight: 700, letterSpacing: 0.3,
           background: 'rgba(133,114,69,0.13)',
           color: '#6B5B35',
           border: '1px solid rgba(133,114,69,0.3)',
@@ -261,7 +261,7 @@ function DeptDrawer({ mode, dept, onClose, onSave }) {
       }}>
         {/* Head */}
         <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid var(--c-border)', flexShrink: 0, position: 'relative' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 6 }}>
             {isEdit ? 'تعديل إدارة' : 'إضافة إدارة'}
           </div>
           <h2 style={{ margin: '0 0 4px', fontSize: 21, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.4 }}>
@@ -574,7 +574,7 @@ export default function DepartmentsPage() {
                 <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.3, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                   {value}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
               </div>
             </div>
           ))}

@@ -16,8 +16,8 @@ function Field({ label, required, error, hint, children }) {
       {label}{required && <span style={{ color: 'var(--c-rejected)', marginInlineStart: 3 }}>*</span>}
     </label>
     {children}
-    {error && <div style={{ color: 'var(--c-rejected)', fontSize: 11.5, fontWeight: 600, marginTop: 5 }}>{error}</div>}
-    {!error && hint && <div style={{ color: 'var(--c-text-3)', fontSize: 11, marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
+    {error && <div style={{ color: 'var(--c-rejected)', fontSize: 12, fontWeight: 600, marginTop: 5 }}>{error}</div>}
+    {!error && hint && <div style={{ color: 'var(--c-text-3)', fontSize: 12, marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
   </div>
 }
 
@@ -81,7 +81,7 @@ export default function EditLeaveBalanceModal({ row, defaultDays, selectedYear, 
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>تعديل رصيد الإجازات — {row.user.name}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>
               السنة {selectedYear} · مستخدم {row.used_days} يوم · متبقي {row.remaining_days} يوم
               {/* Approved days under a non-deducting type — never part of
                   used_days, so they are named apart from it. */}

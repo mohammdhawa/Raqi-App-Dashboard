@@ -185,7 +185,7 @@ export default function LeaveTypeSelect({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>{type.name_ar}</div>
                     {type.requires_reason && (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, color: 'var(--c-text-3)', marginTop: 2 }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
                         <AlertTriangle size={10} />
                         {LEAVE_COPY.requiresReason}
                       </div>

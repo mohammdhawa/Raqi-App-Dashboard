@@ -35,7 +35,7 @@ function Warning({ icon: Icon, tone = 'warn', children }) {
       background: t.bg, border: `1px solid ${t.border}`,
     }}>
       <Icon size={15} style={{ color: t.color, flexShrink: 0, marginTop: 1 }} />
-      <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.7, color: 'var(--c-text-2)' }}>{children}</p>
+      <p style={{ margin: 0, fontSize: 12, lineHeight: 1.7, color: 'var(--c-text-2)' }}>{children}</p>
     </div>
   )
 }
@@ -68,7 +68,7 @@ function EvidencePanel({ selfieUrl, latitude, longitude }) {
       </div>
 
       <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 7, justifyContent: 'center' }}>
-        <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--c-text-3)' }}>
+        <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--c-text-3)' }}>
           {REJECTION_COPY.evidence}
         </span>
 
@@ -76,7 +76,7 @@ function EvidencePanel({ selfieUrl, latitude, longitude }) {
           <a
             href={selfieUrl} target="_blank" rel="noopener noreferrer"
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700,
+              display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700,
               color: 'var(--c-primary)', textDecoration: 'none',
             }}
           >
@@ -84,7 +84,7 @@ function EvidencePanel({ selfieUrl, latitude, longitude }) {
             فتح الصورة بالحجم الكامل
           </a>
         ) : (
-          <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>{REJECTION_COPY.noSelfie}</span>
+          <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{REJECTION_COPY.noSelfie}</span>
         )}
 
         {hasLocation ? (
@@ -92,7 +92,7 @@ function EvidencePanel({ selfieUrl, latitude, longitude }) {
             href={`https://www.google.com/maps?q=${latitude},${longitude}`}
             target="_blank" rel="noopener noreferrer" title="عرض الموقع على الخريطة"
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700,
+              display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700,
               color: 'var(--c-primary)', textDecoration: 'none', fontVariantNumeric: 'tabular-nums',
             }}
           >
@@ -100,7 +100,7 @@ function EvidencePanel({ selfieUrl, latitude, longitude }) {
             {Number(latitude).toFixed(5)}, {Number(longitude).toFixed(5)}
           </a>
         ) : (
-          <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>{REJECTION_COPY.noLocation}</span>
+          <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{REJECTION_COPY.noLocation}</span>
         )}
       </div>
     </div>
@@ -243,11 +243,11 @@ export default function RejectRecordModal({ target, mode = 'reject', onClose, on
                     {existing.label}
                   </span>
                   {existing.note && (
-                    <span style={{ fontSize: 11.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
+                    <span style={{ fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
                       {REJECTION_COPY.note}: {existing.note}
                     </span>
                   )}
-                  <span style={{ fontSize: 10.5, color: 'var(--c-text-3)' }}>
+                  <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
                     {existing.by ? `${REJECTION_COPY.by}: ${existing.by} · ` : ''}
                     {existing.at ? `${REJECTION_COPY.at}: ${formatRejectedAt(existing.at)}` : ''}
                   </span>
@@ -298,7 +298,7 @@ export default function RejectRecordModal({ target, mode = 'reject', onClose, on
                   })}
                 </div>
                 {fieldErrors?.reason && (
-                  <p style={{ margin: '6px 0 0', fontSize: 11.5, fontWeight: 600, color: 'var(--c-rejected)' }}>
+                  <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)' }}>
                     {[].concat(fieldErrors.reason).join('، ')}
                   </p>
                 )}
@@ -312,7 +312,7 @@ export default function RejectRecordModal({ target, mode = 'reject', onClose, on
                 }}>
                   {noteRequired ? REJECTION_COPY.noteLabel : REJECTION_COPY.noteOptional}
                   {noteRequired && <span style={{ color: 'var(--c-rejected)' }}>*</span>}
-                  <span style={{ marginInlineStart: 'auto', fontSize: 10.5, fontWeight: 600, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums' }}>
+                  <span style={{ marginInlineStart: 'auto', fontSize: 12, fontWeight: 600, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums' }}>
                     {note.length}/{NOTE_MAX}
                   </span>
                 </label>
@@ -327,7 +327,7 @@ export default function RejectRecordModal({ target, mode = 'reject', onClose, on
                   }}
                 />
                 {(noteMissing || fieldErrors?.note) && (
-                  <p style={{ margin: '6px 0 0', fontSize: 11.5, fontWeight: 600, color: 'var(--c-rejected)' }}>
+                  <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)' }}>
                     {fieldErrors?.note ? [].concat(fieldErrors.note).join('، ') : REJECTION_COPY.noteRequired}
                   </p>
                 )}

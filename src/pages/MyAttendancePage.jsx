@@ -164,7 +164,7 @@ function ServerPolicyPanel({ features }) {
       <p style={{ margin: 0, fontSize: 12.5, color: 'var(--c-text-2)', lineHeight: 1.9 }}>
         إعدادات المتصفح لن تحلّ هذه المشكلة — الخادم يرسل ترويسة
         {' '}<code style={{
-          fontFamily: 'monospace', fontSize: 11.5, direction: 'ltr', display: 'inline-block',
+          fontFamily: 'monospace', fontSize: 12, direction: 'ltr', display: 'inline-block',
           background: 'var(--c-surface-2)', borderRadius: 3, padding: '1px 5px',
         }}>Permissions-Policy</code>{' '}
         تمنع استخدام الموقع والكاميرا في هذه الصفحة.
@@ -266,11 +266,11 @@ function RecordTile({ record, last }) {
           {meta?.label ?? record.type}
         </div>
         {rejected ? (
-          <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 2, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 2, lineHeight: 1.6 }}>
             {readRejectionMessage(record)}
           </div>
         ) : hours != null && record.type === 'check_out' && (
-          <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
             ساعات العمل: {hours}
           </div>
         )}
@@ -578,7 +578,7 @@ export default function MyAttendancePage() {
       {!disabled && !geoBlocked && policyBlocked.length === 0 && (
         <div style={{
           marginTop: -12, marginBottom: 22, textAlign: 'center',
-          fontSize: 11.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1.8,
+          fontSize: 12, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1.8,
         }}>
           {geoPermission === 'prompt' ? (
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, flexWrap: 'wrap' }}>
@@ -610,7 +610,7 @@ export default function MyAttendancePage() {
           <Clock size={15} style={{ color: 'var(--c-text-3)' }} />
           <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--c-text)' }}>سجلات اليوم</span>
           <div style={{ flex: 1 }} />
-          <span style={{ fontSize: 11.5, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums' }}>
+          <span style={{ fontSize: 12, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums' }}>
             {dateKey}
           </span>
         </div>

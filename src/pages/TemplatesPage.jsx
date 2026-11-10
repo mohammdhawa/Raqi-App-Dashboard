@@ -95,7 +95,7 @@ function TplRow({ tpl, last, onEdit, onDuplicate, onDelete }) {
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text)', marginBottom: 3 }}>
           {tpl.name}
         </div>
-        <div style={{ fontFamily: "'Courier New', monospace", fontSize: 11, color: 'var(--c-text-3)' }}>
+        <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: 'var(--c-text-3)' }}>
           {tpl.slug}
         </div>
       </div>
@@ -110,7 +110,7 @@ function TplRow({ tpl, last, onEdit, onDuplicate, onDelete }) {
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1 }}>
           {tpl.fields_schema?.length ?? 0}
         </div>
-        <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, marginTop: 2 }}>حقل</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-3)', fontWeight: 600, marginTop: 2 }}>حقل</div>
       </div>
 
       {/* Documents count */}
@@ -118,14 +118,14 @@ function TplRow({ tpl, last, onEdit, onDuplicate, onDelete }) {
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1 }}>
           {tpl.documents_count ?? 0}
         </div>
-        <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, marginTop: 2 }}>مرتبط</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-3)', fontWeight: 600, marginTop: 2 }}>مرتبط</div>
       </div>
 
       {/* Version */}
       <div style={{ flex: '0 0 64px' }}>
         <span style={{
           fontFamily: "'Courier New', monospace",
-          fontSize: 11.5, fontWeight: 700, color: 'var(--c-primary)',
+          fontSize: 12, fontWeight: 700, color: 'var(--c-primary)',
           background: 'var(--c-primary-light)', borderRadius: 3,
           padding: '3px 9px', display: 'inline-block',
         }}>
@@ -374,7 +374,7 @@ export default function TemplatesPage() {
                 <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.3, lineHeight: 1 }}>
                   {value}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
               </div>
             </div>
           ))}
@@ -395,7 +395,7 @@ export default function TemplatesPage() {
             <LayoutTemplate size={17} style={{ color: 'var(--c-primary)' }} />
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>القوالب</span>
             <span style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
               background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {total} قوالب
@@ -459,14 +459,14 @@ export default function TemplatesPage() {
                   key={col.label}
                   style={{
                     flex: col.flex,
-                    fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
+                    fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
                     textAlign: col.center ? 'center' : 'right',
                   }}
                 >
                   {col.label}
                 </div>
               ))}
-              <div style={{ marginInlineStart: 'auto', fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
+              <div style={{ marginInlineStart: 'auto', fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)' }}>
                 إجراءات
               </div>
             </div>

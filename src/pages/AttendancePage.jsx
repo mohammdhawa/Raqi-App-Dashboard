@@ -140,7 +140,7 @@ function RoleBadge({ role }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
-      fontSize: 11, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
+      fontSize: 12, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
       background: m.bg, color: m.color,
     }}>
       {m.label}
@@ -205,7 +205,7 @@ function SelfieTag({ record, onView }) {
       onClick={() => onView(record)} title="عرض الصورة"
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        padding: '4px 10px', borderRadius: 2, fontSize: 11.5, fontWeight: 700,
+        padding: '4px 10px', borderRadius: 2, fontSize: 12, fontWeight: 700,
         background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
         border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)',
         transition: 'background .12s, color .12s',
@@ -261,7 +261,7 @@ function SelfiePreviewModal({ record, onClose }) {
             }}>
               {u?.name ?? '—'}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
               {formatDate(record.recorded_at)} — {formatTime(record.recorded_at)}
             </div>
           </div>
@@ -379,7 +379,7 @@ function RecordRow({ record, last, onViewSelfie, onReject, onUndoReject, canReje
           <InitialsTag name={u?.name} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{u?.name ?? '—'}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{u?.email ?? '—'}</div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{u?.email ?? '—'}</div>
           </div>
         </div>
       </td>
@@ -398,7 +398,7 @@ function RecordRow({ record, last, onViewSelfie, onReject, onUndoReject, canReje
           {formatDate(record.recorded_at)}
         </div>
         <div style={{
-          fontSize: 11, color: 'var(--c-text-3)', marginTop: 2, fontVariantNumeric: 'tabular-nums',
+          fontSize: 12, color: 'var(--c-text-3)', marginTop: 2, fontVariantNumeric: 'tabular-nums',
           textDecoration: rejected ? 'line-through' : 'none',
         }}>
           {formatTime(record.recorded_at)}
@@ -425,7 +425,7 @@ function RecordRow({ record, last, onViewSelfie, onReject, onUndoReject, canReje
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px',
               borderRadius: 4, border: 'none', background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
-              fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer',
+              fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer',
             }}
           >
             <ShieldCheck size={13} /> {REJECTION_COPY.undo}
@@ -437,7 +437,7 @@ function RecordRow({ record, last, onViewSelfie, onReject, onUndoReject, canReje
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px',
               borderRadius: 4, border: 'none', background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
-              fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer',
+              fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer',
             }}
           >
             <ShieldX size={13} /> {REJECTION_COPY.reject}
@@ -466,7 +466,7 @@ function AbsentRow({ user, last, onExcuse }) {
           <InitialsTag name={user?.name} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{user?.name ?? '—'}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{user?.email ?? '—'}</div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{user?.email ?? '—'}</div>
           </div>
         </div>
       </td>
@@ -487,7 +487,7 @@ function AbsentRow({ user, last, onExcuse }) {
         <AbsentBadge />
       </td>
       <td style={{ padding: '12px 16px' }}>
-        <button onClick={() => onExcuse(user)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 4, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}>
+        <button onClick={() => onExcuse(user)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 4, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}>
           <ShieldPlus size={13} /> تسجيل عذر / إجازة
         </button>
       </td>
@@ -507,7 +507,7 @@ function DeptSectionCell({ department, section }) {
         </span>
       )}
       {section && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--c-text-3)' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--c-text-3)' }}>
           <Layers size={11} style={{ flexShrink: 0 }} />
           {section}
         </span>
@@ -537,7 +537,7 @@ function LeaveTypePill({ item }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
       <span style={{
         display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
-        fontSize: 11.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
+        fontSize: 12, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
         background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
       }}>
         {leaveTypeName(item)}
@@ -567,7 +567,7 @@ function LeaveRow({ item, last, onUndoExcuse, onReturnToWork }) {
           <InitialsTag name={u?.name} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{u?.name ?? '—'}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{u?.email ?? '—'}</div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{u?.email ?? '—'}</div>
           </div>
         </div>
       </td>
@@ -612,7 +612,7 @@ function LeaveRow({ item, last, onUndoExcuse, onReturnToWork }) {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
               borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
-              fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
+              fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800,
               color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
             }}
           >
@@ -624,7 +624,7 @@ function LeaveRow({ item, last, onUndoExcuse, onReturnToWork }) {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
               borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
-              fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
+              fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800,
               color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
             }}
           >
@@ -1156,7 +1156,7 @@ export default function AttendancePage() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
             <span style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
               background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {tabCountLabel}
@@ -1304,7 +1304,7 @@ export default function AttendancePage() {
               </div>
 
               {dateRangeInvalid && (
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-rejected)', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)', whiteSpace: 'nowrap' }}>
                   تاريخ النهاية يجب أن يكون مساوياً أو بعد تاريخ البداية
                 </span>
               )}

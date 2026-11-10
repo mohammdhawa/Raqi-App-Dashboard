@@ -66,7 +66,7 @@ export function ExportButton({ url, params, filename, disabled }) {
 export function SortableTh({ label, field, sort, onSort, align = 'right', title }) {
   const active = Boolean(field) && sort?.field === field
   const baseStyle = {
-    padding: '11px 16px', textAlign: align, fontSize: 11.5, fontWeight: 700,
+    padding: '11px 16px', textAlign: align, fontSize: 12, fontWeight: 700,
     color: active ? 'var(--c-primary)' : 'var(--c-text-2)',
     borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
   }
@@ -210,7 +210,7 @@ export function MultiSelect({ icon: Icon, label, options, values, onChange, disa
               style={{
                 display: 'flex', alignItems: 'center', gap: 6, width: '100%',
                 padding: '7px 10px', borderRadius: 4, border: 'none', background: 'transparent',
-                fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 700,
+                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
                 color: 'var(--c-rejected)', cursor: 'pointer',
               }}
             >
@@ -235,7 +235,7 @@ export function MultiSelect({ icon: Icon, label, options, values, onChange, disa
               />
               <span style={{ minWidth: 0, flex: 1 }}>
                 {o.name}
-                {o.email && <span style={{ display: 'block', fontSize: 10.5, fontWeight: 500, color: 'var(--c-text-3)', marginTop: 1 }}>{o.email}</span>}
+                {o.email && <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--c-text-3)', marginTop: 1 }}>{o.email}</span>}
               </span>
             </label>
           ))}

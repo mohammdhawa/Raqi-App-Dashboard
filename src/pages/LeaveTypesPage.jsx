@@ -71,7 +71,7 @@ function StatePill({ active }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '3px 10px', borderRadius: 2, whiteSpace: 'nowrap',
-      fontSize: 11, fontWeight: 800,
+      fontSize: 12, fontWeight: 800,
       color: active ? 'var(--c-approved)' : 'var(--c-text-3)',
       background: active ? 'var(--c-approved-bg)' : 'var(--c-surface-2)',
       border: `1px solid ${active ? 'color-mix(in srgb, var(--c-approved) 13%, transparent)' : 'var(--c-border)'}`,
@@ -91,7 +91,7 @@ function FormPill({ icon: Icon, label, on }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '3px 9px', borderRadius: 2, whiteSpace: 'nowrap',
-      fontSize: 10.5, fontWeight: 700, color: 'var(--c-text-2)',
+      fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
       background: 'var(--c-surface)', border: '1px solid var(--c-border)',
     }}>
       <Icon size={11} style={{ color: 'var(--c-text-3)' }} />
@@ -114,7 +114,7 @@ function Toggle({ checked, onChange, label, hint, disabled }) {
       />
       <span style={{ minWidth: 0 }}>
         <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>{label}</span>
-        {hint && <span style={{ display: 'block', fontSize: 11, color: 'var(--c-text-3)', marginTop: 3, lineHeight: 1.6 }}>{hint}</span>}
+        {hint && <span style={{ display: 'block', fontSize: 12, color: 'var(--c-text-3)', marginTop: 3, lineHeight: 1.6 }}>{hint}</span>}
       </span>
     </label>
   )
@@ -128,8 +128,8 @@ function FieldWrap({ label, required, error, hint, children }) {
         {required && <span style={{ color: 'var(--c-rejected)', marginInlineStart: 3 }}>*</span>}
       </label>
       {children}
-      {error && <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
-      {!error && hint && <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
+      {error && <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
+      {!error && hint && <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
     </div>
   )
 }
@@ -150,7 +150,7 @@ function TypeRow({ type, last, onEdit, onDelete }) {
       <td style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{type.name_ar}</div>
         {type.name_en && (
-          <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2, direction: 'ltr', textAlign: 'right' }}>
+          <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2, direction: 'ltr', textAlign: 'right' }}>
             {type.name_en}
           </div>
         )}
@@ -158,7 +158,7 @@ function TypeRow({ type, last, onEdit, onDelete }) {
       <td style={{ padding: '12px 16px' }}>
         <span style={{
           fontFamily: 'var(--font-mono)', direction: 'ltr', display: 'inline-block',
-          fontSize: 11.5, color: 'var(--c-text-2)', background: 'var(--c-surface)',
+          fontSize: 12, color: 'var(--c-text-2)', background: 'var(--c-surface)',
           border: '1px solid var(--c-border)', borderRadius: 3, padding: '2px 8px',
         }}>
           {type.code}
@@ -172,13 +172,13 @@ function TypeRow({ type, last, onEdit, onDelete }) {
           <FormPill icon={UserCheck} label={LEAVE_COPY.forRequests} on={type.for_requests} />
           <FormPill icon={ShieldCheck} label={LEAVE_COPY.forExcuses} on={type.for_excuses} />
           {!type.for_requests && !type.for_excuses && (
-            <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>لا يظهر في أي نموذج</span>
+            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>لا يظهر في أي نموذج</span>
           )}
         </div>
       </td>
       <td style={{ padding: '12px 16px' }}>
         {type.requires_reason
-          ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
+          ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)' }}>
               <Check size={12} style={{ color: 'var(--c-approved)' }} />نعم
             </span>
           : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
@@ -288,7 +288,7 @@ function TypeDrawer({ mode, type, onClose, onSaved }) {
         display: 'flex', flexDirection: 'column', borderInlineEnd: '1px solid var(--c-border)',
       }}>
         <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid var(--c-border)', flexShrink: 0, position: 'relative' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', marginBottom: 6 }}>
             {isEdit ? 'تعديل نوع' : 'نوع جديد'}
           </div>
           <h2 style={{ margin: '0 0 4px', fontSize: 21, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.4 }}>
@@ -375,7 +375,7 @@ function TypeDrawer({ mode, type, onClose, onSaved }) {
             hint="عند التفعيل، كل يوم معتمد تحت هذا النوع يُخصم من رصيد الإجازات السنوي للموظف. عند الإيقاف يُبرَّر الغياب دون أي خصم."
           />
           {errors.deducts_balance && (
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--c-rejected)', margin: '-4px 0 10px' }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)', margin: '-4px 0 10px' }}>
               {errors.deducts_balance}
             </div>
           )}
@@ -720,11 +720,11 @@ export default function LeaveTypesPage() {
 
         {/* Filters */}
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px' }}>
             {visible.length} نوعاً
           </span>
           {tab === 'active' && !hasFilters && (
-            <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>
+            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
               تظهر الأنواع في القوائم بترتيب إضافتها — يُضاف كل نوع جديد في نهاية القائمة
             </span>
           )}
@@ -775,7 +775,7 @@ export default function LeaveTypesPage() {
               <tr style={{ background: 'var(--c-surface)' }}>
                 {COLS.map(col => (
                   <th key={col} style={{
-                    padding: '11px 16px', textAlign: 'right', fontSize: 11.5, fontWeight: 700,
+                    padding: '11px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700,
                     color: 'var(--c-text-2)', borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
                   }}>
                     {col}

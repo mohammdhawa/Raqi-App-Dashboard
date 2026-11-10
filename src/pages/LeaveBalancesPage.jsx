@@ -46,11 +46,11 @@ function BalanceRow({ row, defaultDays, last, onEdit }) {
       <Initials name={row.user?.name} />
       <div><div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 13.5, fontWeight: 700 }}>{row.user?.name ?? '—'}</span>
-        {!row.is_custom && <span title={`يستخدم الرصيد الافتراضي للشركة (${defaultDays} يوم)`} style={{ padding: '2px 8px', borderRadius: 2, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 10.5, fontWeight: 800 }}>الافتراضي</span>}
-      </div><div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{row.user?.email ?? '—'}</div></div>
+        {!row.is_custom && <span title={`يستخدم الرصيد الافتراضي للشركة (${defaultDays} يوم)`} style={{ padding: '2px 8px', borderRadius: 2, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 12, fontWeight: 800 }}>الافتراضي</span>}
+      </div><div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{row.user?.email ?? '—'}</div></div>
     </div></td>
     <td style={{ padding: '12px 16px', fontSize: 12.5, color: 'var(--c-text-2)' }}>
-      <div>{row.user?.department?.name ?? '—'}</div><div style={{ color: 'var(--c-text-3)', fontSize: 11, marginTop: 2 }}>{row.user?.section?.name ?? '—'}</div>
+      <div>{row.user?.department?.name ?? '—'}</div><div style={{ color: 'var(--c-text-3)', fontSize: 12, marginTop: 2 }}>{row.user?.section?.name ?? '—'}</div>
     </td>
     <td style={{ padding: '12px 16px', fontWeight: 800 }}>{row.allocated_days}</td>
     <td style={{ padding: '12px 16px', color: adjustment < 0 ? 'var(--c-rejected)' : 'var(--c-approved)', fontWeight: 700 }}>{adjustment === 0 ? '—' : adjustment > 0 ? `+${adjustment}` : `−${Math.abs(adjustment)}`}</td>
@@ -143,7 +143,7 @@ export default function LeaveBalancesPage() {
       </div>
       <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px', borderRadius: 2, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 11, fontWeight: 700 }}><Wallet size={12} />{total} موظفاً</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px', borderRadius: 2, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 12, fontWeight: 700 }}><Wallet size={12} />{total} موظفاً</span>
           <div style={{ flex: 1 }} />
           <SearchInput value={search} onChange={setSearch} />
           {hasFullAccess && <DepartmentSelect departments={departments} value={departmentId} onChange={changeDepartment} />}

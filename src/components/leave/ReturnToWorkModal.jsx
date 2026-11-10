@@ -67,7 +67,7 @@ function Note({ icon: Icon, tone = 'info', children }) {
       background: t.bg, border: `1px solid ${t.border}`,
     }}>
       <Icon size={15} style={{ color: t.color, flexShrink: 0, marginTop: 1 }} />
-      <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.7, color: 'var(--c-text-2)' }}>{children}</p>
+      <p style={{ margin: 0, fontSize: 12, lineHeight: 1.7, color: 'var(--c-text-2)' }}>{children}</p>
     </div>
   )
 }
@@ -252,7 +252,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
               </span>
               <DeductsBalanceBadge deducts={deducts} compact short />
             </div>
-            <span style={{ fontSize: 10.5, color: 'var(--c-text-3)' }}>
+            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
               اعتمدها: {target?.approvedBy ?? '—'}
             </span>
           </div>
@@ -278,7 +278,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
                 color: 'var(--c-text)', outline: 'none',
               }}
             />
-            <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--c-text-3)', lineHeight: 1.6 }}>
+            <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--c-text-3)', lineHeight: 1.6 }}>
               {LEAVE_COPY.returnToWorkDateHint}
             </p>
           </div>
@@ -306,7 +306,7 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
               fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 6,
             }}>
               {LEAVE_COPY.returnToWorkReason}
-              <span style={{ marginInlineStart: 'auto', fontSize: 10.5, fontWeight: 600, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{ marginInlineStart: 'auto', fontSize: 12, fontWeight: 600, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums' }}>
                 {reason.length}/{REASON_MAX}
               </span>
             </label>
@@ -322,8 +322,8 @@ export default function ReturnToWorkModal({ target, onClose, onDone }) {
               }}
             />
             {reasonError
-              ? <p style={{ margin: '6px 0 0', fontSize: 11.5, fontWeight: 600, color: 'var(--c-rejected)' }}>{reasonError}</p>
-              : <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--c-text-3)', lineHeight: 1.6 }}>{LEAVE_COPY.returnToWorkReasonHint}</p>}
+              ? <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)' }}>{reasonError}</p>
+              : <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--c-text-3)', lineHeight: 1.6 }}>{LEAVE_COPY.returnToWorkReasonHint}</p>}
           </div>
 
           {error && (

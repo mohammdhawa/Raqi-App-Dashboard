@@ -226,7 +226,7 @@ function StampUpload({ file, existingUrl, onChange }) {
               <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
                 اسحب وأفلت أو انقر للرفع
               </div>
-              <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 3 }}>
+              <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 3 }}>
                 PNG, JPG, GIF — بحد أقصى 2MB
               </div>
             </div>
@@ -246,7 +246,7 @@ function StampUpload({ file, existingUrl, onChange }) {
           onClick={e => { e.stopPropagation(); onChange(null) }}
           style={{
             marginTop: 6, border: 0, background: 'transparent',
-            fontSize: 11.5, color: 'var(--c-text-3)', cursor: 'pointer',
+            fontSize: 12, color: 'var(--c-text-3)', cursor: 'pointer',
             fontFamily: 'var(--font-sans)',
           }}
         >
@@ -337,7 +337,7 @@ function SectionDrawer({ mode, section, departments, onClose, onSave }) {
       }}>
         {/* Head */}
         <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid var(--c-border)', flexShrink: 0, position: 'relative' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 6 }}>
             {isEdit ? 'تعديل قسم' : 'إضافة قسم'}
           </div>
           <h2 style={{ margin: '0 0 4px', fontSize: 21, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.4 }}>
@@ -587,7 +587,7 @@ function SectionRow({ section, last, onEdit, onDelete, onPreview }) {
         {section.code && (
           <div style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: 11, color: 'var(--c-text-3)', marginTop: 2,
+            fontSize: 12, color: 'var(--c-text-3)', marginTop: 2,
           }}>
             {section.code}
           </div>
@@ -814,7 +814,7 @@ export default function SectionsPage() {
                 <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.3, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                   {value}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
               </div>
             </div>
           ))}
@@ -836,7 +836,7 @@ export default function SectionsPage() {
             <Layers size={17} style={{ color: 'var(--c-primary)' }} />
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>قائمة الأقسام</span>
             <span style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
               background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {total} معروضة
@@ -893,7 +893,7 @@ export default function SectionsPage() {
                 {TABLE_COLS.map(col => (
                   <th key={col} style={{
                     padding: '11px 16px', textAlign: 'right',
-                    fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
+                    fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
                     borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
                   }}>
                     {col}

@@ -34,19 +34,19 @@ function Step({ step, current, compact }) {
       <span style={{
         width: compact ? 16 : 18, height: compact ? 16 : 18, borderRadius: '50%', flexShrink: 0,
         background: meta.color, color: '#fff',
-        fontSize: compact ? 9.5 : 10.5, fontWeight: 800,
+        fontSize: 12, fontWeight: 800,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontVariantNumeric: 'tabular-nums',
       }}>
         {step.order}
       </span>
       <span style={{
-        fontSize: compact ? 11 : 12, fontWeight: 700, minWidth: 0,
+        fontSize: 12, fontWeight: 700, minWidth: 0,
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
         {step.name ?? `#${step.userId}`}
       </span>
-      <span style={{ fontSize: compact ? 10 : 11, fontWeight: 600, opacity: 0.85, whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.85, whiteSpace: 'nowrap' }}>
         · {label}
       </span>
       {current && <Bell size={compact ? 10 : 11} style={{ flexShrink: 0 }} />}

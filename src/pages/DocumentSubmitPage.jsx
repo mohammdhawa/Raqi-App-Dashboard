@@ -88,8 +88,8 @@ function FieldWrap({ label, required, error, hint, children }) {
         {required && <span style={{ color: 'var(--c-rejected)', marginInlineStart: 3 }}>*</span>}
       </label>
       {children}
-      {hint && !error && <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
-      {error && <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
+      {hint && !error && <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
     </div>
   )
 }
@@ -187,7 +187,7 @@ function WorkflowModeCard({ mode, active, onSelect }) {
           )}
         </div>
       </div>
-      <div style={{ fontSize: 11.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>{mode.desc}</div>
+      <div style={{ fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.6 }}>{mode.desc}</div>
     </div>
   )
 }
@@ -226,7 +226,7 @@ function FileDropzone({ file, onSelect, onRemove, accept, hint, error }) {
           <>
             <Upload size={26} style={{ color: 'var(--c-text-3)', marginBottom: 8 }} />
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>اسحب الملف هنا أو انقر للاختيار</div>
-            {hint && <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 4 }}>{hint}</div>}
+            {hint && <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>{hint}</div>}
           </>
         ) : (
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
@@ -239,7 +239,7 @@ function FileDropzone({ file, onSelect, onRemove, accept, hint, error }) {
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>{file.name}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>{formatFileSize(file.size)}</div>
+              <div style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{formatFileSize(file.size)}</div>
             </div>
             <button
               type="button" onClick={e => { e.stopPropagation(); onRemove() }}
@@ -254,7 +254,7 @@ function FileDropzone({ file, onSelect, onRemove, accept, hint, error }) {
           </div>
         )}
       </div>
-      {error && <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 6 }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 6 }}>{error}</div>}
     </div>
   )
 }
@@ -288,12 +288,12 @@ function TemplateCard({ tpl, active, onSelect }) {
           }}>
             {tpl.name}
           </div>
-          {tpl.type && <div style={{ fontSize: 11, color: 'var(--c-text-3)' }}>{tpl.type}</div>}
+          {tpl.type && <div style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{tpl.type}</div>}
         </div>
       </div>
       {tpl.description && (
         <div style={{
-          fontSize: 11.5, color: 'var(--c-text-2)', lineHeight: 1.6,
+          fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.6,
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
         }}>
           {tpl.description}
@@ -729,7 +729,7 @@ export default function DocumentSubmitPage() {
                   </div>
 
                   {errors.template && (
-                    <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginBottom: 10 }}>{errors.template}</div>
+                    <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginBottom: 10 }}>{errors.template}</div>
                   )}
 
                   {templatesLoading ? (
@@ -836,13 +836,13 @@ export default function DocumentSubmitPage() {
             />
             <FileUp size={22} style={{ color: 'var(--c-text-3)', marginBottom: 6 }} />
             <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>انقر لإضافة مرفقات</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>
               حتى {MAX_ATTACHMENTS} ملفات — PDF, Word, Excel, صور — {MAX_ATTACHMENT_MB} ميجابايت لكل ملف
             </div>
           </div>
 
           {errors.attachments && (
-            <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginBottom: 10 }}>{errors.attachments}</div>
+            <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginBottom: 10 }}>{errors.attachments}</div>
           )}
 
           {attachments.length > 0 && (
@@ -860,7 +860,7 @@ export default function DocumentSubmitPage() {
                     }}>
                       {f.name}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--c-text-3)' }}>{formatFileSize(f.size)}</div>
+                    <div style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{formatFileSize(f.size)}</div>
                   </div>
                   <button
                     type="button" onClick={() => removeAttachment(i)}
@@ -904,7 +904,7 @@ export default function DocumentSubmitPage() {
                   display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10,
                   padding: '10px 12px', borderRadius: 4,
                   background: 'var(--c-pending-bg)', color: 'var(--c-text-2)',
-                  fontSize: 11.5, lineHeight: 1.7,
+                  fontSize: 12, lineHeight: 1.7,
                 }}>
                   <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--c-pending)' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -916,7 +916,7 @@ export default function DocumentSubmitPage() {
                         style={{
                           height: 30, padding: '0 12px', borderRadius: 4,
                           border: '1px solid var(--c-border)', background: '#fff',
-                          fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 700,
+                          fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
                           color: 'var(--c-text)', cursor: 'pointer',
                         }}
                       >

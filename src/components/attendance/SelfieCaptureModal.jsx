@@ -218,7 +218,7 @@ export default function SelfieCaptureModal({ title, hint, onCancel, onConfirm })
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>{title}</div>
             {hint && (
-              <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 3 }}>{hint}</div>
+              <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 3 }}>{hint}</div>
             )}
           </div>
           <button

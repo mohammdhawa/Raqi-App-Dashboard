@@ -87,7 +87,7 @@ function NavItem({ item, badge, onNavigate }) {
       <Icon size={16} strokeWidth={1.8} className="shrink-0 opacity-85" />
       <span className="flex-1 min-w-0">{item.label}</span>
       {badgeValue != null && (
-        <span className="text-[10px] font-semibold bg-[var(--c-accent-on-dark)] text-[var(--c-text)] rounded-[2px] px-1.5 leading-[17px] [font-family:var(--font-mono)]">
+        <span className="text-[12px] font-semibold bg-[var(--c-accent-on-dark)] text-[var(--c-text)] rounded-[2px] px-1.5 leading-[17px] [font-family:var(--font-mono)]">
           {badgeValue}
         </span>
       )}
@@ -150,7 +150,7 @@ export default function Sidebar({ isOpen, onNavigate }) {
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>
               صنع للإنشاءات
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500, letterSpacing: '1.4px', marginTop: 3 }}>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, letterSpacing: '0.4px', marginTop: 3 }}>
               SUNAA CONSTRUCTION
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function Sidebar({ isOpen, onNavigate }) {
             return (
               <div key={section.label} style={{ marginBottom: 4 }}>
                 <div style={{
-                  fontSize: 10.5, fontWeight: 600, letterSpacing: '0.4px',
+                  fontSize: 12, fontWeight: 600, letterSpacing: '0.4px',
                   color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase',
                   padding: '10px 20px 5px',
                 }}>
@@ -200,7 +200,7 @@ export default function Sidebar({ isOpen, onNavigate }) {
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 12.5, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.name ?? '—'}
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10.5, marginTop: 2 }}>
+            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 2 }}>
               {ROLE_LABELS[user?.role] ?? 'مستخدم'}
             </div>
           </div>

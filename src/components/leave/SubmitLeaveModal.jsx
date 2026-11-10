@@ -38,8 +38,8 @@ function Field({ label, required, error, hint, children }) {
         {required && <span style={{ color: 'var(--c-rejected)', marginInlineStart: 3 }}>*</span>}
       </label>
       {children}
-      {hint && !error && <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
-      {error && <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
+      {hint && !error && <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
     </div>
   )
 }
@@ -247,7 +247,7 @@ export default function SubmitLeaveModal({ onClose, onSubmitted }) {
               background: 'var(--c-primary-light)', color: 'var(--c-primary)',
             }}>
               <span style={{ fontSize: 12.5, fontWeight: 700 }}>مدة الإجازة: {span} يوم تقويمي</span>
-              <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>
+              <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
                 — تُحتسب أيام العمل فقط من رصيدك
               </span>
             </div>

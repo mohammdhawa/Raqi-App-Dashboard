@@ -37,8 +37,8 @@ function Field({ label, required, error, hint, children }) {
       {label}{required && <span style={{ color: 'var(--c-rejected)', marginInlineStart: 3 }}>*</span>}
     </label>
     {children}
-    {error && <div style={{ color: 'var(--c-rejected)', fontSize: 11.5, fontWeight: 600, marginTop: 5 }}>{error}</div>}
-    {!error && hint && <div style={{ color: 'var(--c-text-3)', fontSize: 11, marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
+    {error && <div style={{ color: 'var(--c-rejected)', fontSize: 12, fontWeight: 600, marginTop: 5 }}>{error}</div>}
+    {!error && hint && <div style={{ color: 'var(--c-text-3)', fontSize: 12, marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
   </div>
 }
 
@@ -173,7 +173,7 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
           <div style={{ width: 36, height: 36, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-primary)', background: 'var(--c-primary-light)' }}><ShieldCheck size={18} /></div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>تسجيل عذر غياب</div>
-            <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>يُسجَّل العذر معتمداً مباشرة باسم الموارد البشرية.</div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>يُسجَّل العذر معتمداً مباشرة باسم الموارد البشرية.</div>
           </div>
           <button type='button' onClick={onClose} disabled={submitting} title='إغلاق' style={{ width: 34, height: 34, borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
         </div>
@@ -202,7 +202,7 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
                       <span key={day} style={{
                         display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 2,
                         background: '#fff', border: '1px solid color-mix(in srgb, var(--c-pending) 27%, transparent)',
-                        fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap',
+                        fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap',
                       }}>
                         <Calendar size={11} style={{ color: 'var(--c-pending)' }} />
                         {fmtDay(day)}
@@ -212,7 +212,7 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
 
                   {remainingRanges.length > 0 ? (
                     <>
-                      <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 7 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 7 }}>
                         {LEAVE_COPY.excludeAttendedDays}
                         {remainingRanges.length > 1 && ' — سجّل كل فترة على حدة'}
                       </div>
@@ -255,7 +255,7 @@ export default function ExcuseLeaveModal({ employee, date, employees = [], onClo
             {employee ? (
               <div style={{ ...inputStyle, display: 'flex', alignItems: 'center', background: 'var(--c-surface)', color: 'var(--c-text-2)' }}>
                 <span style={{ fontWeight: 700 }}>{selectedEmployee?.name ?? '—'}</span>
-                {selectedEmployee?.email && <span style={{ color: 'var(--c-text-3)', marginInlineStart: 8, fontSize: 11.5 }}>{selectedEmployee.email}</span>}
+                {selectedEmployee?.email && <span style={{ color: 'var(--c-text-3)', marginInlineStart: 8, fontSize: 12 }}>{selectedEmployee.email}</span>}
               </div>
             ) : (
               <select value={userId} onChange={event => { setUserId(event.target.value); setErrors(value => ({ ...value, user_id: undefined })) }} style={inputStyle}>

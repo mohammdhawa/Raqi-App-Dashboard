@@ -38,7 +38,7 @@ function InfoItem({ icon: Icon, label, value, mono }) {
   if (value == null || value === '') return null
   return (
     <div style={{ minWidth: 130 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--c-text-3)', marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)', marginBottom: 4 }}>
         {Icon && <Icon size={11} />}
         {label}
       </div>
@@ -252,7 +252,7 @@ function AttachmentsCard({ documentId, attachments }) {
         <Paperclip size={16} style={{ color: 'var(--c-primary)' }} />
         <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>مرفقات إضافية</span>
         <span style={{
-          fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
+          fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
           background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
         }}>
           {attachments.length}
@@ -276,7 +276,7 @@ function AttachmentsCard({ documentId, attachments }) {
               }}>
                 {a.file_name}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--c-text-3)' }}>
+              <div style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
                 {formatFileSize(a.file_size)}{a.uploader?.name ? ` · ${a.uploader.name}` : ''}
               </div>
             </div>
@@ -335,7 +335,7 @@ function CommentsCard({ docId }) {
         <MessageSquare size={16} style={{ color: 'var(--c-primary)' }} />
         <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>التعليقات</span>
         <span style={{
-          fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
+          fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
           background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
         }}>
           {comments.length}
@@ -361,7 +361,7 @@ function CommentsCard({ docId }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>{c.user?.name ?? '—'}</span>
-                <span style={{ fontSize: 11, color: 'var(--c-text-3)' }}>{formatDateTime(c.created_at)}</span>
+                <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{formatDateTime(c.created_at)}</span>
               </div>
               <div style={{
                 fontSize: 13, color: 'var(--c-text-2)', lineHeight: 1.7,
@@ -466,18 +466,18 @@ function WorkflowStep({ w, isLast, isMe }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>{w.user?.name ?? '—'}</span>
           <span style={{
-            fontSize: 10.5, fontWeight: 700, color: 'var(--c-text-3)',
+            fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)',
             background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 8px',
           }}>
             {w.role === 'chief' ? 'الرئيس الأعلى' : 'مدير'}
           </span>
-          {isMe && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-accent)' }}>(أنت)</span>}
+          {isMe && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-accent)' }}>(أنت)</span>}
         </div>
         <div style={{ marginTop: 6 }}>
           <StatusBadge status={w.status} />
         </div>
         {w.signed_at && (
-          <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 6 }}>{formatDateTime(w.signed_at)}</div>
+          <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 6 }}>{formatDateTime(w.signed_at)}</div>
         )}
         {w.note && (
           <div style={{
@@ -623,7 +623,7 @@ function ActivityLog({ logs }) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>{meta.label}</div>
-                <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
                   {log.done_by?.name ?? '—'} · {formatDateTime(log.created_at)}
                 </div>
                 {log.note && (

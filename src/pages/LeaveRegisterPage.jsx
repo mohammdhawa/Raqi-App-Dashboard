@@ -131,7 +131,7 @@ function DeptSectionCell({ department, section }) {
         </span>
       )}
       {section && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--c-text-3)' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--c-text-3)' }}>
           <Layers size={11} style={{ flexShrink: 0 }} />
           {section}
         </span>
@@ -153,11 +153,11 @@ function SummaryTile({ icon: Icon, label, value, accent, hint }) {
         <Icon size={19} />
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>{label}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>{label}</div>
         <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
           {value}
         </div>
-        {hint && <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', marginTop: 2, whiteSpace: 'nowrap' }}>{hint}</div>}
+        {hint && <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2, whiteSpace: 'nowrap' }}>{hint}</div>}
       </div>
     </div>
   )
@@ -176,7 +176,7 @@ function TypeBreakdown({ types, totalDays }) {
       display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18,
       padding: '12px 14px', background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8,
     }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)' }}>
         <Tags size={13} style={{ color: 'var(--c-text-3)' }} />
         حسب النوع
       </span>
@@ -219,7 +219,7 @@ function DaysCell({ row }) {
         {inRange} يوم
       </span>
       {total != null && Number(total) !== Number(inRange) && (
-        <span style={{ fontSize: 11, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 12, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
           من أصل {total}
         </span>
       )}
@@ -278,7 +278,7 @@ function LeaveRow({ row, last }) {
           <InitialsTag name={employee?.name} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{employee?.name ?? '—'}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{employee?.email ?? '—'}</div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{employee?.email ?? '—'}</div>
           </div>
         </div>
       </td>
@@ -289,7 +289,7 @@ function LeaveRow({ row, last }) {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
-            fontSize: 11.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
+            fontSize: 12, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
             background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
           }}>
             {leaveTypeName(row)}
@@ -568,7 +568,7 @@ export default function LeaveRegisterPage() {
         />
 
         {rangeError && (
-          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-rejected)', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)', whiteSpace: 'nowrap' }}>
             {rangeError}
           </span>
         )}

@@ -85,7 +85,7 @@ function LeaveTypePill({ item }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
       <span style={{
         display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
-        fontSize: 11.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
+        fontSize: 12, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
         background: 'var(--c-surface-2)', color: 'var(--c-text-2)',
       }}>
         {leaveTypeName(item)}
@@ -111,7 +111,7 @@ function DaysCell({ item }) {
         {days} يوم عمل
       </span>
       {calendar != null && calendar !== days && (
-        <span style={{ fontSize: 11, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 12, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
           {calendar} يوم تقويمي
         </span>
       )}
@@ -157,7 +157,7 @@ function BalanceTile({ icon: Icon, label, value, accent, title }) {
         <Icon size={19} />
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>{label}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)' }}>{label}</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{value == null ? '—' : value}</span>
           <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)', marginInlineStart: 4 }}>يوم</span>
@@ -245,7 +245,7 @@ function LeaveOriginCell({ item }) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
         <LeaveExcuseBadge compact />
-        <span style={{ fontSize: 10.5, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 12, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
           {item.creator?.name ?? 'الموارد البشرية'}
         </span>
       </div>
@@ -259,8 +259,8 @@ function LeaveOriginCell({ item }) {
   const name = current?.name ?? decided?.name ?? item.manager?.name ?? '—'
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-      <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>طلب موظف</span>
-      <span style={{ fontSize: 10.5, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)' }}>طلب موظف</span>
+      <span style={{ fontSize: 12, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
         {current ? `${LEAVE_COPY.currentApprover}: ${name}` : name}
       </span>
     </div>
@@ -327,7 +327,7 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
             <InitialsTag name={u?.name} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{u?.name ?? '—'}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
                 {leaveTypeName(item)} · {formatDate(getLeaveStart(item))} — {formatDate(getLeaveEnd(item))}
                 {getLeaveDays(item) != null && ` · ${getLeaveDays(item)} يوم عمل`}
               </div>
@@ -348,7 +348,7 @@ function ReviewModal({ item, action, onClose, onConfirm }) {
               display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 14,
               padding: '10px 12px', borderRadius: 4,
               background: 'var(--c-pending-bg)', color: 'var(--c-text-2)',
-              fontSize: 11.5, lineHeight: 1.7,
+              fontSize: 12, lineHeight: 1.7,
             }}>
               <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--c-pending)' }} />
               {LEAVE_COPY.chainRejectionHint}
@@ -463,7 +463,7 @@ function ReassignButton({ onClick }) {
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 11px',
         borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
-        fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 700,
+        fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
         color: 'var(--c-text-2)', cursor: 'pointer', whiteSpace: 'nowrap',
       }}
     >
@@ -548,7 +548,7 @@ function ApprovalRow({ item, last, onReview, supervisor, onReassign }) {
                 {selfAssigned && (
                   <span style={{
                     display: 'inline-flex', alignItems: 'flex-start', gap: 5,
-                    fontSize: 10.5, lineHeight: 1.5, color: 'var(--c-text-3)', maxWidth: 210,
+                    fontSize: 12, lineHeight: 1.5, color: 'var(--c-text-3)', maxWidth: 210,
                   }}>
                     <AlertTriangle size={11} style={{ flexShrink: 0, marginTop: 2, color: 'var(--c-pending)' }} />
                     {SELF_APPROVAL_BLOCKED}
@@ -932,7 +932,7 @@ export default function LeavePage() {
           display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
         }}>
           <span style={{
-            fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
+            fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
             background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
           }}>
             {total} طلباً

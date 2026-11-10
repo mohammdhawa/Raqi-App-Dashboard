@@ -68,7 +68,7 @@ function FieldWrap({ label, required, error, children }) {
         {required && <span style={{ color: 'var(--c-rejected)', marginInlineStart: 3 }}>*</span>}
       </label>
       {children}
-      {error && <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
     </div>
   )
 }
@@ -169,7 +169,7 @@ function TableField({ columns, value, onChange, error }) {
         }}>
           {cols.map(c => (
             <div key={c.key} style={{
-              padding: '8px 10px', fontSize: 11.5, fontWeight: 700,
+              padding: '8px 10px', fontSize: 12, fontWeight: 700,
               color: 'var(--c-text-2)', textAlign: 'center',
             }}>
               {c.label}

@@ -52,7 +52,7 @@ function RoleBadge({ role }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '3px 10px', borderRadius: 2,
-      fontSize: 11, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
+      fontSize: 12, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
       background: m.bg, color: m.color, border: m.border,
     }}>
       <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', flexShrink: 0 }} />
@@ -144,7 +144,7 @@ function FieldWrap({ label, required, error, children }) {
       </label>
       {children}
       {error && (
-        <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 5, lineHeight: 1.6 }}>{error}</div>
+        <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 5, lineHeight: 1.6 }}>{error}</div>
       )}
     </div>
   )
@@ -225,7 +225,7 @@ function RoleCard({ role, selected, onSelect }) {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--c-text)' }}>{label}</div>
-        <div style={{ fontSize: 11, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.45 }}>{desc}</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.45 }}>{desc}</div>
       </div>
       <div style={{
         width: 18, height: 18, borderRadius: '50%', flexShrink: 0, marginTop: 1,
@@ -371,7 +371,7 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
       }}>
         {/* Head */}
         <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid var(--c-border)', flexShrink: 0, position: 'relative' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 6 }}>
             {isEdit ? 'تعديل مستخدم' : 'إضافة مستخدم'}
           </div>
           <h2 style={{ margin: '0 0 4px', fontSize: 21, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.4 }}>
@@ -514,7 +514,7 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
           }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>تسجيل الحضور</div>
-              <div style={{ fontSize: 11.5, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 12, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5 }}>
                 تفعيل متابعة وقت الدخول والخروج لهذا الموظف
               </div>
             </div>
@@ -528,7 +528,7 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
           }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>صلاحية عرض سجلات الحضور</div>
-              <div style={{ fontSize: 11.5, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 12, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5 }}>
                 السماح لهذا المستخدم بعرض سجلات حضور وانصراف الموظفين
               </div>
             </div>
@@ -818,7 +818,7 @@ export default function UsersPage() {
                 <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.3, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                   {value}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
               </div>
             </div>
           ))}
@@ -841,7 +841,7 @@ export default function UsersPage() {
             <Users size={17} style={{ color: 'var(--c-primary)' }} />
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>قائمة المستخدمين</span>
             <span style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
               background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {total} حسابات
@@ -867,7 +867,7 @@ export default function UsersPage() {
               >
                 {t.label}
                 <span style={{
-                  fontSize: 10.5, fontWeight: 800, borderRadius: 2, padding: '1px 7px',
+                  fontSize: 12, fontWeight: 800, borderRadius: 2, padding: '1px 7px',
                   background: tab === t.key ? 'rgba(255,255,255,0.2)' : 'var(--c-surface-2)',
                   color: tab === t.key ? '#fff' : 'var(--c-text-2)',
                 }}>
@@ -941,7 +941,7 @@ export default function UsersPage() {
                 {TABLE_COLS.map(col => (
                   <th key={col} style={{
                     padding: '11px 16px', textAlign: 'right',
-                    fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
+                    fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
                     borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
                   }}>
                     {col}
@@ -1033,7 +1033,7 @@ function UserRow({ user: u, last, isSelf, onEdit, onDelete }) {
           <Avatar name={u.name} size={38} />
           <div>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{u.name}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{u.email}</div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{u.email}</div>
           </div>
         </div>
       </td>

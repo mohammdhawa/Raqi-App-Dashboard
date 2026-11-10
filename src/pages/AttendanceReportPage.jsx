@@ -121,7 +121,7 @@ function EmployeeCell({ name, email }) {
       <InitialsTag name={name} />
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{name ?? '—'}</div>
-        <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{email ?? '—'}</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{email ?? '—'}</div>
       </div>
     </div>
   )
@@ -138,7 +138,7 @@ function DeptSectionCell({ department, section }) {
         </span>
       )}
       {section && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--c-text-3)' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--c-text-3)' }}>
           <Layers size={11} style={{ flexShrink: 0 }} />
           {section}
         </span>
@@ -197,7 +197,7 @@ function PunchCell({ time, selfie, loc, onViewSelfie, label, missing }) {
   if (!t && missing) {
     return (
       <span style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700,
+        display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700,
         color: 'var(--c-pending)', background: 'var(--c-pending-bg)', padding: '4px 9px', borderRadius: 2,
         border: '1px solid color-mix(in srgb, var(--c-pending) 13%, transparent)', whiteSpace: 'nowrap',
       }}>
@@ -248,11 +248,11 @@ function RejectionCell({ rejection }) {
         {rejection.label}
       </span>
       {rejection.note && (
-        <span style={{ fontSize: 11.5, color: 'var(--c-text-2)', lineHeight: 1.5 }} title={rejection.note}>
+        <span style={{ fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.5 }} title={rejection.note}>
           {REJECTION_COPY.note}: {rejection.note}
         </span>
       )}
-      <span style={{ fontSize: 10.5, color: 'var(--c-text-3)', lineHeight: 1.5 }}>
+      <span style={{ fontSize: 12, color: 'var(--c-text-3)', lineHeight: 1.5 }}>
         {rejection.by ? `${REJECTION_COPY.by}: ${rejection.by}` : ''}
         {rejection.by && rejection.at ? ' · ' : ''}
         {rejection.at ? formatRejectedAt(rejection.at) : ''}
@@ -303,7 +303,7 @@ function AttendanceRow({
         {correction && (
           <span title={correctionTooltip(correction)} style={{
             display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 5,
-            fontSize: 10.5, fontWeight: 700, color: 'var(--c-approved)', cursor: 'help',
+            fontSize: 12, fontWeight: 700, color: 'var(--c-approved)', cursor: 'help',
           }}>
             <ShieldCheck size={11} />
             تم التصحيح
@@ -352,7 +352,7 @@ function AttendanceRow({
               </button>
             ))}
             {showCorrection && correction && (
-              <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>{fmtDateTime(correction.at)}</span>
+              <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{fmtDateTime(correction.at)}</span>
             )}
           </div>
         </td>
@@ -383,7 +383,7 @@ function LeaveReportRow({ row, last, showExcuse, onUndoExcuse, onReturnToWork })
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 5 }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
-            fontSize: 11.5, fontWeight: 700, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
+            fontSize: 12, fontWeight: 700, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
           }}>
             {leaveTypeName(row)}
           </span>
@@ -424,7 +424,7 @@ function LeaveReportRow({ row, last, showExcuse, onUndoExcuse, onReturnToWork })
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
                   borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
-                  fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
+                  fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800,
                   color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
                 }}
               >
@@ -446,7 +446,7 @@ function LeaveReportRow({ row, last, showExcuse, onUndoExcuse, onReturnToWork })
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px',
                 borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
-                fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800,
+                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800,
                 color: 'var(--c-text-2)', whiteSpace: 'nowrap', cursor: 'pointer',
               }}
             >
@@ -496,7 +496,7 @@ function SummaryTile({ meta, count, active, onClick }) {
         <Icon size={19} />
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>{meta.label}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>{meta.label}</div>
         <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
           {count}
         </div>
@@ -527,7 +527,7 @@ function SelfiePreview({ data, onClose }) {
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>{data.label ?? 'الصورة'}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{fmtDateTime(data.time)}</div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{fmtDateTime(data.time)}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {status === 'loaded' && (
@@ -818,16 +818,16 @@ export default function AttendanceReportPage() {
             </span>
           )}
           <span style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--c-text)' }}>{activeMeta?.label}</span>
-          <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px' }}>
             {countFor(section)}
           </span>
           {section === 'missing_checkout' && countFor('missing_checkout') > 0 && (
-            <span style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginInlineStart: 'auto' }}>
+            <span style={{ fontSize: 12, color: 'var(--c-text-3)', marginInlineStart: 'auto' }}>
               يُغلق اليوم تلقائياً الساعة 22:00 — صحّح الخروج لاحتساب ساعات العمل
             </span>
           )}
           {isExcusedSection && (
-            <span style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginInlineStart: 'auto' }}>
+            <span style={{ fontSize: 12, color: 'var(--c-text-3)', marginInlineStart: 'auto' }}>
               {LEAVE_COPY.excusedSectionHint}
             </span>
           )}
@@ -842,7 +842,7 @@ export default function AttendanceReportPage() {
             }}>
               <span
                 title={REJECTION_COPY.sectionHint}
-                style={{ fontSize: 11.5, color: 'var(--c-text-3)', cursor: 'help' }}
+                style={{ fontSize: 12, color: 'var(--c-text-3)', cursor: 'help' }}
               >
                 {REJECTION_COPY.sectionHintShort}
               </span>
@@ -850,7 +850,7 @@ export default function AttendanceReportPage() {
                 to="/admin/attendance?rejected=1"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
-                  fontSize: 11.5, fontWeight: 800, color: 'var(--c-primary)', textDecoration: 'none',
+                  fontSize: 12, fontWeight: 800, color: 'var(--c-primary)', textDecoration: 'none',
                 }}
               >
                 {REJECTION_COPY.allRejectedLink}

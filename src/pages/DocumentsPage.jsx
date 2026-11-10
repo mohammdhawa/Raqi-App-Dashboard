@@ -80,7 +80,7 @@ function InitialsTag({ name }) {
     <div style={{
       width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
       background: 'linear-gradient(135deg, var(--c-primary), #1D5446)',
-      color: '#fff', fontWeight: 800, fontSize: 11.5,
+      color: '#fff', fontWeight: 800, fontSize: 12,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       {initials}
@@ -143,7 +143,7 @@ function DocumentRow({ doc, last, onPreview, onDelete }) {
         <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{doc.title || '—'}</div>
         <div style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 11, color: 'var(--c-text-3)', marginTop: 2,
+          fontSize: 12, color: 'var(--c-text-3)', marginTop: 2,
         }}>
           {doc.reference_number ?? '—'}
         </div>
@@ -173,7 +173,7 @@ function DocumentRow({ doc, last, onPreview, onDelete }) {
               {doc.department.name}
             </div>
             {doc.section && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 3 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--c-text-3)', marginTop: 3 }}>
                 <Layers size={10} />
                 {doc.section.name}
               </div>
@@ -384,7 +384,7 @@ function PdfPreviewModal({ doc, onClose }) {
             </div>
             <div style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 11, color: 'var(--c-text-3)', marginTop: 2,
+              fontSize: 12, color: 'var(--c-text-3)', marginTop: 2,
             }}>
               {doc.reference_number ?? '—'}
             </div>
@@ -581,7 +581,7 @@ export default function DocumentsPage() {
             <FileText size={17} style={{ color: 'var(--c-primary)' }} />
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>قائمة المستندات</span>
             <span style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
               background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {total} مستنداً
@@ -663,7 +663,7 @@ export default function DocumentsPage() {
                 {TABLE_COLS.map(col => (
                   <th key={col} style={{
                     padding: '11px 16px', textAlign: 'right',
-                    fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
+                    fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
                     borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
                   }}>
                     {col}

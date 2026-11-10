@@ -51,7 +51,7 @@ export default function ApproverPicker({ value, onChange, workflowMode, refreshK
       <div style={{
         display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 11px',
         borderRadius: 4, background: 'var(--c-accent-soft)', color: 'var(--c-text-2)',
-        fontSize: 11.5, lineHeight: 1.6,
+        fontSize: 12, lineHeight: 1.6,
       }}>
         <Info size={14} style={{ flexShrink: 0, marginTop: 1, color: 'var(--c-accent)' }} />
         سيتم إضافة الرئيس الأعلى تلقائيًا كآخر معتمد على المستند.

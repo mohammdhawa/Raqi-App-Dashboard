@@ -30,7 +30,7 @@ function metaLine(manager) {
 const orderBadgeStyle = {
   width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
   background: 'var(--c-primary)', color: '#fff',
-  fontSize: 11, fontWeight: 800,
+  fontSize: 12, fontWeight: 800,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   fontVariantNumeric: 'tabular-nums',
 }
@@ -63,7 +63,7 @@ function ManagerRow({ manager, selected, disabled, badge, onToggle }) {
           {manager.name}
         </div>
         <div style={{
-          fontSize: 11.5, color: 'var(--c-text-3)',
+          fontSize: 12, color: 'var(--c-text-3)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {meta}
@@ -94,15 +94,15 @@ function ChipBody({ manager, fallbackId, badge, caption, error, onRemove }) {
           {manager?.name ?? `#${fallbackId}`}
         </div>
         {caption && (
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--c-primary)', marginTop: 2 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-primary)', marginTop: 2 }}>
             {caption}
           </div>
         )}
         {!caption && metaLine(manager) && (
-          <div style={{ fontSize: 11, color: 'var(--c-text-3)' }}>{metaLine(manager)}</div>
+          <div style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{metaLine(manager)}</div>
         )}
         {error && (
-          <div style={{ fontSize: 11, color: 'var(--c-rejected)', marginTop: 3, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 3, lineHeight: 1.5 }}>
             {error}
           </div>
         )}
@@ -190,8 +190,8 @@ function SequenceSummary({ value, known }) {
       {value.map((id, i) => (
         <span key={id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           {i > 0 && <ChevronLeft size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />}
-          <span style={{ ...orderBadgeStyle, width: 18, height: 18, fontSize: 10 }}>{i + 1}</span>
-          <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
+          <span style={{ ...orderBadgeStyle, width: 18, height: 18, fontSize: 12 }}>{i + 1}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)' }}>
             {known[id]?.name ?? `#${id}`}
           </span>
         </span>
@@ -329,7 +329,7 @@ export default function ApproverPickerBase({
         <UserCheck size={14} />
         {selectedLabel} ({value.length}{max != null ? ` / ${max}` : ''})
         {ordered && value.length > 1 && (
-          <span style={{ fontWeight: 400, color: 'var(--c-text-3)', fontSize: 11.5 }}>— اسحب لإعادة الترتيب</span>
+          <span style={{ fontWeight: 400, color: 'var(--c-text-3)', fontSize: 12 }}>— اسحب لإعادة الترتيب</span>
         )}
       </div>
 

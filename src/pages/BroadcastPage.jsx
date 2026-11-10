@@ -32,7 +32,7 @@ function FieldWrap({ label, required, error, hint, count, max, children }) {
         </label>
         {max != null && (
           <span style={{
-            fontSize: 11, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
+            fontSize: 12, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
             color: over ? 'var(--c-rejected)' : 'var(--c-text-3)',
           }}>
             {count} / {max}
@@ -40,8 +40,8 @@ function FieldWrap({ label, required, error, hint, count, max, children }) {
         )}
       </div>
       {children}
-      {hint && !error && <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
-      {error && <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
+      {hint && !error && <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
     </div>
   )
 }
@@ -88,10 +88,10 @@ function Preview({ title, body }) {
                 {body.trim()}
               </div>
             )}
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 6 }}>الآن</div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 6 }}>الآن</div>
           </div>
         </div>
-        <p style={{ margin: '14px 0 0', fontSize: 11.5, color: 'var(--c-text-3)', lineHeight: 1.7 }}>
+        <p style={{ margin: '14px 0 0', fontSize: 12, color: 'var(--c-text-3)', lineHeight: 1.7 }}>
           يظهر الإشعار بهذا الشكل داخل التطبيق، ويُرسل أيضاً كإشعار فوري (Push) على أجهزة
           المستخدمين.
         </p>
@@ -217,7 +217,7 @@ function QueuedPanel({ result, onNew }) {
       )}
 
       {result.broadcast_id && (
-        <div style={{ marginTop: 16, fontSize: 11, color: 'var(--c-text-3)' }}>
+        <div style={{ marginTop: 16, fontSize: 12, color: 'var(--c-text-3)' }}>
           معرّف الإرسال:{' '}
           <span style={{ fontFamily: 'var(--font-mono)' }}>{result.broadcast_id}</span>
         </div>

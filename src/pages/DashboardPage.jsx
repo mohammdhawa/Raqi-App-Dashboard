@@ -66,7 +66,7 @@ function StatCard({ icon: Icon, label, value, sub, iconBg, iconColor, loading })
         <div>
           <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{label}</div>
           {sub != null && (
-            <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 3 }}>{sub}</div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 3 }}>{sub}</div>
           )}
         </div>
       )}
@@ -152,11 +152,11 @@ function RecentActivityItem({ label, sub, status, loading }) {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</div>
-        <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>{sub}</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{sub}</div>
       </div>
       <span style={{
         padding: '3px 10px', borderRadius: 2,
-        fontSize: 11, fontWeight: 700,
+        fontSize: 12, fontWeight: 700,
         background: meta.bg, color: meta.color,
         whiteSpace: 'nowrap',
       }}>
@@ -317,8 +317,8 @@ export default function DashboardPage() {
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={activity} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <CartesianGrid stroke="#D6D1C6" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 11, fill: '#6F7873' }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6F7873' }} axisLine={false} tickLine={false} width={32} />
+              <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fontSize: 12, fill: '#6F7873' }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#6F7873' }} axisLine={false} tickLine={false} width={32} />
               <Tooltip labelFormatter={formatShortDate} contentStyle={{ borderRadius: 4, border: '1px solid #D6D1C6', fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Area type="monotone" dataKey="submitted" name="مُرسلة" stroke="#1D5446" fill="#1D5446" fillOpacity={0.12} strokeWidth={2} />
@@ -368,7 +368,7 @@ export default function DashboardPage() {
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
               <AlertCircle size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
-              <span style={{ fontSize: 11.5, color: 'var(--c-text-3)', lineHeight: 1.5 }}>
+              <span style={{ fontSize: 12, color: 'var(--c-text-3)', lineHeight: 1.5 }}>
                 لا توجد مستندات مسجّلة في النظام بعد
               </span>
             </div>
@@ -390,8 +390,8 @@ export default function DashboardPage() {
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={staffDistribution} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <CartesianGrid stroke="#D6D1C6" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6F7873' }} axisLine={false} tickLine={false} interval={0} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6F7873' }} axisLine={false} tickLine={false} width={32} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6F7873' }} axisLine={false} tickLine={false} interval={0} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#6F7873' }} axisLine={false} tickLine={false} width={32} />
               <Tooltip contentStyle={{ borderRadius: 4, border: '1px solid #D6D1C6', fontSize: 12 }} />
               <Bar dataKey="userCount" name="عدد الموظفين" fill="#1D5446" radius={[2, 2, 0, 0]} />
             </BarChart>
@@ -425,7 +425,7 @@ export default function DashboardPage() {
                 background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                 textAlign: 'center',
               }}>
-                <span style={{ fontSize: 11.5, color: 'var(--c-text-3)' }}>
+                <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
                   لا توجد مستندات حديثة بعد
                 </span>
               </div>
