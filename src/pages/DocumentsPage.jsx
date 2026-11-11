@@ -37,7 +37,7 @@ const chevronStyle = {
 
 function selectStyle(value) {
   return {
-    height: 38, paddingRight: 10, paddingLeft: 32, borderRadius: 10,
+    height: 38, paddingRight: 10, paddingLeft: 32, borderRadius: 4,
     background: '#fff', border: '1px solid var(--c-border)',
     fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
     color: value ? 'var(--c-text)' : 'var(--c-text-2)',
@@ -47,7 +47,7 @@ function selectStyle(value) {
 }
 
 const dateInputStyle = {
-  height: 38, borderRadius: 10, border: '1px solid var(--c-border)',
+  height: 38, borderRadius: 4, border: '1px solid var(--c-border)',
   background: '#fff', padding: '0 10px', fontSize: 12, fontFamily: 'var(--font-sans)',
   color: 'var(--c-text-2)', outline: 'none', cursor: 'pointer',
 }
@@ -61,9 +61,9 @@ function StatusBadge({ status }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
-      padding: '5px 11px', borderRadius: 999,
+      padding: '5px 11px', borderRadius: 2,
       fontSize: 12, fontWeight: 700, color: meta.color,
-      background: meta.bg, border: `1px solid ${meta.color}22`,
+      background: meta.bg, border: `1px solid color-mix(in srgb, ${meta.color} 13%, transparent)`,
       whiteSpace: 'nowrap',
     }}>
       <Icon size={12} />
@@ -79,8 +79,8 @@ function InitialsTag({ name }) {
   return (
     <div style={{
       width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-      background: 'linear-gradient(135deg, var(--c-primary), #1C3A5E)',
-      color: '#fff', fontWeight: 800, fontSize: 11.5,
+      background: 'linear-gradient(135deg, var(--c-primary), #1D5446)',
+      color: '#fff', fontWeight: 800, fontSize: 12,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       {initials}
@@ -91,7 +91,7 @@ function InitialsTag({ name }) {
 // ── Skeleton row ──────────────────────────────────────────────────────────────
 
 function SkeletonRow() {
-  const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)', borderRadius: 7 }
+  const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)', borderRadius: 3 }
   return (
     <tr>
       {[[170, 38], [90, 26], [120, 16], [110, 16], [120, 16], [70, 16], [32, 32]].map(([w, h], i) => (
@@ -112,7 +112,7 @@ function RowBtn({ children, onClick, title, danger }) {
       onClick={onClick} title={title}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        width: 32, height: 32, borderRadius: 9,
+        width: 32, height: 32, borderRadius: 4,
         border: `1px solid ${danger ? (hov ? '#F4C9C6' : 'var(--c-border)') : (hov ? 'var(--c-primary)' : 'var(--c-border)')}`,
         background: danger ? (hov ? 'var(--c-rejected-bg)' : '#fff') : (hov ? 'var(--c-primary)' : '#fff'),
         color: danger ? (hov ? 'var(--c-rejected)' : 'var(--c-text-2)') : (hov ? '#fff' : 'var(--c-text-2)'),
@@ -134,7 +134,7 @@ function DocumentRow({ doc, last, onPreview, onDelete }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
@@ -142,8 +142,8 @@ function DocumentRow({ doc, last, onPreview, onDelete }) {
       <td style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{doc.title || '—'}</div>
         <div style={{
-          fontFamily: "'Courier New', Courier, monospace",
-          fontSize: 11, color: 'var(--c-text-3)', marginTop: 2,
+          fontFamily: 'var(--font-mono)',
+          fontSize: 12, color: 'var(--c-text-3)', marginTop: 2,
         }}>
           {doc.reference_number ?? '—'}
         </div>
@@ -173,7 +173,7 @@ function DocumentRow({ doc, last, onPreview, onDelete }) {
               {doc.department.name}
             </div>
             {doc.section && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 3 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--c-text-3)', marginTop: 3 }}>
                 <Layers size={10} />
                 {doc.section.name}
               </div>
@@ -221,7 +221,7 @@ function PagBtn({ children, active, disabled, onClick }) {
     <button
       onClick={onClick} disabled={disabled}
       style={{
-        width: 32, height: 32, borderRadius: 8,
+        width: 32, height: 32, borderRadius: 4,
         cursor: disabled ? 'default' : 'pointer',
         border: active ? 'none' : '1px solid var(--c-border)',
         background: active ? 'var(--c-primary)' : '#fff',
@@ -258,17 +258,17 @@ function DeleteModal({ doc, onClose, onConfirm }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 50,
-      background: 'rgba(20,32,50,0.48)',
+      background: 'rgba(14,22,19,0.48)',
       backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div style={{
-        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
+        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 8,
         boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
       }}>
         <div style={{ padding: '26px 26px 22px', textAlign: 'center' }}>
           <div style={{
-            width: 60, height: 60, borderRadius: 16, margin: '0 auto 16px',
+            width: 60, height: 60, borderRadius: 8, margin: '0 auto 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
           }}>
@@ -282,7 +282,7 @@ function DeleteModal({ doc, onClose, onConfirm }) {
           </p>
           {error && (
             <div style={{
-              marginTop: 12, padding: '9px 14px', borderRadius: 10,
+              marginTop: 12, padding: '9px 14px', borderRadius: 4,
               background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
               fontSize: 12.5, display: 'inline-block',
             }}>
@@ -294,7 +294,7 @@ function DeleteModal({ doc, onClose, onConfirm }) {
           <button
             onClick={handleDelete} disabled={deleting}
             style={{
-              flex: 1, height: 44, borderRadius: 12, border: 0,
+              flex: 1, height: 44, borderRadius: 8, border: 0,
               background: 'var(--c-rejected)', color: '#fff',
               fontFamily: 'var(--font-sans)', fontSize: 13.5, fontWeight: 700,
               cursor: deleting ? 'default' : 'pointer', opacity: deleting ? 0.7 : 1,
@@ -305,7 +305,7 @@ function DeleteModal({ doc, onClose, onConfirm }) {
           <button
             onClick={onClose} disabled={deleting}
             style={{
-              flex: 1, height: 44, borderRadius: 12,
+              flex: 1, height: 44, borderRadius: 8,
               border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
               fontFamily: 'var(--font-sans)', fontSize: 13.5, fontWeight: 700,
               cursor: deleting ? 'default' : 'pointer',
@@ -357,7 +357,7 @@ function PdfPreviewModal({ doc, onClose }) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 50,
-        background: 'rgba(20,32,50,0.5)',
+        background: 'rgba(14,22,19,0.5)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
@@ -366,7 +366,7 @@ function PdfPreviewModal({ doc, onClose }) {
         onClick={e => e.stopPropagation()}
         style={{
           width: 'min(880px, 100%)', height: 'min(88vh, 1080px)',
-          background: '#fff', borderRadius: 16, overflow: 'hidden',
+          background: '#fff', borderRadius: 8, overflow: 'hidden',
           boxShadow: 'var(--sh-card-lg)', display: 'flex', flexDirection: 'column',
         }}
       >
@@ -383,8 +383,8 @@ function PdfPreviewModal({ doc, onClose }) {
               {doc.title || '—'}
             </div>
             <div style={{
-              fontFamily: "'Courier New', Courier, monospace",
-              fontSize: 11, color: 'var(--c-text-3)', marginTop: 2,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 12, color: 'var(--c-text-3)', marginTop: 2,
             }}>
               {doc.reference_number ?? '—'}
             </div>
@@ -394,7 +394,7 @@ function PdfPreviewModal({ doc, onClose }) {
               <button
                 onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')} title="فتح في تبويب جديد"
                 style={{
-                  width: 34, height: 34, borderRadius: 9,
+                  width: 34, height: 34, borderRadius: 4,
                   border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                 }}
@@ -405,7 +405,7 @@ function PdfPreviewModal({ doc, onClose }) {
             <button
               onClick={onClose} title="إغلاق"
               style={{
-                width: 34, height: 34, borderRadius: 9,
+                width: 34, height: 34, borderRadius: 4,
                 border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
               }}
@@ -569,7 +569,7 @@ export default function DocumentsPage() {
       {/* ── Main card ────────────────────────────────────────────────────────── */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
 
         {/* Toolbar */}
@@ -581,8 +581,8 @@ export default function DocumentsPage() {
             <FileText size={17} style={{ color: 'var(--c-primary)' }} />
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>قائمة المستندات</span>
             <span style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-              background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
+              background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {total} مستنداً
             </span>
@@ -626,7 +626,7 @@ export default function DocumentsPage() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 9,
             background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-            borderRadius: 10, padding: '0 12px', height: 38, minWidth: 220,
+            borderRadius: 4, padding: '0 12px', height: 38, minWidth: 220,
           }}>
             <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
             <input
@@ -663,7 +663,7 @@ export default function DocumentsPage() {
                 {TABLE_COLS.map(col => (
                   <th key={col} style={{
                     padding: '11px 16px', textAlign: 'right',
-                    fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
+                    fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
                     borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
                   }}>
                     {col}
@@ -687,7 +687,7 @@ export default function DocumentsPage() {
 
         {/* Empty state */}
         {!loading && documents.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <FileText size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
               {hasFilters ? 'لا توجد نتائج مطابقة' : 'لا توجد مستندات مسجّلة بعد'}

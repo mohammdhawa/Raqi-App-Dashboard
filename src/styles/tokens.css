@@ -1,38 +1,62 @@
+/*
+ * Sunaa UI tokens (Digital Brand Sheet · 01 Foundations · v1.0), light set.
+ *
+ * Token names predate the Sunaa identity and are kept so call-sites did not
+ * have to change: `--c-primary` is the sheet's `brand-green` (headers, solid
+ * buttons, active states) and `--c-accent` is the sheet's `primary` (bronze:
+ * the active-state block, the base rule under dark blocks, CTA fills).
+ */
 :root {
-  /* Primary — deep navy */
-  --c-primary: #224167;
-  --c-primary-grad: #1a3254;
-  --c-primary-light: rgba(34,65,103,0.08);
+  /* Brand green */
+  --c-primary: #1D5446;
+  --c-primary-hover: #163F34;
+  /* Sunaa blocks are flat ("poured, solid"); the gradient stop equals the
+     base so existing gradients render as one solid fill. */
+  --c-primary-grad: #1D5446;
+  --c-primary-light: rgba(29,84,70,0.08);
 
-  /* Accent — warm gold */
-  --c-accent: #C8A36B;
-  --c-accent-tint: #FDF6EA;
-  --c-accent-soft: rgba(200,163,107,0.25);
+  /* Bronze */
+  --c-accent: #857245;
+  --c-accent-hover: #6B5B35;
+  --c-accent-text: #6B5B35;      /* bronze as text on light surfaces */
+  --c-accent-on-dark: #D9C28E;   /* bronze as text/icon on brand green */
+  --c-accent-tint: #EFEADF;
+  --c-accent-soft: rgba(133,114,69,0.25);
 
-  /* Surfaces */
-  --c-bg: #F4F6FA;
-  --c-surface: #F0F2F7;
-  --c-surface-2: #E8EBF2;
-  --c-border: #E2E6EF;
-  --c-border-strong: #C8CDD9;
+  /* Surfaces: warm concrete page, white cards, sunken wells */
+  --c-bg: #F3F1EC;
+  --c-card: #FFFFFF;
+  --c-surface: #F3F1EC;
+  --c-surface-2: #E7E3DA;
+  --c-concrete: #D8D4CB;
+  --c-border: #D6D1C6;
+  --c-border-strong: #C2BCAE;
 
   /* Text */
-  --c-text: #1B2A41;
-  --c-text-2: #5A6B82;
-  --c-text-3: #9AABBE;
+  --c-text: #0E1613;
+  --c-text-2: #4A5551;
+  --c-text-3: #6F7873;
 
-  /* Status */
-  --c-approved: #1E8F5E;
-  --c-approved-bg: #E8F7F1;
-  --c-rejected: #C0392B;
-  --c-rejected-bg: #FCECEA;
-  --c-pending: #C8A36B;
-  --c-pending-bg: #FDF6EA;
+  /* Status. Pending is amber, not bronze, so a status never reads as brand. */
+  --c-approved: #2E7D5B;
+  --c-approved-bg: #E3F1EA;
+  --c-rejected: #B3261E;
+  --c-rejected-bg: #FBEAE8;
+  --c-pending: #8A5A0B;
+  --c-pending-bg: #FBF1D9;
 
-  /* Shadows */
-  --sh-card: 0 1px 3px rgba(27,42,65,0.07), 0 4px 12px rgba(27,42,65,0.04);
-  --sh-card-lg: 0 4px 16px rgba(27,42,65,0.12), 0 1px 4px rgba(27,42,65,0.06);
+  /* Layers are separated by hairline borders; shadows stay faint. */
+  --sh-card: 0 1px 2px rgba(14,22,19,0.04);
+  --sh-card-lg: 0 6px 16px rgba(14,22,19,0.08), 0 1px 2px rgba(14,22,19,0.04);
+
+  /* Radius: sharper than the old identity */
+  --r-sm: 2px;
+  --r-md: 4px;
+  --r-lg: 8px;
 
   /* Typography */
-  --font-sans: 'Cairo', system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  /* Plex Mono has no Arabic glyphs; fall back to the body face for them, not
+     to a system monospace Arabic. */
+  --font-mono: 'IBM Plex Mono', 'IBM Plex Sans Arabic', ui-monospace, monospace;
 }

@@ -19,15 +19,15 @@ function InboxRow({ doc, last, userId, onView }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.015)' : 'transparent',
+        background: hov ? 'rgba(29,84,70,0.015)' : 'transparent',
         transition: 'background .1s',
       }}
     >
       <td style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{doc.title || '—'}</div>
         <div style={{
-          fontFamily: "'Courier New', Courier, monospace",
-          fontSize: 11, color: 'var(--c-text-3)', marginTop: 2,
+          fontFamily: 'var(--font-mono)',
+          fontSize: 12, color: 'var(--c-text-3)', marginTop: 2,
         }}>
           {doc.document_number ?? '—'}
         </div>
@@ -145,7 +145,7 @@ export default function DocumentInboxPage() {
       {/* Main card */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
 
         {/* Toolbar */}
@@ -157,8 +157,8 @@ export default function DocumentInboxPage() {
             <Inbox size={17} style={{ color: 'var(--c-primary)' }} />
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>الوارد</span>
             <span style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-              background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
+              background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {total} مستنداً
             </span>
@@ -179,7 +179,7 @@ export default function DocumentInboxPage() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 9,
             background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-            borderRadius: 10, padding: '0 12px', height: 38, minWidth: 220,
+            borderRadius: 4, padding: '0 12px', height: 38, minWidth: 220,
           }}>
             <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
             <input
@@ -202,7 +202,7 @@ export default function DocumentInboxPage() {
                 {TABLE_COLS.map(col => (
                   <th key={col} style={{
                     padding: '11px 16px', textAlign: 'right',
-                    fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
+                    fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
                     borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
                   }}>
                     {col}
@@ -228,7 +228,7 @@ export default function DocumentInboxPage() {
 
         {/* Empty state */}
         {!loading && filtered.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <Inbox size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
               {hasFilters ? 'لا توجد نتائج مطابقة' : 'لا توجد مستندات في الوارد حالياً'}

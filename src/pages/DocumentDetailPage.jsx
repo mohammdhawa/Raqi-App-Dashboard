@@ -18,7 +18,7 @@ import {
 // ── Layout primitives ────────────────────────────────────────────────────────
 
 const cardStyle = {
-  background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16,
+  background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8,
   boxShadow: 'var(--sh-card)', overflow: 'hidden', marginBottom: 20,
 }
 
@@ -38,13 +38,13 @@ function InfoItem({ icon: Icon, label, value, mono }) {
   if (value == null || value === '') return null
   return (
     <div style={{ minWidth: 130 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--c-text-3)', marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)', marginBottom: 4 }}>
         {Icon && <Icon size={11} />}
         {label}
       </div>
       <div style={{
         fontSize: 13, fontWeight: 700, color: 'var(--c-text)',
-        fontFamily: mono ? "'Courier New', Courier, monospace" : 'var(--font-sans)',
+        fontFamily: mono ? 'var(--font-mono)' : 'var(--font-sans)',
       }}>
         {value}
       </div>
@@ -151,7 +151,7 @@ function PdfCard({ document, fileMime, hasDecisions }) {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
-                border: '1px solid var(--c-border)', borderRadius: 9,
+                border: '1px solid var(--c-border)', borderRadius: 4,
                 padding: '6px 11px', background: '#fff', cursor: 'pointer',
               }}
             >
@@ -165,7 +165,7 @@ function PdfCard({ document, fileMime, hasDecisions }) {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontSize: 12, fontWeight: 700, color: 'var(--c-primary)',
-                border: '1px solid var(--c-primary)', borderRadius: 9,
+                border: '1px solid var(--c-primary)', borderRadius: 4,
                 padding: '6px 11px', background: '#fff',
                 cursor: downloading ? 'default' : 'pointer',
                 opacity: downloading ? 0.6 : 1,
@@ -216,7 +216,7 @@ function PdfCard({ document, fileMime, hasDecisions }) {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontSize: 12.5, fontWeight: 700, color: '#fff',
-                background: 'var(--c-primary)', borderRadius: 9,
+                background: 'var(--c-primary)', borderRadius: 4,
                 padding: '8px 16px', border: 0, cursor: 'pointer',
               }}
             >
@@ -252,8 +252,8 @@ function AttachmentsCard({ documentId, attachments }) {
         <Paperclip size={16} style={{ color: 'var(--c-primary)' }} />
         <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>مرفقات إضافية</span>
         <span style={{
-          fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-          background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+          fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
+          background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
         }}>
           {attachments.length}
         </span>
@@ -264,7 +264,7 @@ function AttachmentsCard({ documentId, attachments }) {
             key={a.id} onClick={() => handleOpen(a.id)}
             style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-              border: '1px solid var(--c-border)', borderRadius: 10, background: 'var(--c-surface)',
+              border: '1px solid var(--c-border)', borderRadius: 4, background: 'var(--c-surface)',
               width: '100%', textAlign: 'right', cursor: 'pointer', fontFamily: 'var(--font-sans)',
             }}
           >
@@ -276,7 +276,7 @@ function AttachmentsCard({ documentId, attachments }) {
               }}>
                 {a.file_name}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--c-text-3)' }}>
+              <div style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
                 {formatFileSize(a.file_size)}{a.uploader?.name ? ` · ${a.uploader.name}` : ''}
               </div>
             </div>
@@ -335,8 +335,8 @@ function CommentsCard({ docId }) {
         <MessageSquare size={16} style={{ color: 'var(--c-primary)' }} />
         <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-text)' }}>التعليقات</span>
         <span style={{
-          fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-          background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+          fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
+          background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
         }}>
           {comments.length}
         </span>
@@ -361,11 +361,11 @@ function CommentsCard({ docId }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>{c.user?.name ?? '—'}</span>
-                <span style={{ fontSize: 11, color: 'var(--c-text-3)' }}>{formatDateTime(c.created_at)}</span>
+                <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{formatDateTime(c.created_at)}</span>
               </div>
               <div style={{
                 fontSize: 13, color: 'var(--c-text-2)', lineHeight: 1.7,
-                background: 'var(--c-surface)', borderRadius: 10, padding: '9px 12px',
+                background: 'var(--c-surface)', borderRadius: 4, padding: '9px 12px',
                 whiteSpace: 'pre-wrap', wordBreak: 'break-word',
               }}>
                 {c.comment}
@@ -379,7 +379,7 @@ function CommentsCard({ docId }) {
           <div style={{ flex: 1 }}>
             <div style={{
               background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-              borderRadius: 10, padding: '8px 10px',
+              borderRadius: 4, padding: '8px 10px',
             }}>
               <textarea
                 value={text} onChange={e => setText(e.target.value)} rows={2} maxLength={2000}
@@ -421,7 +421,7 @@ function PendingBanner({ users }) {
         {users.map(u => (
           <div key={u.id} style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            background: '#fff', borderRadius: 999, padding: '4px 10px 4px 4px',
+            background: '#fff', borderRadius: 2, padding: '4px 10px 4px 4px',
             border: '1px solid var(--c-border)',
           }}>
             <InitialsAvatar name={u.name} size={22} />
@@ -456,7 +456,7 @@ function WorkflowStep({ w, isLast, isMe }) {
           width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
           background: meta.bg, color: meta.color,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: `1.5px solid ${meta.color}33`,
+          border: `1.5px solid color-mix(in srgb, ${meta.color} 20%, transparent)`,
         }}>
           <Icon size={14} />
         </div>
@@ -466,23 +466,23 @@ function WorkflowStep({ w, isLast, isMe }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>{w.user?.name ?? '—'}</span>
           <span style={{
-            fontSize: 10.5, fontWeight: 700, color: 'var(--c-text-3)',
-            background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 8px',
+            fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)',
+            background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 8px',
           }}>
             {w.role === 'chief' ? 'الرئيس الأعلى' : 'مدير'}
           </span>
-          {isMe && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-accent)' }}>(أنت)</span>}
+          {isMe && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-accent)' }}>(أنت)</span>}
         </div>
         <div style={{ marginTop: 6 }}>
           <StatusBadge status={w.status} />
         </div>
         {w.signed_at && (
-          <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 6 }}>{formatDateTime(w.signed_at)}</div>
+          <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 6 }}>{formatDateTime(w.signed_at)}</div>
         )}
         {w.note && (
           <div style={{
             marginTop: 8, fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.6,
-            background: 'var(--c-surface)', borderRadius: 8, padding: '8px 10px',
+            background: 'var(--c-surface)', borderRadius: 4, padding: '8px 10px',
             whiteSpace: 'pre-wrap', wordBreak: 'break-word',
           }}>
             {w.note}
@@ -555,7 +555,7 @@ function ApprovalCard({ docId, onDone }) {
       <div style={{ padding: 20 }}>
         <div style={{
           background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-          borderRadius: 10, padding: '8px 10px', marginBottom: 12,
+          borderRadius: 4, padding: '8px 10px', marginBottom: 12,
         }}>
           <textarea
             value={note} onChange={e => setNote(e.target.value)} rows={3} maxLength={2000}
@@ -623,7 +623,7 @@ function ActivityLog({ logs }) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>{meta.label}</div>
-                <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
                   {log.done_by?.name ?? '—'} · {formatDateTime(log.created_at)}
                 </div>
                 {log.note && (

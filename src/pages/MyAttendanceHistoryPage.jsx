@@ -33,7 +33,7 @@ const TYPE_META = {
 }
 
 const dateInputStyle = {
-  height: 38, borderRadius: 10, border: '1px solid var(--c-border)',
+  height: 38, borderRadius: 4, border: '1px solid var(--c-border)',
   background: '#fff', padding: '0 10px', fontSize: 12, fontFamily: 'var(--font-sans)',
   color: 'var(--c-text-2)', outline: 'none', cursor: 'pointer',
 }
@@ -90,7 +90,7 @@ function countedHours(records) {
 function SelfieThumb({ url }) {
   const [failed, setFailed] = useState(false)
   const box = {
-    width: 42, height: 42, borderRadius: 11, flexShrink: 0, overflow: 'hidden',
+    width: 42, height: 42, borderRadius: 4, flexShrink: 0, overflow: 'hidden',
     background: 'var(--c-surface-2)', color: 'var(--c-text-3)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   }
@@ -119,7 +119,7 @@ function RecordRow({ record, last }) {
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 18px',
       borderBottom: last ? 'none' : '1px solid var(--c-border)',
-      background: rejected ? 'rgba(192,57,43,0.04)' : 'transparent',
+      background: rejected ? 'rgba(179,38,30,0.04)' : 'transparent',
     }}>
       <SelfieThumb url={record.selfie_url} />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -136,26 +136,26 @@ function RecordRow({ record, last }) {
           {rejected && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
-              padding: '2px 8px', borderRadius: 999,
-              fontSize: 10.5, fontWeight: 800, lineHeight: 1.5, whiteSpace: 'nowrap',
+              padding: '2px 8px', borderRadius: 2,
+              fontSize: 12, fontWeight: 800, lineHeight: 1.5, whiteSpace: 'nowrap',
               color: 'var(--c-rejected)', background: 'var(--c-rejected-bg)',
-              border: '1px solid rgba(192,57,43,0.22)',
+              border: '1px solid rgba(179,38,30,0.22)',
             }}>
               {REJECTION_COPY.badge}
             </span>
           )}
         </div>
         {rejected ? (
-          <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 3, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 3, lineHeight: 1.6 }}>
             {readRejectionMessage(record)}
             {rejection?.at && (
-              <span style={{ display: 'block', fontSize: 10.5, color: 'var(--c-text-3)', marginTop: 2 }}>
+              <span style={{ display: 'block', fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
                 {REJECTION_COPY.badge} — {formatDate(rejection.at)}
               </span>
             )}
           </div>
         ) : (
-          <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 3 }}>
+          <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 3 }}>
             {record.type === 'check_out' && record.work_hours != null
               ? `ساعات العمل: ${record.work_hours_formatted ?? record.work_hours}`
               : record.type === 'check_in' && record.missing_checkout
@@ -306,7 +306,7 @@ export default function MyAttendanceHistoryPage() {
         <Link
           to="/attendance"
           style={{
-            height: 38, padding: '0 14px', borderRadius: 10, flexShrink: 0,
+            height: 38, padding: '0 14px', borderRadius: 4, flexShrink: 0,
             background: '#fff', border: '1px solid var(--c-border)', color: 'var(--c-text-2)',
             fontSize: 12.5, fontWeight: 700, textDecoration: 'none',
             display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -320,7 +320,7 @@ export default function MyAttendanceHistoryPage() {
       {/* Card */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
 
         {/* Filter bar */}
@@ -329,8 +329,8 @@ export default function MyAttendanceHistoryPage() {
           display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
         }}>
           <span style={{
-            fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-            background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+            fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
+            background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
           }}>
             {total} سجلاً
           </span>
@@ -357,7 +357,7 @@ export default function MyAttendanceHistoryPage() {
               onClick={() => updateQuery({ from: '', to: '', rejected: '' })}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 38, padding: '0 12px', borderRadius: 10,
+                height: 38, padding: '0 12px', borderRadius: 4,
                 background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                 fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
                 color: 'var(--c-text-2)', cursor: 'pointer',
@@ -383,13 +383,13 @@ export default function MyAttendanceHistoryPage() {
           <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[0, 1, 2, 3].map(i => (
               <div key={i} style={{
-                height: 42, borderRadius: 11, background: 'var(--c-surface-2)',
+                height: 42, borderRadius: 4, background: 'var(--c-surface-2)',
                 animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.08}s`,
               }} />
             ))}
           </div>
         ) : forbidden ? (
-          <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '48px 20px', textAlign: 'center' }}>
             <ShieldAlert size={30} style={{ color: 'var(--c-text-3)', marginBottom: 10 }} />
             <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>غير مصرح</p>
             <p style={{ margin: 0, fontSize: 13, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
@@ -397,12 +397,12 @@ export default function MyAttendanceHistoryPage() {
             </p>
           </div>
         ) : error ? (
-          <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '48px 20px', textAlign: 'center' }}>
             <AlertTriangle size={30} style={{ color: 'var(--c-rejected)', marginBottom: 10 }} />
             <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: 'var(--c-text-2)' }}>{error}</p>
           </div>
         ) : records.length === 0 ? (
-          <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '48px 20px', textAlign: 'center' }}>
             <Fingerprint size={30} style={{ color: 'var(--c-text-3)', marginBottom: 10 }} />
             <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: 'var(--c-text-2)' }}>
               {rejectedOnly
@@ -419,7 +419,7 @@ export default function MyAttendanceHistoryPage() {
                 padding: '9px 18px', background: 'var(--c-surface)',
                 borderBottom: '1px solid var(--c-border)',
                 display: 'flex', alignItems: 'center', gap: 8,
-                fontSize: 11.5, fontWeight: 800, color: 'var(--c-text-2)',
+                fontSize: 12, fontWeight: 800, color: 'var(--c-text-2)',
               }}>
                 {dayHeading(group.key, today, yesterday)}
                 {/* Refused rows are excluded — the server counts none of them,
@@ -427,7 +427,7 @@ export default function MyAttendanceHistoryPage() {
                 {hours && (
                   <span style={{
                     marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5,
-                    fontSize: 11, fontWeight: 700, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums',
+                    fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums',
                   }}>
                     <Clock size={11} />
                     {hours}
@@ -451,7 +451,7 @@ export default function MyAttendanceHistoryPage() {
             <button
               onClick={() => setPage(Math.max(1, page - 1))} disabled={page <= 1}
               style={{
-                height: 34, padding: '0 14px', borderRadius: 9,
+                height: 34, padding: '0 14px', borderRadius: 4,
                 border: '1px solid var(--c-border)', background: '#fff',
                 fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700,
                 color: page <= 1 ? 'var(--c-text-3)' : 'var(--c-text-2)',
@@ -466,7 +466,7 @@ export default function MyAttendanceHistoryPage() {
             <button
               onClick={() => setPage(Math.min(lastPage, page + 1))} disabled={page >= lastPage}
               style={{
-                height: 34, padding: '0 14px', borderRadius: 9,
+                height: 34, padding: '0 14px', borderRadius: 4,
                 border: '1px solid var(--c-border)', background: '#fff',
                 fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700,
                 color: page >= lastPage ? 'var(--c-text-3)' : 'var(--c-text-2)',

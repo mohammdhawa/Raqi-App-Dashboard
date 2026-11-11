@@ -20,7 +20,7 @@ import DeductsBalanceBadge from '../ui/DeductsBalanceBadge'
 const inputStyle = {
   width: '100%', boxSizing: 'border-box', height: 42,
   background: '#fff', border: '1px solid var(--c-border)',
-  borderRadius: 10, padding: '0 12px', outline: 'none',
+  borderRadius: 4, padding: '0 12px', outline: 'none',
   fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
 }
 
@@ -134,7 +134,7 @@ export default function LeaveTypeSelect({
           top: anchor.top, bottom: anchor.bottom, left: anchor.left, width: anchor.width,
           maxHeight: anchor.maxHeight, display: 'flex', flexDirection: 'column',
           background: '#fff', border: '1px solid var(--c-border)',
-          borderRadius: 12, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
+          borderRadius: 8, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
           fontFamily: 'var(--font-sans)',
         }}>
           {types.length > 6 && (
@@ -185,7 +185,7 @@ export default function LeaveTypeSelect({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)' }}>{type.name_ar}</div>
                     {type.requires_reason && (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, color: 'var(--c-text-3)', marginTop: 2 }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
                         <AlertTriangle size={10} />
                         {LEAVE_COPY.requiresReason}
                       </div>
@@ -205,7 +205,7 @@ export default function LeaveTypeSelect({
 }
 
 const filterSelectStyle = {
-  height: 38, padding: '0 10px', borderRadius: 10, minWidth: 160,
+  height: 38, padding: '0 10px', borderRadius: 4, minWidth: 160,
   background: '#fff', border: '1px solid var(--c-border)',
   fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
   cursor: 'pointer', direction: 'rtl', outline: 'none',

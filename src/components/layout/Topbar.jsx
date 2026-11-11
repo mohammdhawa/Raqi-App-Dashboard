@@ -40,7 +40,7 @@ const ACTION_LABELS = {
 const IconBtn = ({ children, ...props }) => (
   <button
     style={{
-      width: 34, height: 34, borderRadius: 9,
+      width: 34, height: 34, borderRadius: 4,
       border: '1px solid var(--c-border)',
       background: '#fff', color: 'var(--c-text-2)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -234,10 +234,10 @@ function NotificationsPanel() {
       </IconBtn>
       {unreadCount > 0 && (
         <span style={{
-          position: 'absolute', top: -5, insetInlineEnd: -5,
-          minWidth: 16, height: 16, padding: '0 4px', borderRadius: 8,
+          position: 'absolute', top: -6, insetInlineEnd: -6,
+          minWidth: 18, height: 18, padding: '0 4px', borderRadius: 4,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 9.5, fontWeight: 800, lineHeight: 1, color: '#fff',
+          fontSize: 12, fontWeight: 800, lineHeight: 1, color: '#fff',
           background: 'var(--c-rejected)', border: '1.5px solid #fff',
         }}>
           {unreadCount > 99 ? '99+' : unreadCount}
@@ -249,7 +249,7 @@ function NotificationsPanel() {
           position: 'absolute', top: 'calc(100% + 10px)', insetInlineEnd: 0, zIndex: 30,
           width: 360, maxWidth: '90vw', maxHeight: 440,
           display: 'flex', flexDirection: 'column',
-          background: '#fff', borderRadius: 14,
+          background: '#fff', borderRadius: 8,
           border: '1px solid var(--c-border)', boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
         }}>
           <div style={{
@@ -263,7 +263,7 @@ function NotificationsPanel() {
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
                   border: 'none', background: 'transparent', cursor: markingAll ? 'default' : 'pointer',
-                  fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700,
+                  fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
                   color: 'var(--c-primary)', opacity: markingAll ? 0.5 : 1,
                 }}
               >
@@ -311,7 +311,7 @@ function NotificationsPanel() {
                   }} />
                   {Icon && (
                     <span style={{
-                      flexShrink: 0, width: 26, height: 26, borderRadius: 8,
+                      flexShrink: 0, width: 26, height: 26, borderRadius: 4,
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       background: meta.bg, color: meta.color,
                     }}>
@@ -322,13 +322,13 @@ function NotificationsPanel() {
                     <div style={{ fontSize: 12.5, fontWeight: 700, color: meta?.color ?? 'var(--c-text)' }}>{title}</div>
                     {body && (
                       <div style={{
-                        fontSize: 11.5, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5,
+                        fontSize: 12, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5,
                         display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                       }}>
                         {body}
                       </div>
                     )}
-                    <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', marginTop: 4 }}>{timeAgo(n.created_at)}</div>
+                    <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>{timeAgo(n.created_at)}</div>
                   </div>
                 </div>
               )
@@ -401,7 +401,7 @@ export default function Topbar({ onMenuToggle }) {
       <div style={{ flexShrink: 0 }}>
         {isBuilder ? (
           <>
-            <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
               الرئيسية
               <span style={{ margin: '0 3px' }}>·</span>
               <span style={{ color: 'var(--c-text-2)' }}>القوالب</span>
@@ -418,7 +418,7 @@ export default function Topbar({ onMenuToggle }) {
           </>
         ) : isDetail ? (
           <>
-            <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
               الرئيسية
               <span style={{ margin: '0 3px' }}>·</span>
               <span style={{ color: 'var(--c-text-2)' }}>المستندات</span>
@@ -432,7 +432,7 @@ export default function Topbar({ onMenuToggle }) {
           </>
         ) : (
           <>
-            <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', fontWeight: 600, lineHeight: 1 }}>
               الرئيسية
               {meta.section !== 'الرئيسية' && (
                 <> · <span style={{ color: 'var(--c-text-2)' }}>{meta.section}</span></>

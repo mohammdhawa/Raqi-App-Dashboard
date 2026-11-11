@@ -17,7 +17,7 @@ function RowBtn({ children, danger, onClick, title }) {
       onClick={onClick} title={title}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        width: 32, height: 32, borderRadius: 9,
+        width: 32, height: 32, borderRadius: 4,
         border: `1px solid ${danger && hov ? '#F4C9C6' : 'var(--c-border)'}`,
         background: danger && hov ? 'var(--c-rejected-bg)' : '#fff',
         color: danger && hov ? 'var(--c-rejected)' : 'var(--c-text-2)',
@@ -49,7 +49,7 @@ function FieldWrap({ label, required, hint, children }) {
       </label>
       {children}
       {hint && (
-        <div style={{ marginTop: 5, fontSize: 11.5, color: 'var(--c-text-3)', lineHeight: 1.5 }}>
+        <div style={{ marginTop: 5, fontSize: 12, color: 'var(--c-text-3)', lineHeight: 1.5 }}>
           {hint}
         </div>
       )}
@@ -62,13 +62,13 @@ function TextInput({ placeholder, value, onChange, mono }) {
     <div style={{
       display: 'flex', alignItems: 'center', height: 42,
       background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
-      borderRadius: 10, padding: '0 12px',
+      borderRadius: 4, padding: '0 12px',
     }}>
       <input
         placeholder={placeholder} value={value} onChange={onChange}
         style={{
           flex: 1, border: 0, outline: 0, background: 'transparent',
-          fontFamily: mono ? "'Courier New', Courier, monospace" : 'var(--font-sans)',
+          fontFamily: mono ? 'var(--font-mono)' : 'var(--font-sans)',
           fontSize: 13, color: 'var(--c-text)',
           textAlign: 'right', direction: 'rtl',
           letterSpacing: mono ? 0.5 : 'normal',
@@ -83,19 +83,19 @@ function TextInput({ placeholder, value, onChange, mono }) {
 function SkeletonCard() {
   const pulse = { animation: 'pulse 1.5s ease-in-out infinite', background: 'var(--c-surface-2)' }
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden' }}>
       <div style={{ padding: '18px 16px 14px' }}>
-        <div style={{ ...pulse, width: 52, height: 12, borderRadius: 6, marginBottom: 18 }} />
-        <div style={{ ...pulse, width: 46, height: 46, borderRadius: 13, marginBottom: 12 }} />
-        <div style={{ ...pulse, width: '65%', height: 14, borderRadius: 7 }} />
+        <div style={{ ...pulse, width: 52, height: 12, borderRadius: 3, marginBottom: 18 }} />
+        <div style={{ ...pulse, width: 46, height: 46, borderRadius: 8, marginBottom: 12 }} />
+        <div style={{ ...pulse, width: '65%', height: 14, borderRadius: 3 }} />
       </div>
       <div style={{ padding: '10px 16px', borderTop: '1px dashed var(--c-border)' }}>
-        <div style={{ ...pulse, width: '55%', height: 12, borderRadius: 6 }} />
+        <div style={{ ...pulse, width: '55%', height: 12, borderRadius: 3 }} />
       </div>
       <div style={{ padding: '10px 16px', borderTop: '1px solid var(--c-border)', display: 'flex', gap: 6 }}>
-        <div style={{ ...pulse, flex: 1, height: 34, borderRadius: 9 }} />
-        <div style={{ ...pulse, flex: 1, height: 34, borderRadius: 9 }} />
-        <div style={{ ...pulse, width: 32, height: 34, borderRadius: 9 }} />
+        <div style={{ ...pulse, flex: 1, height: 34, borderRadius: 4 }} />
+        <div style={{ ...pulse, flex: 1, height: 34, borderRadius: 4 }} />
+        <div style={{ ...pulse, width: 32, height: 34, borderRadius: 4 }} />
       </div>
     </div>
   )
@@ -110,7 +110,7 @@ function DeptCard({ dept, onEdit, onDelete, onSections }) {
     <div
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16,
+        background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8,
         overflow: 'hidden', position: 'relative',
         boxShadow: hov ? 'var(--sh-card-lg)' : 'var(--sh-card)',
         transform: hov ? 'translateY(-2px)' : 'none',
@@ -123,25 +123,25 @@ function DeptCard({ dept, onEdit, onDelete, onSections }) {
         <div style={{
           position: 'absolute', top: -36, right: -36, width: 110, height: 110,
           borderRadius: '50%', pointerEvents: 'none',
-          background: 'radial-gradient(circle, rgba(200,163,107,0.22) 0%, transparent 68%)',
+          background: 'radial-gradient(circle, rgba(133,114,69,0.22) 0%, transparent 68%)',
         }} />
 
         {/* Code badge — top-left (physical) */}
         <div style={{
           position: 'absolute', top: 12, left: 12,
-          fontFamily: "'Courier New', Courier, monospace",
-          fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3,
-          background: 'rgba(200,163,107,0.13)',
-          color: '#8A6A23',
-          border: '1px solid rgba(200,163,107,0.3)',
-          borderRadius: 7, padding: '2px 8px',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 12, fontWeight: 700, letterSpacing: 0.3,
+          background: 'rgba(133,114,69,0.13)',
+          color: '#6B5B35',
+          border: '1px solid rgba(133,114,69,0.3)',
+          borderRadius: 3, padding: '2px 8px',
         }}>
           {dept.code}
         </div>
 
         {/* Icon box */}
         <div style={{
-          width: 46, height: 46, borderRadius: 13, marginBottom: 12, flexShrink: 0,
+          width: 46, height: 46, borderRadius: 8, marginBottom: 12, flexShrink: 0,
           background: 'linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-grad) 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
@@ -197,7 +197,7 @@ function CardBtn({ icon, label, onClick, primary }) {
       onClick={onClick}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        flex: 1, height: 34, borderRadius: 9,
+        flex: 1, height: 34, borderRadius: 4,
         border: `1px solid ${hov && primary ? 'var(--c-primary)' : 'var(--c-border)'}`,
         background: hov && primary ? 'var(--c-primary-light)' : hov ? 'var(--c-surface)' : '#fff',
         color: primary ? 'var(--c-primary)' : 'var(--c-text-2)',
@@ -248,20 +248,20 @@ function DeptDrawer({ mode, dept, onClose, onSave }) {
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 39,
-          background: 'rgba(20,32,50,0.42)',
+          background: 'rgba(14,22,19,0.42)',
           backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         }}
       />
       <div style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
         width: 'min(520px, 100vw)', background: '#fff', zIndex: 40,
-        boxShadow: '-14px 0 40px rgba(20,32,50,0.22)',
+        boxShadow: '-14px 0 40px rgba(14,22,19,0.22)',
         display: 'flex', flexDirection: 'column',
         borderInlineEnd: '1px solid var(--c-border)',
       }}>
         {/* Head */}
         <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid var(--c-border)', flexShrink: 0, position: 'relative' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 6 }}>
             {isEdit ? 'تعديل إدارة' : 'إضافة إدارة'}
           </div>
           <h2 style={{ margin: '0 0 4px', fontSize: 21, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.4 }}>
@@ -276,7 +276,7 @@ function DeptDrawer({ mode, dept, onClose, onSave }) {
             onClick={onClose}
             style={{
               position: 'absolute', insetInlineStart: 18, top: 18,
-              width: 34, height: 34, borderRadius: 10,
+              width: 34, height: 34, borderRadius: 4,
               background: 'var(--c-surface)', border: '1px solid var(--c-border)',
               color: 'var(--c-text-2)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -365,13 +365,13 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 50,
-      background: 'rgba(20,32,50,0.48)',
+      background: 'rgba(14,22,19,0.48)',
       backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 16,
     }}>
       <div style={{
-        width: 'min(460px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
+        width: 'min(460px, calc(100vw - 32px))', background: '#fff', borderRadius: 8,
         boxShadow: 'var(--sh-card-lg)', overflow: 'hidden',
       }}>
 
@@ -380,7 +380,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
             <div style={{ padding: '30px 26px 22px', textAlign: 'center' }}>
               {/* Warning icon */}
               <div style={{
-                width: 62, height: 62, borderRadius: 16, margin: '0 auto 18px',
+                width: 62, height: 62, borderRadius: 8, margin: '0 auto 18px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'var(--c-accent-tint)', color: 'var(--c-accent)',
               }}>
@@ -395,7 +395,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
 
               {/* Dept ref chip */}
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12,
-                padding: '5px 13px', borderRadius: 999,
+                padding: '5px 13px', borderRadius: 2,
                 background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                 fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)',
               }}>
@@ -406,7 +406,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
               {/* Stats chips */}
               <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '4px 12px', borderRadius: 999,
+                  padding: '4px 12px', borderRadius: 2,
                   background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                   fontSize: 12, fontWeight: 600, color: 'var(--c-text-2)',
                 }}>
@@ -414,7 +414,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
                   {blockedCounts.users} موظفاً
                 </div>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '4px 12px', borderRadius: 999,
+                  padding: '4px 12px', borderRadius: 2,
                   background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                   fontSize: 12, fontWeight: 600, color: 'var(--c-text-2)',
                 }}>
@@ -444,7 +444,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
             <div style={{ padding: '30px 26px 22px', textAlign: 'center' }}>
               {/* Trash icon */}
               <div style={{
-                width: 62, height: 62, borderRadius: 16, margin: '0 auto 18px',
+                width: 62, height: 62, borderRadius: 8, margin: '0 auto 18px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
               }}>
@@ -459,7 +459,7 @@ function DeleteDeptModal({ dept, onClose, onDeleted }) {
 
               {/* Dept ref chip */}
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '5px 13px', borderRadius: 999,
+                padding: '5px 13px', borderRadius: 2,
                 background: 'var(--c-surface)', border: '1px solid var(--c-border)',
                 fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)',
               }}>
@@ -561,10 +561,10 @@ export default function DepartmentsPage() {
             <div key={label} style={{
               display: 'inline-flex', alignItems: 'center', gap: 9,
               background: '#fff', border: '1px solid var(--c-border)',
-              borderRadius: 12, padding: '9px 14px',
+              borderRadius: 8, padding: '9px 14px',
             }}>
               <div style={{
-                width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                width: 30, height: 30, borderRadius: 4, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'var(--c-surface)', color: 'var(--c-primary)',
               }}>
@@ -574,7 +574,7 @@ export default function DepartmentsPage() {
                 <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.3, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                   {value}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
               </div>
             </div>
           ))}
@@ -594,7 +594,7 @@ export default function DepartmentsPage() {
         <div style={{
           display: 'flex', alignItems: 'center', gap: 9,
           background: '#fff', border: '1px solid var(--c-border)',
-          borderRadius: 10, padding: '0 12px', height: 38, minWidth: 220,
+          borderRadius: 4, padding: '0 12px', height: 38, minWidth: 220,
         }}>
           <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
           <input
@@ -614,7 +614,7 @@ export default function DepartmentsPage() {
           {[0, 1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} />)}
         </div>
       ) : depts.length === 0 ? (
-        <div style={{ padding: '72px 20px', textAlign: 'center' }}>
+        <div className="site-grid-light" style={{ padding: '72px 20px', textAlign: 'center' }}>
           <Building2 size={36} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
           <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
             {search ? 'لا توجد نتائج مطابقة' : 'لا توجد إدارات بعد'}

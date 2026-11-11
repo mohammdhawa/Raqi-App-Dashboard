@@ -5,7 +5,7 @@ import { useToast } from '../ui/Toast'
 import { LEAVE_COPY } from '../../utils/leave'
 
 const inputStyle = {
-  width: '100%', height: 42, borderRadius: 10, border: '1px solid var(--c-border)',
+  width: '100%', height: 42, borderRadius: 4, border: '1px solid var(--c-border)',
   background: '#fff', padding: '0 12px', outline: 'none',
   fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
 }
@@ -16,8 +16,8 @@ function Field({ label, required, error, hint, children }) {
       {label}{required && <span style={{ color: 'var(--c-rejected)', marginInlineStart: 3 }}>*</span>}
     </label>
     {children}
-    {error && <div style={{ color: 'var(--c-rejected)', fontSize: 11.5, fontWeight: 600, marginTop: 5 }}>{error}</div>}
-    {!error && hint && <div style={{ color: 'var(--c-text-3)', fontSize: 11, marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
+    {error && <div style={{ color: 'var(--c-rejected)', fontSize: 12, fontWeight: 600, marginTop: 5 }}>{error}</div>}
+    {!error && hint && <div style={{ color: 'var(--c-text-3)', fontSize: 12, marginTop: 5, lineHeight: 1.6 }}>{hint}</div>}
   </div>
 }
 
@@ -76,12 +76,12 @@ export default function EditLeaveBalanceModal({ row, defaultDays, selectedYear, 
   }
 
   return (
-    <div onClick={() => !submitting && onClose()} style={{ position: 'fixed', inset: 0, zIndex: 60, padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(20,32,50,0.52)', backdropFilter: 'blur(2px)' }}>
-      <div role='dialog' aria-modal='true' aria-label='تعديل رصيد الإجازات' onClick={event => event.stopPropagation()} style={{ width: 'min(540px, 100%)', background: '#fff', borderRadius: 16, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden' }}>
+    <div onClick={() => !submitting && onClose()} style={{ position: 'fixed', inset: 0, zIndex: 60, padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(14,22,19,0.52)', backdropFilter: 'blur(2px)' }}>
+      <div role='dialog' aria-modal='true' aria-label='تعديل رصيد الإجازات' onClick={event => event.stopPropagation()} style={{ width: 'min(540px, 100%)', background: '#fff', borderRadius: 8, boxShadow: 'var(--sh-card-lg)', overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>تعديل رصيد الإجازات — {row.user.name}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--c-text-3)', marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 4 }}>
               السنة {selectedYear} · مستخدم {row.used_days} يوم · متبقي {row.remaining_days} يوم
               {/* Approved days under a non-deducting type — never part of
                   used_days, so they are named apart from it. */}
@@ -90,10 +90,10 @@ export default function EditLeaveBalanceModal({ row, defaultDays, selectedYear, 
               )}
             </div>
           </div>
-          <button type='button' onClick={onClose} disabled={submitting} title='إغلاق' style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
+          <button type='button' onClick={onClose} disabled={submitting} title='إغلاق' style={{ width: 34, height: 34, borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
         </div>
         <div style={{ padding: 20, display: 'grid', gap: 16 }}>
-          {!row.is_custom && <div style={{ padding: '9px 12px', borderRadius: 10, background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontSize: 12, fontWeight: 700 }}>هذا الموظف يستخدم الرصيد الافتراضي حالياً.</div>}
+          {!row.is_custom && <div style={{ padding: '9px 12px', borderRadius: 4, background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontSize: 12, fontWeight: 700 }}>هذا الموظف يستخدم الرصيد الافتراضي حالياً.</div>}
           <Field label='الرصيد السنوي' required error={errors.allocated_days}>
             <input type='number' min='0' max='365' step='1' value={allocatedDays} onChange={event => { setAllocatedDays(event.target.value); setErrors(value => ({ ...value, allocated_days: undefined })) }} style={inputStyle} />
           </Field>
@@ -105,8 +105,8 @@ export default function EditLeaveBalanceModal({ row, defaultDays, selectedYear, 
           </Field>
         </div>
         <div style={{ padding: '12px 20px', borderTop: '1px solid var(--c-border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <button type='button' onClick={onClose} disabled={submitting} style={{ height: 38, padding: '0 16px', borderRadius: 10, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>إلغاء</button>
-          <button type='button' onClick={submit} disabled={submitting} style={{ height: 38, padding: '0 18px', borderRadius: 10, border: 'none', background: 'var(--c-primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 7, opacity: submitting ? 0.7 : 1 }}>
+          <button type='button' onClick={onClose} disabled={submitting} style={{ height: 38, padding: '0 16px', borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>إلغاء</button>
+          <button type='button' onClick={submit} disabled={submitting} style={{ height: 38, padding: '0 18px', borderRadius: 4, border: 'none', background: 'var(--c-primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 7, opacity: submitting ? 0.7 : 1 }}>
             {submitting ? <Loader2 size={14} className='animate-spin' /> : <Check size={14} />} حفظ التعديل
           </button>
         </div>

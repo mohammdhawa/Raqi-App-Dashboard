@@ -9,6 +9,8 @@ import {
   Megaphone, Tags,
 } from 'lucide-react'
 
+// Grouped by what the person is doing rather than by who may do it: every
+// group hides itself when none of its items are visible to the current user.
 const NAV = [
   {
     label: 'الرئيسية',
@@ -23,26 +25,41 @@ const NAV = [
       { label: 'الوارد', icon: Inbox, path: '/documents/inbox', roles: ['admin', 'chief', 'manager'] },
       { label: 'الصادر', icon: Send, path: '/documents/sent',   roles: ['admin', 'chief', 'manager'] },
       { label: 'مستند جديد', icon: Plus, path: '/documents/new', roles: ['admin', 'chief', 'manager'] },
+      { label: 'كل المستندات',    icon: Files,          path: '/admin/documents', roles: ['admin'] },
+      { label: 'قوالب المستندات', icon: LayoutTemplate, path: '/admin/templates', roles: ['admin'] },
     ],
   },
   {
-    label: 'الإدارة',
+    label: 'الحضور',
     items: [
-      { label: 'كل المستندات',       icon: Files,           path: '/admin/documents',   roles: ['admin'] },
-      { label: 'الأشخاص والصلاحيات', icon: Users,           path: '/admin/users',        roles: ['admin'] },
-      { label: 'الحضور والانصراف',   icon: Fingerprint,     path: '/admin/attendance',   show: (auth) => auth.canViewAttendance },
-      { label: 'التقرير اليومي',      icon: ClipboardList,   path: '/admin/attendance/report', show: (auth) => auth.canViewAttendance },
-      { label: 'التقرير الشهري',      icon: CalendarRange,   path: '/admin/attendance/monthly', show: (auth) => auth.canViewAttendance },
-      { label: 'إدارة الإجازات',      icon: CalendarCheck,   path: '/admin/leave',        roles: ['admin', 'manager', 'chief', 'employee'] },
-      { label: 'سجل الإجازات',        icon: CalendarRange,   path: '/admin/leave-register', show: (auth) => auth.canViewLeaveRegister },
-      { label: 'أرصدة الإجازات',      icon: WalletCards,     path: '/admin/leave-balances', show: (auth) => auth.canViewAttendance },
-      { label: 'أنواع الإجازات',      icon: Tags,            path: '/admin/leave-types',  roles: ['admin'] },
-      { label: 'الإدارات',           icon: Building2,       path: '/admin/departments',  roles: ['admin'] },
-      { label: 'الأقسام',            icon: Layers,          path: '/admin/sections',     roles: ['admin'] },
-      { label: 'قوالب المستندات',    icon: LayoutTemplate,  path: '/admin/templates',    roles: ['admin'] },
-      { label: 'إشعار عام',          icon: Megaphone,       path: '/admin/broadcast',    roles: ['admin'] },
-      { label: 'سجل التدقيق',        icon: History,         path: '/admin/audit',        roles: ['admin', 'chief'] },
-      { label: 'الإعدادات',          icon: Settings,        path: '/admin/settings',     roles: ['admin'] },
+      { label: 'الحضور والانصراف', icon: Fingerprint,   path: '/admin/attendance',         show: (auth) => auth.canViewAttendance },
+      { label: 'التقرير اليومي',    icon: ClipboardList, path: '/admin/attendance/report',  show: (auth) => auth.canViewAttendance },
+      { label: 'التقرير الشهري',    icon: CalendarRange, path: '/admin/attendance/monthly', show: (auth) => auth.canViewAttendance },
+    ],
+  },
+  {
+    label: 'الإجازات',
+    items: [
+      { label: 'إدارة الإجازات', icon: CalendarCheck, path: '/admin/leave',          roles: ['admin', 'manager', 'chief', 'employee'] },
+      { label: 'سجل الإجازات',   icon: CalendarRange, path: '/admin/leave-register', show: (auth) => auth.canViewLeaveRegister },
+      { label: 'أرصدة الإجازات', icon: WalletCards,   path: '/admin/leave-balances', show: (auth) => auth.canViewAttendance },
+      { label: 'أنواع الإجازات', icon: Tags,          path: '/admin/leave-types',    roles: ['admin'] },
+    ],
+  },
+  {
+    label: 'المؤسسة',
+    items: [
+      { label: 'الأشخاص والصلاحيات', icon: Users,     path: '/admin/users',       roles: ['admin'] },
+      { label: 'الإدارات',           icon: Building2, path: '/admin/departments', roles: ['admin'] },
+      { label: 'الأقسام',            icon: Layers,    path: '/admin/sections',    roles: ['admin'] },
+    ],
+  },
+  {
+    label: 'النظام',
+    items: [
+      { label: 'إشعار عام',   icon: Megaphone, path: '/admin/broadcast', roles: ['admin'] },
+      { label: 'سجل التدقيق', icon: History,   path: '/admin/audit',     roles: ['admin', 'chief'] },
+      { label: 'الإعدادات',   icon: Settings,  path: '/admin/settings',  roles: ['admin'] },
     ],
   },
 ]
@@ -57,18 +74,20 @@ function NavItem({ item, badge, onNavigate }) {
       onClick={onNavigate}
       className={({ isActive }) =>
         [
-          'flex items-center gap-2.5 px-3 py-[9px] rounded-[10px] mx-2 my-px',
-          'text-[13px] font-semibold no-underline transition-all duration-150 border-l-2',
+          'sb-item flex items-center gap-2.5 px-3 py-[9px] rounded-[4px] mx-2 my-px',
+          'text-[13px] no-underline transition-colors duration-150',
           isActive
-            ? 'bg-white/[0.13] text-white border-[#C8A36B]'
-            : 'text-white/70 border-transparent hover:text-white/90 hover:bg-white/[0.08]',
+            ? 'is-active bg-white/[0.10] text-white font-bold'
+            : 'text-white/75 font-medium hover:text-white hover:bg-white/[0.06]',
         ].join(' ')
       }
     >
+      {/* Sunaa signature 01: an 8px bronze block marks the active item */}
+      <span className="sb-block" aria-hidden="true" />
       <Icon size={16} strokeWidth={1.8} className="shrink-0 opacity-85" />
       <span className="flex-1 min-w-0">{item.label}</span>
       {badgeValue != null && (
-        <span className="text-[10px] font-extrabold bg-[#C8A36B] text-[#2A2010] rounded-full px-1.5 leading-[17px]">
+        <span className="text-[12px] font-semibold bg-[var(--c-accent-on-dark)] text-[var(--c-text)] rounded-[2px] px-1.5 leading-[17px] [font-family:var(--font-mono)]">
           {badgeValue}
         </span>
       )}
@@ -116,23 +135,23 @@ export default function Sidebar({ isOpen, onNavigate }) {
         {/* Logo */}
         <div style={{
           padding: '16px 16px 14px',
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          borderBottom: '3px solid var(--c-accent)',
           display: 'flex',
           alignItems: 'center',
           gap: 10,
           flexShrink: 0,
         }}>
           <img
-            src="/assets/logo-symbol-gold.png"
-            alt="شركة الراقي"
-            style={{ width: 36, height: 36, objectFit: 'contain', flexShrink: 0 }}
+            src="/assets/sunaa-mark-on-dark.png"
+            alt="صنع للإنشاءات"
+            style={{ width: 38, height: 38, objectFit: 'contain', flexShrink: 0 }}
           />
           <div>
-            <div style={{ color: '#fff', fontWeight: 800, fontSize: 14, lineHeight: 1.2 }}>
-              شركة الراقي
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>
+              صنع للإنشاءات
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.8px', marginTop: 2 }}>
-              AL-RAQI · APPROVALS
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, letterSpacing: '0.4px', marginTop: 3 }}>
+              SUNAA CONSTRUCTION
             </div>
           </div>
         </div>
@@ -145,8 +164,8 @@ export default function Sidebar({ isOpen, onNavigate }) {
             return (
               <div key={section.label} style={{ marginBottom: 4 }}>
                 <div style={{
-                  fontSize: 9.5, fontWeight: 800, letterSpacing: '1.2px',
-                  color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase',
+                  fontSize: 12, fontWeight: 600, letterSpacing: '0.4px',
+                  color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase',
                   padding: '10px 20px 5px',
                 }}>
                   {section.label}
@@ -170,8 +189,8 @@ export default function Sidebar({ isOpen, onNavigate }) {
           flexShrink: 0,
         }}>
           <div style={{
-            width: 34, height: 34, borderRadius: 10,
-            background: 'linear-gradient(135deg, var(--c-accent), #a07840)',
+            width: 34, height: 34, borderRadius: 4,
+            background: 'var(--c-accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 13, fontWeight: 800, color: '#fff', flexShrink: 0,
           }}>
@@ -181,7 +200,7 @@ export default function Sidebar({ isOpen, onNavigate }) {
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 12.5, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.name ?? '—'}
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10.5, marginTop: 2 }}>
+            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 2 }}>
               {ROLE_LABELS[user?.role] ?? 'مستخدم'}
             </div>
           </div>
@@ -189,7 +208,7 @@ export default function Sidebar({ isOpen, onNavigate }) {
             onClick={logout}
             style={{
               background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)',
-              cursor: 'pointer', padding: 4, borderRadius: 6,
+              cursor: 'pointer', padding: 4, borderRadius: 3,
               display: 'flex', alignItems: 'center',
             }}
             title="تسجيل الخروج"

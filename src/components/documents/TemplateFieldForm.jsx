@@ -68,7 +68,7 @@ function FieldWrap({ label, required, error, children }) {
         {required && <span style={{ color: 'var(--c-rejected)', marginInlineStart: 3 }}>*</span>}
       </label>
       {children}
-      {error && <div style={{ fontSize: 11.5, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
     </div>
   )
 }
@@ -79,7 +79,7 @@ function TextField({ value, onChange, type = 'text', error, placeholder }) {
       display: 'flex', alignItems: 'center', height: 42,
       background: 'var(--c-surface)',
       border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
-      borderRadius: 10, padding: '0 12px',
+      borderRadius: 4, padding: '0 12px',
     }}>
       <input
         type={type} value={value ?? ''} onChange={e => onChange(e.target.value)}
@@ -100,7 +100,7 @@ function TextareaField({ value, onChange, error, rows = 3 }) {
     <div style={{
       background: 'var(--c-surface)',
       border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
-      borderRadius: 10, padding: '10px 12px',
+      borderRadius: 4, padding: '10px 12px',
     }}>
       <textarea
         value={value ?? ''} onChange={e => onChange(e.target.value)} rows={rows}
@@ -120,7 +120,7 @@ function SelectField({ value, onChange, options, error }) {
       <select
         value={value ?? ''} onChange={e => onChange(e.target.value)}
         style={{
-          width: '100%', height: 42, borderRadius: 10, boxSizing: 'border-box',
+          width: '100%', height: 42, borderRadius: 4, boxSizing: 'border-box',
           border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
           background: 'var(--c-surface)', padding: '0 36px 0 12px',
           fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
@@ -161,7 +161,7 @@ function TableField({ columns, value, onChange, error }) {
       <div style={{ overflowX: 'auto' }}>
       <div style={{
         border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
-        borderRadius: 10, overflow: 'hidden', minWidth: cols.length > 3 ? cols.length * 110 : undefined,
+        borderRadius: 4, overflow: 'hidden', minWidth: cols.length > 3 ? cols.length * 110 : undefined,
       }}>
         <div style={{
           display: 'grid', gridTemplateColumns: gridCols,
@@ -169,7 +169,7 @@ function TableField({ columns, value, onChange, error }) {
         }}>
           {cols.map(c => (
             <div key={c.key} style={{
-              padding: '8px 10px', fontSize: 11.5, fontWeight: 700,
+              padding: '8px 10px', fontSize: 12, fontWeight: 700,
               color: 'var(--c-text-2)', textAlign: 'center',
             }}>
               {c.label}
@@ -222,7 +222,7 @@ function TableField({ columns, value, onChange, error }) {
       <button
         type="button" onClick={addRow}
         style={{
-          marginTop: 8, width: '100%', height: 36, borderRadius: 8,
+          marginTop: 8, width: '100%', height: 36, borderRadius: 4,
           border: '1.5px dashed var(--c-border)', background: 'transparent',
           cursor: 'pointer', fontFamily: 'var(--font-sans)',
           fontSize: 12, fontWeight: 700, color: 'var(--c-text-3)',

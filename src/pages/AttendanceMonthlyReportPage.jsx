@@ -71,12 +71,12 @@ function readApiError(err) {
 }
 
 const dateInputStyle = {
-  height: 38, borderRadius: 10, border: '1px solid var(--c-border)', background: '#fff',
+  height: 38, borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff',
   padding: '0 10px', fontSize: 12, fontFamily: 'var(--font-sans)', color: 'var(--c-text-2)', outline: 'none', cursor: 'pointer',
 }
 
 const presetBtnStyle = (active) => ({
-  height: 38, padding: '0 12px', borderRadius: 10, whiteSpace: 'nowrap',
+  height: 38, padding: '0 12px', borderRadius: 4, whiteSpace: 'nowrap',
   border: active ? 'none' : '1px solid var(--c-border)',
   background: active ? 'var(--c-primary)' : '#fff',
   color: active ? '#fff' : 'var(--c-text-2)',
@@ -89,7 +89,7 @@ function InitialsTag({ name, size = 34 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: 'linear-gradient(135deg, var(--c-primary), #1C3A5E)',
+      background: 'linear-gradient(135deg, var(--c-primary), #1D5446)',
       color: '#fff', fontWeight: 800, fontSize: size * 0.34,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
@@ -109,7 +109,7 @@ function DeptSectionCell({ department, section }) {
         </span>
       )}
       {section && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--c-text-3)' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--c-text-3)' }}>
           <Layers size={11} style={{ flexShrink: 0 }} />
           {section}
         </span>
@@ -129,7 +129,7 @@ function RatePill({ rate }) {
       : ['var(--c-rejected)', 'var(--c-rejected-bg)']
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 999,
+      display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 2,
       fontSize: 12, fontWeight: 800, color, background: bg, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
     }}>
       {v}%
@@ -153,21 +153,21 @@ function SummaryTile({ icon: Icon, label, value, accent, hint }) {
   return (
     <div style={{
       flex: 1, minWidth: 150, display: 'flex', alignItems: 'center', gap: 12,
-      padding: '13px 15px', borderRadius: 12, background: '#fff', border: '1px solid var(--c-border)',
+      padding: '13px 15px', borderRadius: 8, background: '#fff', border: '1px solid var(--c-border)',
     }}>
       <div style={{
-        width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+        width: 40, height: 40, borderRadius: 4, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center', background: accent.bg, color: accent.color,
       }}>
         <Icon size={19} />
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>{label}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>{label}</div>
         <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
           {value}
         </div>
         {hint && (
-          <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', marginTop: 2, whiteSpace: 'nowrap' }}>{hint}</div>
+          <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2, whiteSpace: 'nowrap' }}>{hint}</div>
         )}
       </div>
     </div>
@@ -182,7 +182,7 @@ function EmployeeRow({ row, last, onOpen }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.025)' : 'transparent',
+        background: hov ? 'rgba(29,84,70,0.025)' : 'transparent',
         transition: 'background .1s', cursor: 'pointer',
       }}
     >
@@ -191,7 +191,7 @@ function EmployeeRow({ row, last, onOpen }) {
           <InitialsTag name={row.name} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--c-text)' }}>{row.name ?? '—'}</div>
-            <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{row.email ?? '—'}</div>
+            <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{row.email ?? '—'}</div>
           </div>
         </div>
       </td>
@@ -491,13 +491,13 @@ export default function AttendanceMonthlyReportPage() {
           filename="attendance-monthly-report.xlsx" disabled={Boolean(rangeError)}
         />
         {rangeError && (
-          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-rejected)', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)', whiteSpace: 'nowrap' }}>
             {rangeError}
           </span>
         )}
         <div style={{ flex: 1 }} />
         {report && !rangeError && (
-          <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 999, padding: '6px 12px', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '6px 12px', whiteSpace: 'nowrap' }}>
             {report.working_days} يوم عمل · {fmtDate(report.from)} — {fmtDate(report.to)}
           </span>
         )}
@@ -528,7 +528,7 @@ export default function AttendanceMonthlyReportPage() {
       )}
 
       {/* Table */}
-      <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
+      <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
         {rangeError ? (
           <div style={{ padding: '56px 24px', textAlign: 'center' }}>
             <CalendarRange size={36} style={{ color: 'var(--c-text-3)', marginBottom: 14 }} />
@@ -587,7 +587,7 @@ export default function AttendanceMonthlyReportPage() {
         )}
 
         {!loading && !rangeError && rows.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <Users size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
               {error || 'لا يوجد موظفون مطابقون في هذه الفترة'}

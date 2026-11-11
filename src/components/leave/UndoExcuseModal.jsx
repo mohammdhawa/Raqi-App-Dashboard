@@ -36,17 +36,17 @@ function fmtDay(value) {
 
 function Warning({ icon: Icon, tone = 'warn', children }) {
   const tones = {
-    warn: { bg: 'var(--c-pending-bg)',    border: 'var(--c-pending)22',    color: 'var(--c-pending)' },
-    info: { bg: 'var(--c-primary-light)', border: 'rgba(34,65,103,0.16)',  color: 'var(--c-primary)' },
+    warn: { bg: 'var(--c-pending-bg)',    border: 'color-mix(in srgb, var(--c-pending) 13%, transparent)',    color: 'var(--c-pending)' },
+    info: { bg: 'var(--c-primary-light)', border: 'rgba(29,84,70,0.16)',  color: 'var(--c-primary)' },
   }
   const t = tones[tone]
   return (
     <div style={{
-      display: 'flex', gap: 9, padding: '10px 12px', borderRadius: 10,
+      display: 'flex', gap: 9, padding: '10px 12px', borderRadius: 4,
       background: t.bg, border: `1px solid ${t.border}`,
     }}>
       <Icon size={15} style={{ color: t.color, flexShrink: 0, marginTop: 1 }} />
-      <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.7, color: 'var(--c-text-2)' }}>{children}</p>
+      <p style={{ margin: 0, fontSize: 12, lineHeight: 1.7, color: 'var(--c-text-2)' }}>{children}</p>
     </div>
   )
 }
@@ -149,7 +149,7 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
     <div
       onClick={() => { if (!submitting) onClose() }}
       style={{
-        position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(20,32,50,0.5)',
+        position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(14,22,19,0.5)',
         backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
@@ -159,7 +159,7 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
         onClick={e => e.stopPropagation()}
         style={{
           width: 'min(460px, 100%)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto',
-          background: '#fff', borderRadius: 16, boxShadow: 'var(--sh-card-lg)',
+          background: '#fff', borderRadius: 8, boxShadow: 'var(--sh-card-lg)',
         }}
       >
         {/* Header */}
@@ -182,7 +182,7 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
           <button
             type='button' onClick={onClose} disabled={submitting} title='إغلاق'
             style={{
-              width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+              width: 34, height: 34, borderRadius: 4, flexShrink: 0,
               border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
             }}
@@ -196,8 +196,8 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
 
           {/* The excuse being retracted, in the `excused` colour it is leaving. */}
           <div style={{
-            padding: '11px 13px', borderRadius: 10,
-            background: EXCUSED_META.bg, border: `1px solid ${EXCUSED_META.color}22`,
+            padding: '11px 13px', borderRadius: 4,
+            background: EXCUSED_META.bg, border: `1px solid color-mix(in srgb, ${EXCUSED_META.color} 13%, transparent)`,
             display: 'flex', flexDirection: 'column', gap: 6,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
@@ -207,11 +207,11 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
               <DeductsBalanceBadge deducts={deducts} compact short />
             </div>
             {target?.reason && (
-              <span style={{ fontSize: 11.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
+              <span style={{ fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
                 {target.reason}
               </span>
             )}
-            <span style={{ fontSize: 10.5, color: 'var(--c-text-3)' }}>
+            <span style={{ fontSize: 12, color: 'var(--c-text-3)' }}>
               سجّلها: {target?.recordedBy ?? 'الموارد البشرية'}
             </span>
           </div>
@@ -233,7 +233,7 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
               fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', marginBottom: 6,
             }}>
               {LEAVE_COPY.undoExcuseReason}
-              <span style={{ marginInlineStart: 'auto', fontSize: 10.5, fontWeight: 600, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{ marginInlineStart: 'auto', fontSize: 12, fontWeight: 600, color: 'var(--c-text-3)', fontVariantNumeric: 'tabular-nums' }}>
                 {reason.length}/{REASON_MAX}
               </span>
             </label>
@@ -242,21 +242,21 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
               onChange={e => { setReason(e.target.value); setReasonError('') }}
               placeholder={LEAVE_COPY.undoExcuseReasonPlaceholder}
               style={{
-                width: '100%', borderRadius: 10, background: '#fff',
+                width: '100%', borderRadius: 4, background: '#fff',
                 border: `1px solid ${reasonError ? 'var(--c-rejected)' : 'var(--c-border)'}`,
                 padding: '10px 12px', fontSize: 13, fontFamily: 'var(--font-sans)',
                 color: 'var(--c-text)', outline: 'none', resize: 'vertical', lineHeight: 1.6,
               }}
             />
             {reasonError
-              ? <p style={{ margin: '6px 0 0', fontSize: 11.5, fontWeight: 600, color: 'var(--c-rejected)' }}>{reasonError}</p>
-              : <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--c-text-3)', lineHeight: 1.6 }}>{LEAVE_COPY.undoExcuseReasonHint}</p>}
+              ? <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)' }}>{reasonError}</p>
+              : <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--c-text-3)', lineHeight: 1.6 }}>{LEAVE_COPY.undoExcuseReasonHint}</p>}
           </div>
 
           {error && (
             <div style={{
               fontSize: 12, fontWeight: 600, color: 'var(--c-rejected)', lineHeight: 1.7,
-              background: 'var(--c-rejected-bg)', padding: '9px 12px', borderRadius: 9,
+              background: 'var(--c-rejected-bg)', padding: '9px 12px', borderRadius: 4,
             }}>
               {error}
             </div>
@@ -271,7 +271,7 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
           <button
             type='button' onClick={submit} disabled={submitting || !canSubmit}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 18px', borderRadius: 10,
+              display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 18px', borderRadius: 4,
               background: 'var(--c-pending)', color: '#fff', border: 'none',
               fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
               cursor: (submitting || !canSubmit) ? 'default' : 'pointer',
@@ -285,7 +285,7 @@ export default function UndoExcuseModal({ target, onClose, onDone }) {
           <button
             type='button' onClick={onClose} disabled={submitting}
             style={{
-              height: 40, padding: '0 18px', borderRadius: 10, background: '#fff',
+              height: 40, padding: '0 18px', borderRadius: 4, background: '#fff',
               border: '1px solid var(--c-border)', fontFamily: 'var(--font-sans)',
               fontSize: 13, fontWeight: 700, color: 'var(--c-text-2)',
               cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,

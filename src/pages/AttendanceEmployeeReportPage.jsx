@@ -102,7 +102,7 @@ function InitialsTag({ name, size = 44 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: 'linear-gradient(135deg, var(--c-primary), #1C3A5E)',
+      background: 'linear-gradient(135deg, var(--c-primary), #1D5446)',
       color: '#fff', fontWeight: 800, fontSize: size * 0.34,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
@@ -117,8 +117,8 @@ function StatusBadge({ status }) {
   const Icon = m.icon
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: 999,
-      fontSize: 12, fontWeight: 700, color: m.color, background: m.bg, border: `1px solid ${m.color}22`, whiteSpace: 'nowrap',
+      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: 2,
+      fontSize: 12, fontWeight: 700, color: m.color, background: m.bg, border: `1px solid color-mix(in srgb, ${m.color} 13%, transparent)`, whiteSpace: 'nowrap',
     }}>
       <Icon size={12} />
       {m.label}
@@ -130,18 +130,18 @@ function StatCard({ icon: Icon, label, value, accent, hint }) {
   return (
     <div style={{
       flex: 1, minWidth: 120, display: 'flex', alignItems: 'center', gap: 11,
-      padding: '12px 14px', borderRadius: 12, background: '#fff', border: '1px solid var(--c-border)',
+      padding: '12px 14px', borderRadius: 8, background: '#fff', border: '1px solid var(--c-border)',
     }}>
       <div style={{
-        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+        width: 36, height: 36, borderRadius: 4, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center', background: accent.bg, color: accent.color,
       }}>
         <Icon size={17} />
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>{label}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>{label}</div>
         <div style={{ fontSize: 19, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
-        {hint && <div style={{ fontSize: 10, color: 'var(--c-text-3)', marginTop: 2, whiteSpace: 'nowrap' }}>{hint}</div>}
+        {hint && <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2, whiteSpace: 'nowrap' }}>{hint}</div>}
       </div>
     </div>
   )
@@ -155,13 +155,13 @@ function StatusLegend() {
       display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
       padding: '10px 16px', borderBottom: '1px solid var(--c-border)', background: 'var(--c-surface)',
     }}>
-      <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--c-text-3)' }}>دليل الحالات</span>
+      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--c-text-3)' }}>دليل الحالات</span>
       {DAY_STATUSES.map(status => {
         const meta = STATUS_META[status]
         return (
-          <span key={status} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>
+          <span key={status} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)', whiteSpace: 'nowrap' }}>
             <span style={{
-              width: 10, height: 10, borderRadius: 3, flexShrink: 0,
+              width: 10, height: 10, borderRadius: 2, flexShrink: 0,
               background: meta.bg, border: `1.5px solid ${meta.color}`,
             }} />
             {meta.label}
@@ -198,9 +198,9 @@ function DayRow({ day, last, onExcuse, onUndoExcuse, onCorrect }) {
   // notified about and what HR will be asked about, so it is always shown.
   const rejection = readRejection(day)
   const background = hov
-    ? 'rgba(34,65,103,0.015)'
+    ? 'rgba(29,84,70,0.015)'
     : day.status === 'rejected'
-      ? 'rgba(192,57,43,0.05)'
+      ? 'rgba(179,38,30,0.05)'
       : day.status === 'excused'
         ? EXCUSED_META.bg
         : inSpan
@@ -218,7 +218,7 @@ function DayRow({ day, last, onExcuse, onUndoExcuse, onCorrect }) {
         <div style={{ fontSize: 12.5, fontWeight: 700, color: dim ? 'var(--c-text-2)' : 'var(--c-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
           {fmtDate(day.date)}
         </div>
-        <div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{WEEKDAY_AR[day.weekday] ?? ''}</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{WEEKDAY_AR[day.weekday] ?? ''}</div>
       </td>
       <td style={{ padding: '11px 16px' }}>
         <StatusBadge status={day.status} />
@@ -231,7 +231,7 @@ function DayRow({ day, last, onExcuse, onUndoExcuse, onCorrect }) {
             }}
           >
             <ShieldX size={11} style={{ color: 'var(--c-rejected)', flexShrink: 0, marginTop: 2 }} />
-            <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--c-rejected)', lineHeight: 1.6 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-rejected)', lineHeight: 1.6 }}>
               {rejection.recordedAt ? `${fmtTime(rejection.recordedAt)} · ` : ''}
               {rejection.short}
               {rejection.note && (
@@ -252,7 +252,7 @@ function DayRow({ day, last, onExcuse, onUndoExcuse, onCorrect }) {
           {correction && (
             <span title={correctionTooltip(correction)} style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
-              fontSize: 10.5, fontWeight: 700, color: 'var(--c-approved)', cursor: 'help',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-approved)', cursor: 'help',
             }}>
               <ShieldCheck size={11} />
               تم التصحيح
@@ -289,9 +289,9 @@ function DayRow({ day, last, onExcuse, onUndoExcuse, onCorrect }) {
           it happened. The three statuses are disjoint, so the branches never
           compete for the cell. */}
       <td style={{ padding: '11px 16px' }}>
-        {canCorrect ? <button onClick={() => onCorrect(day)} title="تسجيل وقت الخروج الفعلي ليُحتسب وقت العمل" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><Clock size={13} /> تصحيح الخروج</button>
-          : EXCUSABLE_STATUSES.includes(day.status) ? <button onClick={() => onExcuse(day)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><ShieldPlus size={13} /> تسجيل عذر</button>
-          : day.status === 'excused' && excuse ? <button onClick={() => onUndoExcuse(day)} title={LEAVE_COPY.undoExcuseTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><Undo2 size={13} /> {LEAVE_COPY.undoExcuse}</button>
+        {canCorrect ? <button onClick={() => onCorrect(day)} title="تسجيل وقت الخروج الفعلي ليُحتسب وقت العمل" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 4, border: 'none', background: 'var(--c-primary)', color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><Clock size={13} /> تصحيح الخروج</button>
+          : EXCUSABLE_STATUSES.includes(day.status) ? <button onClick={() => onExcuse(day)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 4, border: 'none', background: 'var(--c-primary-light)', color: 'var(--c-primary)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><ShieldPlus size={13} /> تسجيل عذر</button>
+          : day.status === 'excused' && excuse ? <button onClick={() => onUndoExcuse(day)} title={LEAVE_COPY.undoExcuseTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 31, padding: '0 10px', borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-text-2)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer' }}><Undo2 size={13} /> {LEAVE_COPY.undoExcuse}</button>
           : <span style={{ color: 'var(--c-text-3)' }}>—</span>}
       </td>
       {/* Shown for every day inside a span, not only `on_leave` ones — a
@@ -300,8 +300,8 @@ function DayRow({ day, last, onExcuse, onUndoExcuse, onCorrect }) {
       <td style={{ padding: '11px 16px' }}>
         {inSpan
           ? <span style={{
-              display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999,
-              fontSize: 11.5, fontWeight: 700, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
+              display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 2,
+              fontSize: 12, fontWeight: 700, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', whiteSpace: 'nowrap',
             }}>{leaveTypeLabel(excuse?.leave_type_name ?? day.leave_type)}</span>
           : <span style={{ color: 'var(--c-text-3)', fontSize: 12.5 }}>—</span>}
       </td>
@@ -311,11 +311,11 @@ function DayRow({ day, last, onExcuse, onUndoExcuse, onCorrect }) {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, maxWidth: 260 }}>
             <DeductsBalanceBadge deducts={excuse.deducts_balance} compact short />
             {excuse.reason && (
-              <span style={{ fontSize: 11.5, color: 'var(--c-text-2)', lineHeight: 1.5 }} title={excuse.reason}>
+              <span style={{ fontSize: 12, color: 'var(--c-text-2)', lineHeight: 1.5 }} title={excuse.reason}>
                 {excuse.reason}
               </span>
             )}
-            <span style={{ fontSize: 10.5, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 12, color: 'var(--c-text-3)', whiteSpace: 'nowrap' }}>
               سجّلها: {excuse.recorded_by ?? 'الموارد البشرية'}
             </span>
           </div>
@@ -331,7 +331,7 @@ function SkeletonRow() {
     <tr>
       {Array.from({ length: COLS.length }, (_, i) => (
         <td key={i} style={{ padding: '11px 16px' }}>
-          <div style={{ ...pulse, height: 16, width: i === 0 ? 110 : 70, borderRadius: 7, animationDelay: `${i * 0.08}s` }} />
+          <div style={{ ...pulse, height: 16, width: i === 0 ? 110 : 70, borderRadius: 3, animationDelay: `${i * 0.08}s` }} />
         </td>
       ))}
     </tr>
@@ -438,7 +438,7 @@ export default function AttendanceEmployeeReportPage() {
     <button
       onClick={goBack}
       style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 10,
+        display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 4,
         background: '#fff', border: '1px solid var(--c-border)',
         fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', cursor: 'pointer',
       }}
@@ -452,7 +452,7 @@ export default function AttendanceEmployeeReportPage() {
     return (
       <div style={{ padding: '28px clamp(16px, 4vw, 28px) 48px', maxWidth: 1240, margin: '0 auto' }}>
         <div style={{ marginBottom: 18 }}>{backBtn}</div>
-        <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, boxShadow: 'var(--sh-card)', padding: '56px 24px', textAlign: 'center' }}>
+        <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, boxShadow: 'var(--sh-card)', padding: '56px 24px', textAlign: 'center' }}>
           <UserX size={36} style={{ color: 'var(--c-text-3)', marginBottom: 14 }} />
           <p style={{ margin: '0 0 4px', color: 'var(--c-text)', fontSize: 16, fontWeight: 800 }}>تعذّر عرض التقرير</p>
           <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 13.5, lineHeight: 1.6 }}>{error}</p>
@@ -467,7 +467,7 @@ export default function AttendanceEmployeeReportPage() {
 
       {/* Employee header card */}
       <div style={{
-        background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, boxShadow: 'var(--sh-card)',
+        background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, boxShadow: 'var(--sh-card)',
         padding: '18px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
       }}>
         {loading ? (
@@ -494,7 +494,7 @@ export default function AttendanceEmployeeReportPage() {
                 )}
               </div>
             </div>
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 999, padding: '6px 12px', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)', background: 'var(--c-surface-2)', borderRadius: 2, padding: '6px 12px', whiteSpace: 'nowrap' }}>
               {fmtDate(report?.from)} — {fmtDate(report?.to)}
             </span>
           </>
@@ -538,7 +538,7 @@ export default function AttendanceEmployeeReportPage() {
         <select
           value={dayStatus} onChange={e => setDayStatus(e.target.value)}
           style={{
-            height: 38, padding: '0 10px', borderRadius: 10, minWidth: 140,
+            height: 38, padding: '0 10px', borderRadius: 4, minWidth: 140,
             background: '#fff', border: '1px solid var(--c-border)',
             fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
             cursor: 'pointer', direction: 'rtl', outline: 'none',
@@ -565,7 +565,7 @@ export default function AttendanceEmployeeReportPage() {
       </div>
 
       {/* Day-by-day table */}
-      <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
+      <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
         <StatusLegend />
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -586,7 +586,7 @@ export default function AttendanceEmployeeReportPage() {
         </div>
 
         {!loading && days.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <CalendarOff size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>لا توجد أيام في هذه الفترة</p>
           </div>

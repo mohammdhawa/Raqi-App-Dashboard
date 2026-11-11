@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import { Building2, Layers, Search, X } from 'lucide-react'
 
 const controlStyle = {
-  height: 38, padding: '0 10px', borderRadius: 10, minWidth: 150,
+  height: 38, padding: '0 10px', borderRadius: 4, minWidth: 150,
   background: '#fff', border: '1px solid var(--c-border)',
   fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
   cursor: 'pointer', direction: 'rtl', outline: 'none',
@@ -69,7 +69,7 @@ export function SearchInput({ value, onChange, placeholder = 'بحث بالاس�
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 8,
-      height: 38, padding: '0 10px', borderRadius: 10, minWidth: 200,
+      height: 38, padding: '0 10px', borderRadius: 4, minWidth: 200,
       background: '#fff', border: '1px solid var(--c-border)',
     }}>
       <Search size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />

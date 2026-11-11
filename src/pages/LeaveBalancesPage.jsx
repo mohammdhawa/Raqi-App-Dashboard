@@ -26,7 +26,7 @@ const columns = [
 
 function PagBtn({ children, active, disabled, onClick }) {
   return <button onClick={onClick} disabled={disabled} style={{
-    width: 32, height: 32, borderRadius: 8, border: active ? 'none' : '1px solid var(--c-border)',
+    width: 32, height: 32, borderRadius: 4, border: active ? 'none' : '1px solid var(--c-border)',
     background: active ? 'var(--c-primary)' : '#fff', color: active ? '#fff' : 'var(--c-text-2)',
     opacity: disabled ? 0.5 : 1, fontFamily: 'var(--font-sans)', cursor: disabled ? 'default' : 'pointer',
   }}>{children}</button>
@@ -46,11 +46,11 @@ function BalanceRow({ row, defaultDays, last, onEdit }) {
       <Initials name={row.user?.name} />
       <div><div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 13.5, fontWeight: 700 }}>{row.user?.name ?? '—'}</span>
-        {!row.is_custom && <span title={`يستخدم الرصيد الافتراضي للشركة (${defaultDays} يوم)`} style={{ padding: '2px 8px', borderRadius: 999, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 10.5, fontWeight: 800 }}>الافتراضي</span>}
-      </div><div style={{ fontSize: 11, color: 'var(--c-text-3)', marginTop: 2 }}>{row.user?.email ?? '—'}</div></div>
+        {!row.is_custom && <span title={`يستخدم الرصيد الافتراضي للشركة (${defaultDays} يوم)`} style={{ padding: '2px 8px', borderRadius: 2, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 12, fontWeight: 800 }}>الافتراضي</span>}
+      </div><div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>{row.user?.email ?? '—'}</div></div>
     </div></td>
     <td style={{ padding: '12px 16px', fontSize: 12.5, color: 'var(--c-text-2)' }}>
-      <div>{row.user?.department?.name ?? '—'}</div><div style={{ color: 'var(--c-text-3)', fontSize: 11, marginTop: 2 }}>{row.user?.section?.name ?? '—'}</div>
+      <div>{row.user?.department?.name ?? '—'}</div><div style={{ color: 'var(--c-text-3)', fontSize: 12, marginTop: 2 }}>{row.user?.section?.name ?? '—'}</div>
     </td>
     <td style={{ padding: '12px 16px', fontWeight: 800 }}>{row.allocated_days}</td>
     <td style={{ padding: '12px 16px', color: adjustment < 0 ? 'var(--c-rejected)' : 'var(--c-approved)', fontWeight: 700 }}>{adjustment === 0 ? '—' : adjustment > 0 ? `+${adjustment}` : `−${Math.abs(adjustment)}`}</td>
@@ -60,7 +60,7 @@ function BalanceRow({ row, defaultDays, last, onEdit }) {
     </td>
     <td style={{ padding: '12px 16px', fontWeight: 800, color: remainingColor }}>{row.remaining_days}</td>
     <td style={{ padding: '12px 16px', maxWidth: 220 }}><div title={row.note ?? undefined} style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', color: row.note ? 'var(--c-text-2)' : 'var(--c-text-3)', fontSize: 12 }}>{row.note || '—'}</div></td>
-    <td style={{ padding: '12px 16px' }}><button onClick={() => onEdit(row)} title='تعديل الرصيد' style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Edit3 size={14} /></button></td>
+    <td style={{ padding: '12px 16px' }}><button onClick={() => onEdit(row)} title='تعديل الرصيد' style={{ width: 34, height: 34, borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', color: 'var(--c-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Edit3 size={14} /></button></td>
   </tr>
 }
 
@@ -141,34 +141,34 @@ export default function LeaveBalancesPage() {
           عمود «{LEAVE_COPY.nonDeductingDays}» يعرض الإجازات المعتمدة التي لا تُخصم من الاستحقاق.
         </p>
       </div>
-      <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
+      <div style={{ background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px', borderRadius: 999, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 11, fontWeight: 700 }}><Wallet size={12} />{total} موظفاً</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px', borderRadius: 2, background: 'var(--c-surface-2)', color: 'var(--c-text-2)', fontSize: 12, fontWeight: 700 }}><Wallet size={12} />{total} موظفاً</span>
           <div style={{ flex: 1 }} />
           <SearchInput value={search} onChange={setSearch} />
           {hasFullAccess && <DepartmentSelect departments={departments} value={departmentId} onChange={changeDepartment} />}
           <SectionSelect sections={sections} value={sectionId} onChange={setSectionId} disabled={hasFullAccess && !departmentId} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Calendar size={13} style={{ color: 'var(--c-text-3)' }} />
-            <select value={year} onChange={event => setYear(Number(event.target.value))} style={{ height: 38, padding: '0 10px', borderRadius: 10, border: '1px solid var(--c-border)', background: '#fff', fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
+            <select value={year} onChange={event => setYear(Number(event.target.value))} style={{ height: 38, padding: '0 10px', borderRadius: 4, border: '1px solid var(--c-border)', background: '#fff', fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
               {years.map(value => <option key={value} value={value}>{value}</option>)}
             </select>
           </div>
           <PerPageSelect value={perPage} onChange={setPerPage} />
         </div>
         <div style={{ overflowX: 'auto' }}>
-          {error && <div style={{ margin: 14, padding: '10px 12px', borderRadius: 10, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 700 }}>{error}</div>}
+          {error && <div style={{ margin: 14, padding: '10px 12px', borderRadius: 4, background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)', fontSize: 12.5, fontWeight: 700 }}>{error}</div>}
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr style={{ background: 'var(--c-surface)' }}>
               {columns.map(column => <SortableTh key={column.label} label={column.label} field={column.field} title={column.title} sort={sort} onSort={setSort} />)}
             </tr></thead>
             <tbody>
-              {loading ? [0, 1, 2, 3, 4].map(index => <tr key={index}>{columns.map((column, cell) => <td key={column.label} style={{ padding: '12px 16px' }}><div style={{ height: 16, width: cell === 0 ? 150 : 70, borderRadius: 7, background: 'var(--c-surface-2)', animation: 'pulse 1.5s ease-in-out infinite' }} /></td>)}</tr>)
+              {loading ? [0, 1, 2, 3, 4].map(index => <tr key={index}>{columns.map((column, cell) => <td key={column.label} style={{ padding: '12px 16px' }}><div style={{ height: 16, width: cell === 0 ? 150 : 70, borderRadius: 3, background: 'var(--c-surface-2)', animation: 'pulse 1.5s ease-in-out infinite' }} /></td>)}</tr>)
                 : rows.map((row, index) => <BalanceRow key={row.user?.id ?? index} row={row} defaultDays={defaultDays} last={index === rows.length - 1} onEdit={setEditing} />)}
             </tbody>
           </table>
         </div>
-        {!loading && rows.length === 0 && <div style={{ padding: '56px 20px', textAlign: 'center' }}><Inbox size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} /><p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>لا يوجد موظفون مطابقون للتصفية</p></div>}
+        {!loading && rows.length === 0 && <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}><Inbox size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} /><p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>لا يوجد موظفون مطابقون للتصفية</p></div>}
         {lastPage > 1 && <div style={{ padding: '12px 20px', borderTop: '1px solid var(--c-border)', display: 'flex', justifyContent: 'center', gap: 6 }}>
           <PagBtn disabled={page <= 1} onClick={() => { setPage(page - 1); fetchRows(page - 1) }}>‹</PagBtn>
           {Array.from({ length: lastPage }, (_, index) => index + 1).map(value => <PagBtn key={value} active={value === page} onClick={() => { setPage(value); fetchRows(value) }}>{value}</PagBtn>)}

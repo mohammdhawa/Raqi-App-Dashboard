@@ -25,28 +25,28 @@ function Step({ step, current, compact }) {
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 5,
         padding: compact ? '2px 7px 2px 3px' : '4px 9px 4px 4px',
-        borderRadius: 999, maxWidth: '100%',
+        borderRadius: 2, maxWidth: '100%',
         background: meta.bg, color: meta.color,
-        border: `1px solid ${meta.color}22`,
-        ...(current ? { boxShadow: `0 0 0 2px ${meta.color}33` } : {}),
+        border: `1px solid color-mix(in srgb, ${meta.color} 13%, transparent)`,
+        ...(current ? { boxShadow: `0 0 0 2px color-mix(in srgb, ${meta.color} 20%, transparent)` } : {}),
       }}
     >
       <span style={{
         width: compact ? 16 : 18, height: compact ? 16 : 18, borderRadius: '50%', flexShrink: 0,
         background: meta.color, color: '#fff',
-        fontSize: compact ? 9.5 : 10.5, fontWeight: 800,
+        fontSize: 12, fontWeight: 800,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontVariantNumeric: 'tabular-nums',
       }}>
         {step.order}
       </span>
       <span style={{
-        fontSize: compact ? 11 : 12, fontWeight: 700, minWidth: 0,
+        fontSize: 12, fontWeight: 700, minWidth: 0,
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
         {step.name ?? `#${step.userId}`}
       </span>
-      <span style={{ fontSize: compact ? 10 : 11, fontWeight: 600, opacity: 0.85, whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.85, whiteSpace: 'nowrap' }}>
         · {label}
       </span>
       {current && <Bell size={compact ? 10 : 11} style={{ flexShrink: 0 }} />}

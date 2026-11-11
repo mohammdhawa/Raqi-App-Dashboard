@@ -13,7 +13,7 @@ import { useToast } from '../ui/Toast'
 import { downloadXlsx, readApiError } from '../../utils/attendanceQuery'
 
 const controlStyle = {
-  height: 38, padding: '0 10px', borderRadius: 10,
+  height: 38, padding: '0 10px', borderRadius: 4,
   background: '#fff', border: '1px solid var(--c-border)',
   fontFamily: 'var(--font-sans)', fontSize: 12.5, fontWeight: 600,
   cursor: 'pointer', direction: 'rtl', outline: 'none',
@@ -45,7 +45,7 @@ export function ExportButton({ url, params, filename, disabled }) {
       title="تنزيل النتائج الحالية بنفس الفلاتر والترتيب كملف Excel"
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 7,
-        height: 38, padding: '0 14px', borderRadius: 10, whiteSpace: 'nowrap',
+        height: 38, padding: '0 14px', borderRadius: 4, whiteSpace: 'nowrap',
         background: '#fff', border: '1px solid var(--c-border)',
         fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
         color: 'var(--c-approved)',
@@ -66,7 +66,7 @@ export function ExportButton({ url, params, filename, disabled }) {
 export function SortableTh({ label, field, sort, onSort, align = 'right', title }) {
   const active = Boolean(field) && sort?.field === field
   const baseStyle = {
-    padding: '11px 16px', textAlign: align, fontSize: 11.5, fontWeight: 700,
+    padding: '11px 16px', textAlign: align, fontSize: 12, fontWeight: 700,
     color: active ? 'var(--c-primary)' : 'var(--c-text-2)',
     borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap',
   }
@@ -115,7 +115,7 @@ export function ToggleChip({ label, active, onChange, icon: Icon, title }) {
       type="button" onClick={() => onChange(!active)} title={title}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        height: 38, padding: '0 12px', borderRadius: 10, whiteSpace: 'nowrap',
+        height: 38, padding: '0 12px', borderRadius: 4, whiteSpace: 'nowrap',
         border: active ? 'none' : '1px solid var(--c-border)',
         background: active ? 'var(--c-primary)' : '#fff',
         color: active ? '#fff' : 'var(--c-text-2)',
@@ -183,13 +183,13 @@ export function MultiSelect({ icon: Icon, label, options, values, onChange, disa
         <div style={{
           position: 'absolute', top: 'calc(100% + 6px)', insetInlineStart: 0, zIndex: 40,
           minWidth: 230, maxHeight: 300, overflowY: 'auto',
-          background: '#fff', border: '1px solid var(--c-border)', borderRadius: 12,
+          background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8,
           boxShadow: 'var(--sh-card-lg)', padding: 6,
         }}>
           {options.length > 8 && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 7, height: 34,
-              padding: '0 10px', margin: '2px 2px 6px', borderRadius: 9,
+              padding: '0 10px', margin: '2px 2px 6px', borderRadius: 4,
               background: 'var(--c-surface)', border: '1px solid var(--c-border)',
             }}>
               <Search size={12} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
@@ -209,8 +209,8 @@ export function MultiSelect({ icon: Icon, label, options, values, onChange, disa
               type="button" onClick={() => onChange([])}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                padding: '7px 10px', borderRadius: 8, border: 'none', background: 'transparent',
-                fontFamily: 'var(--font-sans)', fontSize: 11.5, fontWeight: 700,
+                padding: '7px 10px', borderRadius: 4, border: 'none', background: 'transparent',
+                fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700,
                 color: 'var(--c-rejected)', cursor: 'pointer',
               }}
             >
@@ -224,7 +224,7 @@ export function MultiSelect({ icon: Icon, label, options, values, onChange, disa
               key={o.id}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
-                borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+                borderRadius: 4, cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
                 color: 'var(--c-text)',
               }}
               className="hover:bg-[var(--c-surface)]"
@@ -235,7 +235,7 @@ export function MultiSelect({ icon: Icon, label, options, values, onChange, disa
               />
               <span style={{ minWidth: 0, flex: 1 }}>
                 {o.name}
-                {o.email && <span style={{ display: 'block', fontSize: 10.5, fontWeight: 500, color: 'var(--c-text-3)', marginTop: 1 }}>{o.email}</span>}
+                {o.email && <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--c-text-3)', marginTop: 1 }}>{o.email}</span>}
               </span>
             </label>
           ))}

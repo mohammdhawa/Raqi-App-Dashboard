@@ -21,12 +21,12 @@ export default function DeductsBalanceBadge({ deducts, compact = false, short = 
       title={deducts ? LEAVE_COPY.deducts : LEAVE_COPY.nonDeductingDaysHint}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 5,
-        padding: compact ? '2px 8px' : '4px 10px', borderRadius: 999,
-        fontSize: compact ? 10.5 : 11.5, fontWeight: 800, lineHeight: 1.5,
+        padding: compact ? '2px 8px' : '4px 10px', borderRadius: 2,
+        fontSize: 12, fontWeight: 800, lineHeight: 1.5,
         whiteSpace: 'nowrap',
         color: deducts ? 'var(--c-text-2)' : 'var(--c-approved)',
         background: deducts ? 'var(--c-surface-2)' : 'var(--c-approved-bg)',
-        border: `1px solid ${deducts ? 'var(--c-border)' : 'var(--c-approved)22'}`,
+        border: `1px solid ${deducts ? 'var(--c-border)' : 'color-mix(in srgb, var(--c-approved) 13%, transparent)'}`,
       }}
     >
       <Icon size={compact ? 11 : 12} />

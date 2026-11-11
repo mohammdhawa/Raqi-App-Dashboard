@@ -16,7 +16,7 @@ function RowBtn({ children, danger, onClick, title }) {
       onClick={onClick} title={title}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        width: 32, height: 32, borderRadius: 9,
+        width: 32, height: 32, borderRadius: 4,
         border: `1px solid ${danger && hov ? '#F4C9C6' : 'var(--c-border)'}`,
         background: danger && hov ? 'var(--c-rejected-bg)' : '#fff',
         color: danger && hov ? 'var(--c-rejected)' : 'var(--c-text-2)',
@@ -33,9 +33,9 @@ function RowBtn({ children, danger, onClick, title }) {
 
 const TYPE_COLORS = {
   'عقد':         { bg: 'var(--c-primary-light)', color: 'var(--c-primary)' },
-  'مالي':        { bg: 'rgba(30,143,94,0.1)',    color: '#1E8F5E' },
+  'مالي':        { bg: 'rgba(46,125,91,0.1)',    color: '#2E7D5B' },
   'مذكرة':       { bg: 'var(--c-surface-2)',     color: 'var(--c-text-2)' },
-  'مشتريات':     { bg: 'rgba(200,163,107,0.18)', color: '#7A5E2A' },
+  'مشتريات':     { bg: 'rgba(133,114,69,0.18)', color: '#6B5B35' },
   'موارد بشرية': { bg: 'rgba(139,92,246,0.1)',   color: '#7C3AED' },
 }
 
@@ -44,7 +44,7 @@ function TypePill({ type }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center',
-      padding: '4px 10px', borderRadius: 8,
+      padding: '4px 10px', borderRadius: 4,
       fontSize: 12, fontWeight: 700,
       background: c.bg, color: c.color,
       whiteSpace: 'nowrap', maxWidth: '100%',
@@ -60,9 +60,9 @@ function TypePill({ type }) {
 function TplGlyph({ active }) {
   return (
     <div style={{
-      width: 48, height: 48, borderRadius: 13, flexShrink: 0,
+      width: 48, height: 48, borderRadius: 8, flexShrink: 0,
       background: active ? 'var(--c-primary-light)' : 'var(--c-surface)',
-      border: `1.5px solid ${active ? 'rgba(34,65,103,0.15)' : 'var(--c-border)'}`,
+      border: `1.5px solid ${active ? 'rgba(29,84,70,0.15)' : 'var(--c-border)'}`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       opacity: active ? 1 : 0.5,
     }}>
@@ -84,7 +84,7 @@ function TplRow({ tpl, last, onEdit, onDuplicate, onDelete }) {
       style={{
         display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px',
         borderBottom: last ? 'none' : '1px solid var(--c-border)',
-        background: hov ? 'rgba(34,65,103,0.018)' : 'transparent',
+        background: hov ? 'rgba(29,84,70,0.018)' : 'transparent',
         cursor: 'pointer', transition: 'background .1s',
       }}
     >
@@ -95,7 +95,7 @@ function TplRow({ tpl, last, onEdit, onDuplicate, onDelete }) {
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text)', marginBottom: 3 }}>
           {tpl.name}
         </div>
-        <div style={{ fontFamily: "'Courier New', monospace", fontSize: 11, color: 'var(--c-text-3)' }}>
+        <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: 'var(--c-text-3)' }}>
           {tpl.slug}
         </div>
       </div>
@@ -110,7 +110,7 @@ function TplRow({ tpl, last, onEdit, onDuplicate, onDelete }) {
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1 }}>
           {tpl.fields_schema?.length ?? 0}
         </div>
-        <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, marginTop: 2 }}>حقل</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-3)', fontWeight: 600, marginTop: 2 }}>حقل</div>
       </div>
 
       {/* Documents count */}
@@ -118,15 +118,15 @@ function TplRow({ tpl, last, onEdit, onDuplicate, onDelete }) {
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-text)', lineHeight: 1 }}>
           {tpl.documents_count ?? 0}
         </div>
-        <div style={{ fontSize: 10.5, color: 'var(--c-text-3)', fontWeight: 600, marginTop: 2 }}>مرتبط</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-3)', fontWeight: 600, marginTop: 2 }}>مرتبط</div>
       </div>
 
       {/* Version */}
       <div style={{ flex: '0 0 64px' }}>
         <span style={{
           fontFamily: "'Courier New', monospace",
-          fontSize: 11.5, fontWeight: 700, color: 'var(--c-primary)',
-          background: 'var(--c-primary-light)', borderRadius: 7,
+          fontSize: 12, fontWeight: 700, color: 'var(--c-primary)',
+          background: 'var(--c-primary-light)', borderRadius: 3,
           padding: '3px 9px', display: 'inline-block',
         }}>
           v{tpl.version ?? 1}
@@ -169,14 +169,14 @@ function TplRow({ tpl, last, onEdit, onDuplicate, onDelete }) {
 function SkeletonRow({ last }) {
   const pulse = {
     animation: 'pulse 1.5s ease-in-out infinite',
-    background: 'var(--c-surface-2)', borderRadius: 7,
+    background: 'var(--c-surface-2)', borderRadius: 3,
   }
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px',
       borderBottom: last ? 'none' : '1px solid var(--c-border)',
     }}>
-      <div style={{ ...pulse, width: 48, height: 48, borderRadius: 13 }} />
+      <div style={{ ...pulse, width: 48, height: 48, borderRadius: 8 }} />
       <div style={{ flex: '0 0 200px' }}>
         <div style={{ ...pulse, height: 14, width: 140, marginBottom: 8 }} />
         <div style={{ ...pulse, height: 11, width: 90 }} />
@@ -188,7 +188,7 @@ function SkeletonRow({ last }) {
       ))}
       <div style={{ marginInlineStart: 'auto', display: 'flex', gap: 6 }}>
         {[0, 1, 2].map(i => (
-          <div key={i} style={{ ...pulse, width: 32, height: 32, borderRadius: 9, animationDelay: `${i * 0.06}s` }} />
+          <div key={i} style={{ ...pulse, width: 32, height: 32, borderRadius: 4, animationDelay: `${i * 0.06}s` }} />
         ))}
       </div>
     </div>
@@ -212,16 +212,16 @@ function DeleteModal({ tpl, onClose, onDeleted }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 50,
-      background: 'rgba(20,32,50,0.48)', backdropFilter: 'blur(2px)',
+      background: 'rgba(14,22,19,0.48)', backdropFilter: 'blur(2px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div style={{
-        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 18,
+        width: 'min(440px, calc(100vw - 32px))', background: '#fff', borderRadius: 8,
         overflow: 'hidden', boxShadow: 'var(--sh-card-lg)',
       }}>
         <div style={{ padding: '28px 24px 20px', textAlign: 'center' }}>
           <div style={{
-            width: 60, height: 60, borderRadius: 16, margin: '0 auto 16px',
+            width: 60, height: 60, borderRadius: 8, margin: '0 auto 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'var(--c-rejected-bg)', color: 'var(--c-rejected)',
           }}>
@@ -235,7 +235,7 @@ function DeleteModal({ tpl, onClose, onDeleted }) {
           </p>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '5px 12px', borderRadius: 999,
+            padding: '5px 12px', borderRadius: 2,
             background: 'var(--c-surface)', border: '1px solid var(--c-border)',
             fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
           }}>
@@ -361,10 +361,10 @@ export default function TemplatesPage() {
             <div key={label} style={{
               display: 'inline-flex', alignItems: 'center', gap: 9,
               background: '#fff', border: '1px solid var(--c-border)',
-              borderRadius: 12, padding: '9px 14px',
+              borderRadius: 8, padding: '9px 14px',
             }}>
               <div style={{
-                width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                width: 30, height: 30, borderRadius: 4, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: iconBg, color: iconColor,
               }}>
@@ -374,7 +374,7 @@ export default function TemplatesPage() {
                 <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.3, lineHeight: 1 }}>
                   {value}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-2)', fontWeight: 600, marginTop: 2 }}>{label}</div>
               </div>
             </div>
           ))}
@@ -384,7 +384,7 @@ export default function TemplatesPage() {
       {/* ── Main card ── */}
       <div style={{
         background: '#fff', border: '1px solid var(--c-border)',
-        borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--sh-card)',
+        borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--sh-card)',
       }}>
         {/* Toolbar */}
         <div style={{
@@ -395,8 +395,8 @@ export default function TemplatesPage() {
             <LayoutTemplate size={17} style={{ color: 'var(--c-primary)' }} />
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>القوالب</span>
             <span style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--c-text-2)',
-              background: 'var(--c-surface-2)', borderRadius: 999, padding: '2px 9px',
+              fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
+              background: 'var(--c-surface-2)', borderRadius: 2, padding: '2px 9px',
             }}>
               {total} قوالب
             </span>
@@ -405,14 +405,14 @@ export default function TemplatesPage() {
           {/* Filter tabs */}
           <div style={{
             display: 'flex', gap: 4,
-            background: 'var(--c-surface)', borderRadius: 10, padding: 4,
+            background: 'var(--c-surface)', borderRadius: 4, padding: 4,
           }}>
             {FILTER_TABS.map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setFilter(tab.key)}
                 style={{
-                  height: 30, padding: '0 12px', borderRadius: 8,
+                  height: 30, padding: '0 12px', borderRadius: 4,
                   border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)',
                   fontSize: 12.5, fontWeight: 700, transition: 'all .14s',
                   background: filter === tab.key ? '#fff' : 'transparent',
@@ -431,7 +431,7 @@ export default function TemplatesPage() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 9,
             background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-            borderRadius: 10, padding: '0 12px', height: 38, minWidth: 200,
+            borderRadius: 4, padding: '0 12px', height: 38, minWidth: 200,
           }}>
             <Search size={14} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
             <input
@@ -459,14 +459,14 @@ export default function TemplatesPage() {
                   key={col.label}
                   style={{
                     flex: col.flex,
-                    fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)',
+                    fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)',
                     textAlign: col.center ? 'center' : 'right',
                   }}
                 >
                   {col.label}
                 </div>
               ))}
-              <div style={{ marginInlineStart: 'auto', fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
+              <div style={{ marginInlineStart: 'auto', fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)' }}>
                 إجراءات
               </div>
             </div>
@@ -489,7 +489,7 @@ export default function TemplatesPage() {
 
         {/* Empty state */}
         {!loading && templates.length === 0 && (
-          <div style={{ padding: '56px 20px', textAlign: 'center' }}>
+          <div className="site-grid-light" style={{ padding: '56px 20px', textAlign: 'center' }}>
             <LayoutTemplate size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>
               {search ? 'لا توجد نتائج مطابقة' : 'لا توجد قوالب بعد'}

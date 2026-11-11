@@ -30,7 +30,7 @@ function metaLine(manager) {
 const orderBadgeStyle = {
   width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
   background: 'var(--c-primary)', color: '#fff',
-  fontSize: 11, fontWeight: 800,
+  fontSize: 12, fontWeight: 800,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   fontVariantNumeric: 'tabular-nums',
 }
@@ -47,7 +47,7 @@ function ManagerRow({ manager, selected, disabled, badge, onToggle }) {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-        padding: '9px 10px', borderRadius: 10, border: 'none',
+        padding: '9px 10px', borderRadius: 4, border: 'none',
         background: selected ? 'var(--c-accent-tint)' : hov && !disabled ? 'var(--c-surface-2)' : 'transparent',
         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1,
         textAlign: 'right', fontFamily: 'var(--font-sans)',
@@ -63,7 +63,7 @@ function ManagerRow({ manager, selected, disabled, badge, onToggle }) {
           {manager.name}
         </div>
         <div style={{
-          fontSize: 11.5, color: 'var(--c-text-3)',
+          fontSize: 12, color: 'var(--c-text-3)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {meta}
@@ -71,7 +71,7 @@ function ManagerRow({ manager, selected, disabled, badge, onToggle }) {
       </div>
       {badge?.(manager)}
       <div style={{
-        width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+        width: 20, height: 20, borderRadius: 3, flexShrink: 0,
         border: `1.5px solid ${selected ? 'var(--c-primary)' : 'var(--c-border)'}`,
         background: selected ? 'var(--c-primary)' : '#fff',
         display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
@@ -94,15 +94,15 @@ function ChipBody({ manager, fallbackId, badge, caption, error, onRemove }) {
           {manager?.name ?? `#${fallbackId}`}
         </div>
         {caption && (
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--c-primary)', marginTop: 2 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-primary)', marginTop: 2 }}>
             {caption}
           </div>
         )}
         {!caption && metaLine(manager) && (
-          <div style={{ fontSize: 11, color: 'var(--c-text-3)' }}>{metaLine(manager)}</div>
+          <div style={{ fontSize: 12, color: 'var(--c-text-3)' }}>{metaLine(manager)}</div>
         )}
         {error && (
-          <div style={{ fontSize: 11, color: 'var(--c-rejected)', marginTop: 3, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 3, lineHeight: 1.5 }}>
             {error}
           </div>
         )}
@@ -124,7 +124,7 @@ function ApproverChip({ manager, fallbackId, badge, error, onRemove }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
-      background: '#fff', borderRadius: 10, marginBottom: 8,
+      background: '#fff', borderRadius: 4, marginBottom: 8,
       border: `1px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
     }}>
       <ChipBody manager={manager} fallbackId={fallbackId} badge={badge} error={error} onRemove={onRemove} />
@@ -150,7 +150,7 @@ function SortableApproverChip({ id, manager, index, badge, caption, error, onRem
         display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
         background: isDragging ? 'var(--c-surface)' : '#fff',
         border: `1px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
-        borderRadius: 10, marginBottom: 8,
+        borderRadius: 4, marginBottom: 8,
         boxShadow: isDragging ? 'var(--sh-card-lg)' : 'none',
       }}
     >
@@ -159,7 +159,7 @@ function SortableApproverChip({ id, manager, index, badge, caption, error, onRem
         style={{
           width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'grab', border: 'none', background: 'transparent',
-          color: 'var(--c-text-3)', borderRadius: 6, flexShrink: 0, padding: 0,
+          color: 'var(--c-text-3)', borderRadius: 3, flexShrink: 0, padding: 0,
         }}
       >
         <GripVertical size={14} />
@@ -184,14 +184,14 @@ function SequenceSummary({ value, known }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
-      padding: '8px 11px', borderRadius: 9, marginBottom: 10,
+      padding: '8px 11px', borderRadius: 4, marginBottom: 10,
       background: 'var(--c-surface-2)',
     }}>
       {value.map((id, i) => (
         <span key={id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           {i > 0 && <ChevronLeft size={13} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />}
-          <span style={{ ...orderBadgeStyle, width: 18, height: 18, fontSize: 10 }}>{i + 1}</span>
-          <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-2)' }}>
+          <span style={{ ...orderBadgeStyle, width: 18, height: 18, fontSize: 12 }}>{i + 1}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-2)' }}>
             {known[id]?.name ?? `#${id}`}
           </span>
         </span>
@@ -291,7 +291,7 @@ export default function ApproverPickerBase({
           style={{
             width: '100%', height: 40, boxSizing: 'border-box',
             paddingInlineStart: 36, paddingInlineEnd: 12,
-            borderRadius: 10, border: '1px solid var(--c-border)',
+            borderRadius: 4, border: '1px solid var(--c-border)',
             fontFamily: 'var(--font-sans)', fontSize: 13, outline: 'none',
           }}
         />
@@ -299,7 +299,7 @@ export default function ApproverPickerBase({
 
       <div style={{
         maxHeight: 220, overflowY: 'auto', border: '1px solid var(--c-border)',
-        borderRadius: 10, padding: 6, marginBottom: 14, background: 'var(--c-surface)',
+        borderRadius: 4, padding: 6, marginBottom: 14, background: 'var(--c-surface)',
       }}>
         {loading && (
           <div style={{ padding: 16, textAlign: 'center', color: 'var(--c-text-3)', fontSize: 12.5 }}>
@@ -329,14 +329,14 @@ export default function ApproverPickerBase({
         <UserCheck size={14} />
         {selectedLabel} ({value.length}{max != null ? ` / ${max}` : ''})
         {ordered && value.length > 1 && (
-          <span style={{ fontWeight: 400, color: 'var(--c-text-3)', fontSize: 11.5 }}>— اسحب لإعادة الترتيب</span>
+          <span style={{ fontWeight: 400, color: 'var(--c-text-3)', fontSize: 12 }}>— اسحب لإعادة الترتيب</span>
         )}
       </div>
 
       {value.length === 0 && (
         <div style={{
           padding: '18px 12px', textAlign: 'center', color: 'var(--c-text-3)', fontSize: 12.5,
-          border: '1px dashed var(--c-border)', borderRadius: 10, marginBottom: 10,
+          border: '1px dashed var(--c-border)', borderRadius: 4, marginBottom: 10,
         }}>
           {noneSelectedText}
         </div>
