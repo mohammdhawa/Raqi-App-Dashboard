@@ -3,8 +3,26 @@ import test from 'node:test'
 
 import {
   canRejectRecord,
+  canViewAttendanceReports,
   isAttendanceRejectCapabilityDenied,
 } from './attendancePermissions.js'
+
+test('a manager or chief sees team attendance unless it is switched off', () => {
+  assert.equal(canViewAttendanceReports({ role: 'manager' }), true)
+  assert.equal(canViewAttendanceReports({ role: 'manager', team_attendance_access: true }), true)
+  assert.equal(canViewAttendanceReports({ role: 'manager', team_attendance_access: false }), false)
+  assert.equal(canViewAttendanceReports({ role: 'chief', team_attendance_access: false }), false)
+  assert.equal(canViewAttendanceReports({ role: 'employee', team_attendance_access: true }), false)
+  assert.equal(canViewAttendanceReports(null), false)
+})
+
+test('the team switch does not narrow admins or can_view_attendance users', () => {
+  assert.equal(canViewAttendanceReports({ role: 'admin', team_attendance_access: false }), true)
+  assert.equal(canViewAttendanceReports({
+    role: 'manager', can_view_attendance: true, team_attendance_access: false,
+  }), true)
+  assert.equal(canViewAttendanceReports({ role: 'employee', can_view_attendance: true }), true)
+})
 
 test('attendance rejection admits only admins and can_view_attendance users', () => {
   assert.equal(canRejectRecord({ role: 'admin', can_view_attendance: false }), true)

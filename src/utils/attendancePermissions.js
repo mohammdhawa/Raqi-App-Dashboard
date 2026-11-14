@@ -1,4 +1,17 @@
 /**
+ * Who reaches the attendance reports — the backend's `attendance.report.view`
+ * gate, verbatim. Admins and can_view_attendance users always do; a manager or
+ * chief only while their `team_attendance_access` switch is on. The switch
+ * defaults to on, so a session cached before the field existed reads as on.
+ */
+export function canViewAttendanceReports(user) {
+  if (!user) return false
+  if (user.role === 'admin' || user.can_view_attendance) return true
+
+  return ['manager', 'chief'].includes(user.role) && user.team_attendance_access !== false
+}
+
+/**
  * Interim S5 capability: attendance visibility alone no longer grants the
  * power to reject or restore a record. Department membership is irrelevant.
  */

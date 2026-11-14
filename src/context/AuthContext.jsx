@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import api from '../services/api'
+import { canViewAttendanceReports } from '../utils/attendancePermissions'
 import { readToken, readUser, persistSession, persistUser, clearSession } from '../services/authStorage'
 
 const AuthContext = createContext(null)
@@ -89,7 +90,7 @@ export function AuthProvider({ children }) {
   }
 
   const isAuthenticated = Boolean(token)
-  const canViewAttendance = ['admin', 'manager', 'chief'].includes(user?.role) || !!user?.can_view_attendance
+  const canViewAttendance = canViewAttendanceReports(user)
   // `attendance_check` is the backend permission behind every /api/attendance/*
   // write, so it gates the self-service pages verbatim — no role shortcut, or an
   // admin without the flag would reach a page that can only 403. Independent of
