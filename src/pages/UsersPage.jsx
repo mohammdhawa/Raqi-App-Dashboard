@@ -12,6 +12,9 @@ import { buildUserCreatePayload, buildUserUpdatePayload, userUpdateBody } from '
 
 // Editing any of these on your own account changes what you are allowed to
 // reach, so the session has to be re-read from GET /me afterwards.
+// The role tabs, as the `role` filter GET /admin/users understands.
+const TAB_ROLES = { all: '', manager: 'admin,manager,chief', employee: 'employee' }
+
 const PERMISSION_KEYS = ['role', 'attendance_check', 'can_view_attendance', 'team_attendance_access', 'department_id', 'section_id']
 
 // ── Primitive components ──────────────────────────────────────────────────────
@@ -698,6 +701,7 @@ export default function UsersPage() {
   const [search, setSearch]         = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [deptFilter, setDeptFilter] = useState('')
+  const [roleCounts, setRoleCounts] = useState({})
   const [drawer, setDrawer]         = useState(null) // { mode: 'create'|'edit', user? }
   const [deleteTarget, setDelete]   = useState(null)
 
@@ -707,7 +711,10 @@ export default function UsersPage() {
     try {
       const params = { page: targetPage }
       if (search)     params.search        = search
-      if (roleFilter) params.role          = roleFilter
+      // The role dropdown names one role; a tab names a group of them. Both
+      // are sent to the server, so they filter every page, not just this one.
+      const role = roleFilter || TAB_ROLES[tab]
+      if (role)       params.role          = role
       if (deptFilter) params.department_id = deptFilter
       const res = await api.get('/admin/users', { params })
       const pagination = res.data.users
@@ -715,12 +722,13 @@ export default function UsersPage() {
       setPage(pagination.current_page ?? targetPage)
       setLastPage(pagination.last_page ?? 1)
       setTotal(pagination.total ?? 0)
+      setRoleCounts(res.data.role_counts ?? {})
     } catch {
       setUsers([])
     } finally {
       setLoading(false)
     }
-  }, [search, roleFilter, deptFilter, page])
+  }, [search, roleFilter, deptFilter, tab, page])
 
   const fetchDepts = useCallback(async () => {
     try {
@@ -734,7 +742,7 @@ export default function UsersPage() {
     setPage(1)
     fetchUsers(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, roleFilter, deptFilter])
+  }, [search, roleFilter, deptFilter, tab])
 
   // Fetch when page changes (without resetting)
   useEffect(() => { fetchUsers(page) }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -762,23 +770,20 @@ export default function UsersPage() {
     [fetchUsers, fetchDepts, page],
   )
 
-  // ── Derived — tab filter is client-side on the current page ─────────────────
-  const filtered = users.filter(u => {
-    if (tab === 'manager'  && !['admin', 'manager', 'chief'].includes(u.role)) return false
-    if (tab === 'employee' && u.role !== 'employee') return false
-    return true
-  })
+  // ── Derived — counts come from the server and cover every page ────────────
+  const countOf = role => roleCounts[role] ?? 0
+  const leadership = countOf('admin') + countOf('manager') + countOf('chief')
 
   const counts = {
-    all:      users.length,
-    manager:  users.filter(u => ['admin', 'manager', 'chief'].includes(u.role)).length,
-    employee: users.filter(u => u.role === 'employee').length,
+    all:      leadership + countOf('employee'),
+    manager:  leadership,
+    employee: countOf('employee'),
   }
 
   const metrics = [
-    { Icon: Settings, label: 'مدير نظام', value: users.filter(u => u.role === 'admin').length },
-    { Icon: Shield,   label: 'رئيس أعلى', value: users.filter(u => u.role === 'chief').length },
-    { Icon: Users,    label: 'إجمالي',     value: total },
+    { Icon: Settings, label: 'مدير نظام', value: countOf('admin') },
+    { Icon: Shield,   label: 'رئيس أعلى', value: countOf('chief') },
+    { Icon: Users,    label: 'إجمالي',     value: counts.all },
   ]
 
   const tabs = [
@@ -875,7 +880,7 @@ export default function UsersPage() {
           }}>
             {tabs.map(t => (
               <button
-                key={t.key} onClick={() => setTab(t.key)}
+                key={t.key} onClick={() => { setRoleFilter(''); setTab(t.key) }}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   height: 30, padding: '0 12px', borderRadius: 4, border: 0,
@@ -918,7 +923,7 @@ export default function UsersPage() {
 
           {/* Role filter */}
           <select
-            value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
+            value={roleFilter} onChange={e => { setTab('all'); setRoleFilter(e.target.value) }}
             style={{
               height: 38, padding: '0 10px', borderRadius: 4,
               background: '#fff', border: '1px solid var(--c-border)',
@@ -972,10 +977,10 @@ export default function UsersPage() {
             <tbody>
               {loading
                 ? [0, 1, 2].map(i => <SkeletonRow key={i} />)
-                : filtered.map((u, idx) => (
+                : users.map((u, idx) => (
                   <UserRow
                     key={u.id} user={u}
-                    last={idx === filtered.length - 1}
+                    last={idx === users.length - 1}
                     isSelf={u.id === authUser?.id}
                     onEdit={() => setDrawer({ mode: 'edit', user: u })}
                     onDelete={() => setDelete(u)}
@@ -987,7 +992,7 @@ export default function UsersPage() {
         </div>
 
         {/* Empty state */}
-        {!loading && filtered.length === 0 && (
+        {!loading && users.length === 0 && (
           <div className="site-grid-light" style={{ padding: '48px 20px', textAlign: 'center' }}>
             <Users size={32} style={{ color: 'var(--c-text-3)', marginBottom: 12 }} />
             <p style={{ margin: 0, color: 'var(--c-text-2)', fontSize: 14, fontWeight: 600 }}>لا توجد نتائج</p>
