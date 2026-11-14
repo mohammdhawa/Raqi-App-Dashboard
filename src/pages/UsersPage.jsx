@@ -12,7 +12,7 @@ import { buildUserCreatePayload, buildUserUpdatePayload, userUpdateBody } from '
 
 // Editing any of these on your own account changes what you are allowed to
 // reach, so the session has to be re-read from GET /me afterwards.
-const PERMISSION_KEYS = ['role', 'attendance_check', 'can_view_attendance', 'department_id', 'section_id']
+const PERMISSION_KEYS = ['role', 'attendance_check', 'can_view_attendance', 'team_attendance_access', 'department_id', 'section_id']
 
 // ── Primitive components ──────────────────────────────────────────────────────
 
@@ -258,12 +258,14 @@ function buildInitialForm(mode, user) {
       section_id: user.section?.id ?? user.section_id ?? '',
       attendance_check: Boolean(user.attendance_check),
       can_view_attendance: Boolean(user.can_view_attendance),
+      // On unless the server says otherwise — the column defaults to true.
+      team_attendance_access: user.team_attendance_access !== false,
     }
   }
   return {
     name: '', email: '', password: '', password_confirmation: '',
     role: 'employee', department_id: '', section_id: '',
-    attendance_check: false, can_view_attendance: false,
+    attendance_check: false, can_view_attendance: false, team_attendance_access: true,
   }
 }
 
@@ -534,6 +536,24 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
             </div>
             <Toggle on={form.can_view_attendance} onChange={v => set('can_view_attendance', v)} />
           </div>
+
+          {/* Only managers and chiefs reach their team's attendance by role,
+              so only they have something to switch off. */}
+          {(form.role === 'manager' || form.role === 'chief') && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '13px 15px',
+              borderRadius: 8, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+              marginTop: 10,
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>متابعة حضور الفريق</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5 }}>
+                  السماح لهذا المدير بعرض حضور وغياب موظفي إدارته
+                </div>
+              </div>
+              <Toggle on={form.team_attendance_access} onChange={v => set('team_attendance_access', v)} />
+            </div>
+          )}
         </div>
 
         {/* Footer */}

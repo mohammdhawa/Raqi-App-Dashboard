@@ -18,7 +18,8 @@ export function buildUserCreatePayload(form) {
     role:                  form.role,
     attendance_check:      form.attendance_check,
     can_view_attendance:   form.can_view_attendance,
-    department_id:         idOrNull(form.department_id),
+    team_attendance_access: form.team_attendance_access,
+    department_id:        idOrNull(form.department_id),
     section_id:            idOrNull(form.section_id),
     password:              form.password,
     password_confirmation: form.password_confirmation,
@@ -56,6 +57,7 @@ export function buildUserUpdatePayload(initial, form) {
   if (form.role !== initial.role) payload.role = form.role
   if (form.attendance_check !== initial.attendance_check) payload.attendance_check = form.attendance_check
   if (form.can_view_attendance !== initial.can_view_attendance) payload.can_view_attendance = form.can_view_attendance
+  if (form.team_attendance_access !== initial.team_attendance_access) payload.team_attendance_access = form.team_attendance_access
 
   if (form.password) {
     payload.password              = form.password
