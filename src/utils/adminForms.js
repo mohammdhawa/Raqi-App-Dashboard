@@ -107,3 +107,54 @@ export function movedUsersMessage(count) {
   if (count >= 3 && count <= 10) return `تم نقل القسم ونقل ${count} مستخدمين معه.`
   return `تم نقل القسم ونقل ${count} مستخدماً معه.`
 }
+
+// Laravel's Password::defaults() — the rule both user requests apply.
+export const PASSWORD_MIN = 8
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * The checks the user form can answer before the request goes out, keyed by
+ * field so each message lands under its own control. The server still owns
+ * everything that needs the database (a taken email, the single chief, the
+ * last administrator); this only spares a round trip for what is plainly
+ * missing or mistyped.
+ *
+ * `checkPassword` is false when editing without opening the password fields:
+ * an empty password there means "leave it as it is".
+ */
+export function validateUserForm(form, { checkPassword = true } = {}) {
+  const errors = {}
+  if (!form.name.trim()) errors.name = 'الاسم مطلوب.'
+  if (!form.email.trim()) errors.email = 'البريد الإلكتروني مطلوب.'
+  else if (!EMAIL_RE.test(form.email.trim())) errors.email = 'صيغة البريد الإلكتروني غير صحيحة.'
+
+  if (checkPassword) {
+    if (!form.password) errors.password = 'كلمة المرور مطلوبة.'
+    else if (form.password.length < PASSWORD_MIN) errors.password = `كلمة المرور يجب أن تكون ${PASSWORD_MIN} أحرف على الأقل.`
+    if (form.password && form.password_confirmation !== form.password) {
+      errors.password_confirmation = 'تأكيد كلمة المرور غير متطابق.'
+    }
+  }
+  return errors
+}
+
+// No look-alikes (0/O, 1/l/I), so a password read aloud or copied by hand
+// survives the trip to the employee.
+const PW_LOWER  = 'abcdefghjkmnpqrstuvwxyz'
+const PW_UPPER  = 'ABCDEFGHJKMNPQRSTUVWXYZ'
+const PW_DIGITS = '23456789'
+
+/** A random password with at least one lowercase, uppercase and digit. */
+export function generatePassword(length = 12) {
+  const all = PW_LOWER + PW_UPPER + PW_DIGITS
+  const pick = set => set[crypto.getRandomValues(new Uint32Array(1))[0] % set.length]
+  const chars = [pick(PW_LOWER), pick(PW_UPPER), pick(PW_DIGITS)]
+  while (chars.length < length) chars.push(pick(all))
+  // Fisher–Yates, so the guaranteed classes are not always up front.
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1)
+    ;[chars[i], chars[j]] = [chars[j], chars[i]]
+  }
+  return chars.join('')
+}

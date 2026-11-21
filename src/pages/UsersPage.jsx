@@ -1,14 +1,18 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useId } from 'react'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/ui/Toast'
 import {
   Users, Settings, Shield, Search, Pencil, Trash2,
   X, User, Mail, Lock, Eye, EyeOff, Star, AlertCircle, Crown,
+  UserPlus, KeyRound, Copy, Check, Clock, Building2, WandSparkles, LoaderCircle,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
 import { onSectionsChanged } from '../utils/dataEvents'
-import { buildUserCreatePayload, buildUserUpdatePayload, userUpdateBody } from '../utils/adminForms'
+import {
+  buildUserCreatePayload, buildUserUpdatePayload, userUpdateBody,
+  validateUserForm, generatePassword, PASSWORD_MIN,
+} from '../utils/adminForms'
 
 // Editing any of these on your own account changes what you are allowed to
 // reach, so the session has to be re-read from GET /me afterwards.
@@ -103,10 +107,12 @@ function RowBtn({ children, danger, onClick, title, disabled }) {
   )
 }
 
-function Toggle({ on, onChange }) {
+function Toggle({ on, onChange, labelledBy }) {
   return (
     <button
-      type="button" onClick={() => onChange(!on)}
+      type="button" role="switch" aria-checked={on} aria-labelledby={labelledBy}
+      // The row around it toggles too; stop the click so it doesn't flip twice.
+      onClick={e => { e.stopPropagation(); onChange(!on) }}
       style={{
         width: 42, height: 24, borderRadius: 999, border: 0,
         position: 'relative', flexShrink: 0, cursor: 'pointer',
@@ -129,9 +135,9 @@ function Toggle({ on, onChange }) {
 
 // ── Drawer primitives ─────────────────────────────────────────────────────────
 
-function DrawerSection({ icon: Icon, label }) {
+function DrawerSection({ icon: Icon, label, first }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, marginTop: 22 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, marginTop: first ? 0 : 26 }}>
       {Icon && <Icon size={15} style={{ color: 'var(--c-primary)', flexShrink: 0 }} />}
       <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--c-text)' }}>{label}</span>
       <span style={{ flex: 1, height: 1, background: 'var(--c-border)' }} />
@@ -139,34 +145,54 @@ function DrawerSection({ icon: Icon, label }) {
   )
 }
 
-function FieldWrap({ label, required, error, children }) {
+function FieldWrap({ label, htmlFor, required, error, hint, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--c-text)', marginBottom: 7 }}>
+    <div style={{ marginBottom: 16, minWidth: 0 }}>
+      <label htmlFor={htmlFor} style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--c-text)', marginBottom: 7 }}>
         {label}{required && <span style={{ color: 'var(--c-rejected)', marginRight: 3 }}>*</span>}
       </label>
       {children}
-      {error && (
-        <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 5, lineHeight: 1.6 }}>{error}</div>
-      )}
+      {error ? (
+        <div role="alert" style={{ display: 'flex', alignItems: 'flex-start', gap: 5, fontSize: 12, color: 'var(--c-rejected)', marginTop: 6, lineHeight: 1.6 }}>
+          <AlertCircle size={13} style={{ flexShrink: 0, marginTop: 3 }} />
+          {error}
+        </div>
+      ) : hint}
     </div>
   )
 }
 
-function TextInput({ icon: Icon, type = 'text', placeholder, value, onChange, suffix }) {
+// A small status line under a field: grey until it is met, then green (or red
+// when `state` says the value is wrong).
+function FieldHint({ state = 'neutral', children }) {
+  const color = state === 'ok' ? 'var(--c-approved)' : state === 'bad' ? 'var(--c-rejected)' : 'var(--c-text-3)'
+  const Icon  = state === 'ok' ? Check : state === 'bad' ? X : null
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color, marginTop: 6, lineHeight: 1.6 }}>
+      {Icon ? <Icon size={13} style={{ flexShrink: 0 }} /> : <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', margin: '0 4px' }} />}
+      {children}
+    </div>
+  )
+}
+
+function TextInput({ id, icon: Icon, type = 'text', placeholder, value, onChange, suffix, error, autoComplete, autoFocus, ltr }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 9, height: 42,
-      background: 'var(--c-surface)', border: '1.5px solid var(--c-border)',
+      display: 'flex', alignItems: 'center', gap: 9, height: 42, minWidth: 0,
+      background: 'var(--c-surface)', border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
       borderRadius: 4, padding: '0 12px',
     }}>
       {Icon && <Icon size={15} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />}
       <input
-        type={type} placeholder={placeholder} value={value} onChange={onChange}
+        id={id} type={type} placeholder={placeholder} value={value} onChange={onChange}
+        autoComplete={autoComplete} autoFocus={autoFocus} aria-invalid={Boolean(error)}
+        spellCheck={false}
         style={{
-          flex: 1, border: 0, outline: 0, background: 'transparent',
+          // minWidth 0: an <input> otherwise keeps its intrinsic ~20ch width and
+          // shoves the suffix buttons out of the box in a half-width column.
+          flex: 1, minWidth: 0, width: '100%', border: 0, outline: 0, background: 'transparent',
           fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
-          textAlign: 'right', direction: 'rtl',
+          textAlign: 'right', direction: ltr ? 'ltr' : 'rtl',
         }}
       />
       {suffix}
@@ -174,21 +200,59 @@ function TextInput({ icon: Icon, type = 'text', placeholder, value, onChange, su
   )
 }
 
-function SelectInput({ placeholder, value, onChange, options, error }) {
+function FieldIconBtn({ label, onClick, children }) {
+  return (
+    <button
+      type="button" onClick={onClick} title={label} aria-label={label}
+      className="hover:!text-[var(--c-text)] hover:!bg-[var(--c-surface-2)]"
+      style={{
+        width: 28, height: 28, margin: '0 -6px', flexShrink: 0, borderRadius: 4,
+        border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--c-text-2)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .12s',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function SelectInput({ id, placeholder, value, onChange, options, error, disabled }) {
   return (
     <select
-      value={value} onChange={onChange}
+      id={id} value={value} onChange={onChange} disabled={disabled} aria-invalid={Boolean(error)}
       style={{
         width: '100%', height: 42, border: `1.5px solid ${error ? 'var(--c-rejected)' : 'var(--c-border)'}`,
         borderRadius: 4, padding: '0 12px', background: 'var(--c-surface)',
         fontFamily: 'var(--font-sans)', fontSize: 13,
         color: value ? 'var(--c-text)' : 'var(--c-text-3)',
-        outline: 'none', cursor: 'pointer', direction: 'rtl',
+        outline: 'none', cursor: disabled ? 'not-allowed' : 'pointer', direction: 'rtl',
+        opacity: disabled ? 0.6 : 1,
       }}
     >
       <option value="">{placeholder}</option>
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
+  )
+}
+
+function ToggleRow({ title, desc, on, onChange }) {
+  const labelId = useId()
+  return (
+    <div
+      onClick={() => onChange(!on)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 14, padding: '13px 15px',
+        borderRadius: 8, cursor: 'pointer', transition: 'all .14s',
+        background: on ? 'rgba(29,84,70,0.035)' : 'var(--c-surface)',
+        border: `1px solid ${on ? 'rgba(29,84,70,0.22)' : 'var(--c-border)'}`,
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div id={labelId} style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>{title}</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5 }}>{desc}</div>
+      </div>
+      <Toggle on={on} onChange={onChange} labelledBy={labelId} />
+    </div>
   )
 }
 
@@ -207,11 +271,12 @@ function RoleCard({ role, selected, onSelect }) {
   const accentChief = active && isChief
 
   return (
-    <div
+    <button
+      type="button" role="radio" aria-checked={active}
       onClick={() => onSelect(key)}
       style={{
-        display: 'flex', alignItems: 'flex-start', gap: 10, padding: 12,
-        borderRadius: 8, cursor: 'pointer',
+        display: 'flex', alignItems: 'flex-start', gap: 10, padding: 12, width: '100%',
+        borderRadius: 8, cursor: 'pointer', textAlign: 'right', fontFamily: 'inherit',
         background: accentChief ? 'rgba(133,114,69,0.03)' : active ? 'rgba(29,84,70,0.03)' : '#fff',
         border: `1.5px solid ${accentChief ? 'var(--c-accent)' : active ? 'var(--c-primary)' : 'var(--c-border)'}`,
         boxShadow: accentChief ? '0 0 0 3px var(--c-accent-tint)' : active ? '0 0 0 3px rgba(29,84,70,0.07)' : 'none',
@@ -235,7 +300,7 @@ function RoleCard({ role, selected, onSelect }) {
         border: `1.5px solid ${accentChief ? 'var(--c-accent)' : active ? 'var(--c-primary)' : 'var(--c-border-strong)'}`,
         background: accentChief ? 'var(--c-accent)' : active ? 'var(--c-primary)' : 'transparent',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: accentChief ? '#FFFFFF' : '#fff',
+        color: '#fff',
       }}>
         {active && (
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -243,7 +308,7 @@ function RoleCard({ role, selected, onSelect }) {
           </svg>
         )}
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -272,8 +337,17 @@ function buildInitialForm(mode, user) {
   }
 }
 
+// The fields that render their own error line; anything else the server
+// rejects is shown in the footer.
+const INLINE_ERROR_KEYS = ['name', 'email', 'password', 'password_confirmation', 'department_id', 'section_id']
+
 function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
   const isEdit = mode === 'edit'
+  const titleId = useId()
+  const ids = {
+    name: useId(), email: useId(), password: useId(), password_confirmation: useId(),
+    department_id: useId(), section_id: useId(),
+  }
 
   // Frozen snapshot of what the server currently holds — the PATCH diff is
   // taken against this, so an untouched field is never resent.
@@ -281,13 +355,20 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
   const [form, setForm] = useState(initial)
 
   const [sections, setSections]   = useState([])
+  // Editing leaves the password alone unless the admin opens it on purpose.
+  const [changingPw, setChangingPw] = useState(!isEdit)
   const [showPw, setShowPw]       = useState(false)
-  const [showPwC, setShowPwC]     = useState(false)
+  const [copied, setCopied]       = useState(false)
   const [saving, setSaving]       = useState(false)
   const [error, setError]         = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
 
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+  const dirty = JSON.stringify(form) !== JSON.stringify(initial)
+
+  const set = (key, val) => {
+    setForm(f => ({ ...f, [key]: val }))
+    setFieldErrors(fe => (fe[key] ? { ...fe, [key]: undefined } : fe))
+  }
 
   // Fetch sections whenever department changes
   useEffect(() => {
@@ -299,12 +380,56 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
       .catch(() => setSections([]))
   }, [form.department_id])
 
+  // Escape closes, as with any dialog.
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape' && !saving) onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose, saving])
+
   const chiefTaken = form.role === 'chief' &&
     users.some(u => u.role === 'chief' && (!isEdit || u.id !== user?.id))
+
+  const pwLongEnough = form.password.length >= PASSWORD_MIN
+  const pwMatches    = form.password_confirmation === form.password
+
+  const generate = () => {
+    const pw = generatePassword()
+    setForm(f => ({ ...f, password: pw, password_confirmation: pw }))
+    setFieldErrors(fe => ({ ...fe, password: undefined, password_confirmation: undefined }))
+    setShowPw(true)
+  }
+
+  const copyPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(form.password)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1600)
+    } catch { /* clipboard blocked — the field is still visible to copy by hand */ }
+  }
+
+  const cancelPasswordChange = () => {
+    setForm(f => ({ ...f, password: '', password_confirmation: '' }))
+    setFieldErrors(fe => ({ ...fe, password: undefined, password_confirmation: undefined }))
+    setShowPw(false)
+    setChangingPw(false)
+  }
+
+  const focusFirstError = errs => {
+    const key = INLINE_ERROR_KEYS.find(k => errs[k])
+    if (key) document.getElementById(ids[key])?.focus()
+  }
 
   const handleSubmit = async () => {
     if (saving) return
     setError('')
+
+    const clientErrors = validateUserForm(form, { checkPassword: changingPw })
+    if (Object.keys(clientErrors).length) {
+      setFieldErrors(clientErrors)
+      focusFirstError(clientErrors)
+      return
+    }
     setFieldErrors({})
 
     // `changes` is what the user actually touched — it answers the "nothing to
@@ -331,21 +456,24 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
         : null
 
       if (errs) {
-        // Both halves of the department/section invariant are reported on the
-        // field they belong to, so the caller sees which control to fix.
+        // Each message goes under the control it belongs to — including both
+        // halves of the department/section invariant — so the admin sees
+        // which field to fix instead of a joined sentence in the footer.
         const first = key => (Array.isArray(errs[key]) ? errs[key][0] : errs[key])
-        setFieldErrors({
-          department_id: first('department_id'),
-          section_id:    first('section_id'),
-        })
-      }
+        const inline = Object.fromEntries(INLINE_ERROR_KEYS.filter(k => errs[k]).map(k => [k, first(k)]))
+        setFieldErrors(inline)
+        focusFirstError(inline)
 
-      // The last-administrator refusal is a 422 carrying only `message`. The
-      // backend owns that rule — it reads the roster under a lock, so it is the
-      // only place that can answer it correctly against a concurrent change.
-      setError(errs
-        ? Object.values(errs).flat().join(' — ')
-        : (data?.message ?? 'حدث خطأ. يرجى المحاولة مرة أخرى.'))
+        const rest = Object.entries(errs)
+          .filter(([k]) => !INLINE_ERROR_KEYS.includes(k))
+          .flatMap(([, v]) => v)
+        setError(rest.length ? rest.join(' — ') : 'يرجى تصحيح الحقول المحددة.')
+      } else {
+        // The last-administrator refusal is a 422 carrying only `message`. The
+        // backend owns that rule — it reads the roster under a lock, so it is
+        // the only place that can answer it correctly against a concurrent change.
+        setError(data?.message ?? 'حدث خطأ. يرجى المحاولة مرة أخرى.')
+      }
     } finally {
       setSaving(false)
     }
@@ -354,11 +482,17 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
   const deptOptions    = departments.map(d => ({ value: d.id, label: d.name }))
   const sectionOptions = sections.map(s => ({ value: s.id, label: s.name }))
 
+  const eyeBtn = (
+    <FieldIconBtn label={showPw ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'} onClick={() => setShowPw(p => !p)}>
+      {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+    </FieldIconBtn>
+  )
+
   return (
     <>
-      {/* Scrim */}
+      {/* Scrim — closes only a pristine form, so a stray click can't throw away typed data */}
       <div
-        onClick={onClose}
+        onClick={() => { if (!dirty && !saving) onClose() }}
         style={{
           position: 'fixed', inset: 0, zIndex: 39,
           background: 'rgba(14,22,19,0.42)',
@@ -367,34 +501,46 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
       />
 
       {/* Drawer — pinned to inline-start (right in RTL) */}
-      <div style={{
-        position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
-        width: 'min(520px, 100vw)', background: '#fff', zIndex: 40,
-        boxShadow: '-14px 0 40px rgba(14,22,19,0.22)',
-        display: 'flex', flexDirection: 'column',
-        borderInlineEnd: '1px solid var(--c-border)',
-      }}>
+      <div
+        role="dialog" aria-modal="true" aria-labelledby={titleId}
+        style={{
+          position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
+          width: 'min(520px, 100vw)', background: '#fff', zIndex: 40,
+          boxShadow: '-14px 0 40px rgba(14,22,19,0.22)',
+          display: 'flex', flexDirection: 'column',
+          borderInlineEnd: '1px solid var(--c-border)',
+        }}
+      >
         {/* Head */}
-        <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid var(--c-border)', flexShrink: 0, position: 'relative' }}>
-          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.4, color: 'var(--c-accent)', textTransform: 'uppercase', marginBottom: 6 }}>
-            {isEdit ? 'تعديل مستخدم' : 'إضافة مستخدم'}
+        <div style={{
+          padding: '20px 24px 18px', borderBottom: '1px solid var(--c-border)', flexShrink: 0,
+          display: 'flex', alignItems: 'flex-start', gap: 14,
+        }}>
+          <div style={{
+            width: 42, height: 42, borderRadius: 8, flexShrink: 0,
+            background: 'var(--c-surface)', color: 'var(--c-primary)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {isEdit ? <Pencil size={18} /> : <UserPlus size={19} />}
           </div>
-          <h2 style={{ margin: '0 0 4px', fontSize: 21, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.4 }}>
-            {isEdit ? 'تعديل بيانات المستخدم' : 'إضافة مستخدم'}
-          </h2>
-          <p style={{ margin: 0, fontSize: 12.5, color: 'var(--c-text-2)' }}>
-            {isEdit
-              ? 'عدّل بيانات الموظف أو صلاحياته وارتباطه بالإدارة.'
-              : 'أكمل بيانات الموظف وحدّد دوره وارتباطه بالإدارة.'}
-          </p>
-          {/* Close button — pinned to inline-start corner */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 id={titleId} style={{ margin: '1px 0 4px', fontSize: 19, fontWeight: 800, color: 'var(--c-text)', letterSpacing: -0.3 }}>
+              {isEdit ? 'تعديل بيانات المستخدم' : 'إضافة مستخدم جديد'}
+            </h2>
+            <p style={{ margin: 0, fontSize: 12.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
+              {isEdit
+                ? 'عدّل بيانات الموظف أو صلاحياته وارتباطه بالإدارة.'
+                : 'أكمل بيانات الموظف وحدّد دوره وارتباطه بالإدارة.'}
+            </p>
+          </div>
+          {/* Close — at inline-end (left in RTL), clear of the title */}
           <button
-            onClick={onClose}
+            type="button" onClick={onClose} aria-label="إغلاق" title="إغلاق (Esc)"
+            className="hover:!text-[var(--c-text)] hover:!border-[var(--c-border-strong)]"
             style={{
-              position: 'absolute', insetInlineStart: 18, top: 18,
-              width: 34, height: 34, borderRadius: 4,
+              width: 34, height: 34, borderRadius: 4, flexShrink: 0,
               background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-              color: 'var(--c-text-2)', cursor: 'pointer',
+              color: 'var(--c-text-2)', cursor: 'pointer', transition: 'all .12s',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -402,190 +548,234 @@ function UserDrawer({ mode, user, users, departments, onClose, onSave }) {
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        <form
+          noValidate autoComplete="off"
+          onSubmit={e => { e.preventDefault(); handleSubmit() }}
+          style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+        >
+          {/* Body */}
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '20px 24px 28px' }}>
 
-          {/* Edit: identity card */}
-          {isEdit && user && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 14, padding: 14,
-              borderRadius: 8, marginBottom: 18,
-              background: 'linear-gradient(120deg, var(--c-surface) 0%, #fff 80%)',
-              border: '1px solid var(--c-border)',
-            }}>
-              <Avatar name={user.name} size={44} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>{user.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--c-text-2)', marginTop: 2 }}>{user.email}</div>
-              </div>
-              <RoleBadge role={user.role} />
-            </div>
-          )}
-
-          {/* ── Basic info ── */}
-          <DrawerSection icon={User} label="البيانات الأساسية" />
-
-          <FieldWrap label="الاسم الكامل" required>
-            <TextInput icon={User} placeholder="مثال: أحمد الزهراني" value={form.name} onChange={e => set('name', e.target.value)} />
-          </FieldWrap>
-
-          <FieldWrap label="البريد الإلكتروني" required>
-            <TextInput icon={Mail} type="email" placeholder="user@al-raqi.aa" value={form.email} onChange={e => set('email', e.target.value)} />
-          </FieldWrap>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
-            <FieldWrap label={isEdit ? 'كلمة المرور الجديدة' : 'كلمة المرور'} required={!isEdit}>
-              <TextInput
-                icon={Lock} type={showPw ? 'text' : 'password'} placeholder="••••••••"
-                value={form.password} onChange={e => set('password', e.target.value)}
-                suffix={
-                  <button type="button" onClick={() => setShowPw(p => !p)}
-                    style={{ border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--c-text-3)', display: 'flex', padding: 0 }}>
-                    {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                }
-              />
-            </FieldWrap>
-            <FieldWrap label="تأكيد كلمة المرور" required={!isEdit}>
-              <TextInput
-                icon={Lock} type={showPwC ? 'text' : 'password'} placeholder="••••••••"
-                value={form.password_confirmation} onChange={e => set('password_confirmation', e.target.value)}
-                suffix={
-                  <button type="button" onClick={() => setShowPwC(p => !p)}
-                    style={{ border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--c-text-3)', display: 'flex', padding: 0 }}>
-                    {showPwC ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                }
-              />
-            </FieldWrap>
-          </div>
-
-          {/* ── Role ── */}
-          <DrawerSection icon={Shield} label="الدور والصلاحية" />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 10 }}>
-            {ROLES.map(r => (
-              <RoleCard key={r.key} role={r} selected={form.role} onSelect={v => set('role', v)} />
-            ))}
-          </div>
-
-          {chiefTaken && (
-            <div style={{
-              display: 'flex', gap: 10, alignItems: 'flex-start',
-              padding: '12px 14px', borderRadius: 8, marginTop: 10,
-              background: 'var(--c-accent-tint)', fontSize: 12, lineHeight: 1.6, color: '#6B5B35',
-            }}>
-              <AlertCircle size={15} style={{ color: 'var(--c-accent)', flexShrink: 0, marginTop: 1 }} />
-              <span>تم تعيين رئيس أعلى بالفعل. لا يمكن أن يكون هناك أكثر من رئيس أعلى واحد في النظام.</span>
-            </div>
-          )}
-
-          {/* ── Department / Section ── */}
-          <DrawerSection icon={Settings} label="الإدارة والقسم" />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
-            <FieldWrap label="الإدارة" error={fieldErrors.department_id}>
-              <SelectInput
-                placeholder="اختر الإدارة" value={form.department_id}
-                error={fieldErrors.department_id}
-                onChange={e => {
-                  // Clearing or moving the department always clears the section
-                  // too: a section belongs to exactly one department, so the old
-                  // one cannot survive the move. The cleared value is then sent
-                  // as an explicit null rather than being dropped.
-                  set('department_id', e.target.value)
-                  set('section_id', '')
-                  setFieldErrors({})
-                }}
-                options={deptOptions}
-              />
-            </FieldWrap>
-            <FieldWrap label="القسم" error={fieldErrors.section_id}>
-              <SelectInput
-                placeholder={form.department_id ? 'اختر القسم (أو اتركه فارغاً)' : 'اختر الإدارة أولاً'}
-                value={form.section_id}
-                error={fieldErrors.section_id}
-                onChange={e => { set('section_id', e.target.value); setFieldErrors(f => ({ ...f, section_id: undefined })) }}
-                options={sectionOptions}
-              />
-            </FieldWrap>
-          </div>
-
-          {/* ── Attendance toggle ── */}
-          <DrawerSection icon={null} label="تسجيل الحضور" />
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 14, padding: '13px 15px',
-            borderRadius: 8, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>تسجيل الحضور</div>
-              <div style={{ fontSize: 12, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5 }}>
-                تفعيل متابعة وقت الدخول والخروج لهذا الموظف
-              </div>
-            </div>
-            <Toggle on={form.attendance_check} onChange={v => set('attendance_check', v)} />
-          </div>
-
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 14, padding: '13px 15px',
-            borderRadius: 8, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-            marginTop: 10,
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>صلاحية عرض سجلات الحضور</div>
-              <div style={{ fontSize: 12, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5 }}>
-                السماح لهذا المستخدم بعرض سجلات حضور وانصراف الموظفين
-              </div>
-            </div>
-            <Toggle on={form.can_view_attendance} onChange={v => set('can_view_attendance', v)} />
-          </div>
-
-          {/* Only managers and chiefs reach their team's attendance by role,
-              so only they have something to switch off. */}
-          {(form.role === 'manager' || form.role === 'chief') && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 14, padding: '13px 15px',
-              borderRadius: 8, background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-              marginTop: 10,
-            }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>متابعة حضور الفريق</div>
-                <div style={{ fontSize: 12, color: 'var(--c-text-2)', marginTop: 2, lineHeight: 1.5 }}>
-                  السماح لهذا المدير بعرض حضور وغياب موظفي إدارته
+            {/* Edit: identity card */}
+            {isEdit && user && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 14, padding: 14,
+                borderRadius: 8, marginBottom: 22,
+                background: 'linear-gradient(120deg, var(--c-surface) 0%, #fff 80%)',
+                border: '1px solid var(--c-border)',
+              }}>
+                <Avatar name={user.name} size={44} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-text)' }}>{user.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--c-text-2)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</div>
                 </div>
+                <RoleBadge role={user.role} />
               </div>
-              <Toggle on={form.team_attendance_access} onChange={v => set('team_attendance_access', v)} />
-            </div>
-          )}
-        </div>
+            )}
 
-        {/* Footer */}
-        <div style={{
-          flexShrink: 0, borderTop: '1px solid var(--c-border)', background: '#fff',
-        }}>
-          {error && (
-            <div style={{
-              display: 'flex', gap: 9, alignItems: 'flex-start',
-              padding: '10px 24px', background: 'var(--c-rejected-bg)',
-              borderBottom: '1px solid #F4C9C6',
-              fontSize: 12.5, color: 'var(--c-rejected)', lineHeight: 1.6,
-            }}>
-              <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
-              {error}
+            {/* ── Basic info ── */}
+            <DrawerSection icon={User} label="البيانات الأساسية" first />
+
+            <FieldWrap label="الاسم الكامل" htmlFor={ids.name} required error={fieldErrors.name}>
+              <TextInput
+                id={ids.name} icon={User} placeholder="مثال: أحمد الزهراني" autoComplete="off"
+                autoFocus={!isEdit} error={fieldErrors.name}
+                value={form.name} onChange={e => set('name', e.target.value)}
+              />
+            </FieldWrap>
+
+            <FieldWrap label="البريد الإلكتروني" htmlFor={ids.email} required error={fieldErrors.email}
+              hint={!isEdit && <FieldHint>يستخدمه الموظف لتسجيل الدخول.</FieldHint>}>
+              <TextInput
+                id={ids.email} icon={Mail} type="email" placeholder="name@alraqi.com" ltr
+                autoComplete="off" error={fieldErrors.email}
+                value={form.email} onChange={e => set('email', e.target.value)}
+              />
+            </FieldWrap>
+
+            {/* ── Password ── */}
+            <DrawerSection icon={KeyRound} label="كلمة المرور" />
+
+            {!changingPw ? (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                borderRadius: 8, background: 'var(--c-surface)', border: '1px dashed var(--c-border-strong)',
+              }}>
+                <Lock size={15} style={{ color: 'var(--c-text-3)', flexShrink: 0 }} />
+                <span style={{ flex: 1, fontSize: 12.5, color: 'var(--c-text-2)', lineHeight: 1.6 }}>
+                  كلمة المرور الحالية ستبقى كما هي.
+                </span>
+                <Button type="button" variant="ghost" style={{ height: 34, background: '#fff' }} onClick={() => setChangingPw(true)}>
+                  تغيير كلمة المرور
+                </Button>
+              </div>
+            ) : (
+              <>
+                <FieldWrap
+                  label={isEdit ? 'كلمة المرور الجديدة' : 'كلمة المرور'} htmlFor={ids.password} required
+                  error={fieldErrors.password}
+                  hint={<FieldHint state={pwLongEnough ? 'ok' : 'neutral'}>{PASSWORD_MIN} أحرف على الأقل</FieldHint>}
+                >
+                  <TextInput
+                    id={ids.password} icon={Lock} type={showPw ? 'text' : 'password'} ltr
+                    // new-password stops the browser filling in the admin's own saved password.
+                    autoComplete="new-password" autoFocus={isEdit} error={fieldErrors.password}
+                    value={form.password} onChange={e => set('password', e.target.value)}
+                    suffix={<>
+                      {form.password && (
+                        <FieldIconBtn label={copied ? 'تم النسخ' : 'نسخ كلمة المرور'} onClick={copyPassword}>
+                          {copied ? <Check size={15} style={{ color: 'var(--c-approved)' }} /> : <Copy size={15} />}
+                        </FieldIconBtn>
+                      )}
+                      {eyeBtn}
+                    </>}
+                  />
+                </FieldWrap>
+
+                <FieldWrap
+                  label="تأكيد كلمة المرور" htmlFor={ids.password_confirmation} required
+                  error={fieldErrors.password_confirmation}
+                  hint={form.password_confirmation && (
+                    <FieldHint state={pwMatches ? 'ok' : 'bad'}>
+                      {pwMatches ? 'كلمتا المرور متطابقتان' : 'كلمتا المرور غير متطابقتين'}
+                    </FieldHint>
+                  )}
+                >
+                  <TextInput
+                    id={ids.password_confirmation} icon={Lock} type={showPw ? 'text' : 'password'} ltr
+                    autoComplete="new-password" error={fieldErrors.password_confirmation}
+                    value={form.password_confirmation}
+                    onChange={e => set('password_confirmation', e.target.value)}
+                    suffix={eyeBtn}
+                  />
+                </FieldWrap>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: -4 }}>
+                  <Button type="button" variant="ghost" style={{ height: 34, fontSize: 12.5 }} onClick={generate}>
+                    <WandSparkles size={14} />
+                    توليد كلمة مرور قوية
+                  </Button>
+                  {isEdit && (
+                    <Button type="button" variant="ghost" style={{ height: 34, fontSize: 12.5, border: 0 }} onClick={cancelPasswordChange}>
+                      إبقاء كلمة المرور الحالية
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* ── Role ── */}
+            <DrawerSection icon={Shield} label="الدور والصلاحية" />
+
+            <div role="radiogroup" aria-label="الدور" className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 10 }}>
+              {ROLES.map(r => (
+                <RoleCard key={r.key} role={r} selected={form.role} onSelect={v => set('role', v)} />
+              ))}
             </div>
-          )}
-          <div style={{ padding: '16px 24px', display: 'flex', gap: 10 }}>
-            <Button
-              variant="primary" style={{ flex: 1, height: 46 }}
-              onClick={handleSubmit}
-            >
-              {saving ? '...' : isEdit ? 'حفظ التعديلات' : '+ إنشاء المستخدم'}
-            </Button>
-            <Button variant="ghost" style={{ flex: 1, height: 46 }} onClick={onClose}>
-              إلغاء
-            </Button>
+
+            {chiefTaken && (
+              <div style={{
+                display: 'flex', gap: 10, alignItems: 'flex-start',
+                padding: '12px 14px', borderRadius: 8, marginTop: 10,
+                background: 'var(--c-accent-tint)', fontSize: 12, lineHeight: 1.6, color: '#6B5B35',
+              }}>
+                <AlertCircle size={15} style={{ color: 'var(--c-accent)', flexShrink: 0, marginTop: 1 }} />
+                <span>تم تعيين رئيس أعلى بالفعل. لا يمكن أن يكون هناك أكثر من رئيس أعلى واحد في النظام.</span>
+              </div>
+            )}
+
+            {/* ── Department / Section ── */}
+            <DrawerSection icon={Building2} label="الإدارة والقسم" />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
+              <FieldWrap label="الإدارة" htmlFor={ids.department_id} error={fieldErrors.department_id}>
+                <SelectInput
+                  id={ids.department_id}
+                  placeholder="بدون إدارة" value={form.department_id}
+                  error={fieldErrors.department_id}
+                  onChange={e => {
+                    // Clearing or moving the department always clears the section
+                    // too: a section belongs to exactly one department, so the old
+                    // one cannot survive the move. The cleared value is then sent
+                    // as an explicit null rather than being dropped.
+                    set('department_id', e.target.value)
+                    set('section_id', '')
+                    setFieldErrors(fe => ({ ...fe, department_id: undefined, section_id: undefined }))
+                  }}
+                  options={deptOptions}
+                />
+              </FieldWrap>
+              <FieldWrap label="القسم" htmlFor={ids.section_id} error={fieldErrors.section_id}
+                hint={!form.department_id && <FieldHint>اختر الإدارة أولاً</FieldHint>}>
+                <SelectInput
+                  id={ids.section_id}
+                  disabled={!form.department_id}
+                  placeholder={form.department_id ? 'بدون قسم' : '—'}
+                  value={form.section_id}
+                  error={fieldErrors.section_id}
+                  onChange={e => set('section_id', e.target.value)}
+                  options={sectionOptions}
+                />
+              </FieldWrap>
+            </div>
+
+            {/* ── Attendance ── */}
+            <DrawerSection icon={Clock} label="الحضور" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <ToggleRow
+                title="تسجيل الحضور"
+                desc="تفعيل متابعة وقت الدخول والخروج لهذا الموظف"
+                on={form.attendance_check} onChange={v => set('attendance_check', v)}
+              />
+              <ToggleRow
+                title="صلاحية عرض سجلات الحضور"
+                desc="السماح لهذا المستخدم بعرض سجلات حضور وانصراف الموظفين"
+                on={form.can_view_attendance} onChange={v => set('can_view_attendance', v)}
+              />
+              {/* Only managers and chiefs reach their team's attendance by role,
+                  so only they have something to switch off. */}
+              {(form.role === 'manager' || form.role === 'chief') && (
+                <ToggleRow
+                  title="متابعة حضور الفريق"
+                  desc="السماح لهذا المدير بعرض حضور وغياب موظفي إدارته"
+                  on={form.team_attendance_access} onChange={v => set('team_attendance_access', v)}
+                />
+              )}
+            </div>
           </div>
-        </div>
+
+          {/* Footer */}
+          <div style={{
+            flexShrink: 0, borderTop: '1px solid var(--c-border)', background: '#fff',
+          }}>
+            {error && (
+              <div role="alert" style={{
+                display: 'flex', gap: 9, alignItems: 'flex-start',
+                padding: '10px 24px', background: 'var(--c-rejected-bg)',
+                borderBottom: '1px solid #F4C9C6',
+                fontSize: 12.5, color: 'var(--c-rejected)', lineHeight: 1.6,
+              }}>
+                <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+                {error}
+              </div>
+            )}
+            <div style={{ padding: '16px 24px', display: 'flex', gap: 10 }}>
+              <Button
+                type="submit" variant="primary" disabled={saving}
+                style={{ flex: 2, height: 46, opacity: saving ? 0.75 : 1, cursor: saving ? 'wait' : 'pointer' }}
+              >
+                {saving
+                  ? <><LoaderCircle size={16} style={{ animation: 'spin 0.9s linear infinite' }} /> جارٍ الحفظ…</>
+                  : isEdit
+                    ? <><Check size={16} /> حفظ التعديلات</>
+                    : <><UserPlus size={16} /> إنشاء المستخدم</>}
+              </Button>
+              <Button type="button" variant="ghost" style={{ flex: 1, height: 46 }} onClick={onClose} disabled={saving}>
+                إلغاء
+              </Button>
+            </div>
+          </div>
+        </form>
       </div>
     </>
   )

@@ -48,7 +48,11 @@
       "Bash(curl -s -m 10 -o /dev/null -w \"vite:%{http_code}\" http://localhost:5173/)",
       "Bash(curl -s -m 10 -X POST http://localhost:8000/api/login -H \"Content-Type: application/json\" -H \"Accept: application/json\" -d '{\"email\":\"admin@alraqi.com\",\"password\":\"r12345\"}')",
       "Bash(node v8-changes.mjs)",
-      "Bash(node v8-doc-delete.mjs)"
+      "Bash(node v8-doc-delete.mjs)",
+      "Bash(node -e \"let s='';process.stdin.on\\('data',d=>s+=d\\).on\\('end',\\(\\)=>{for\\(const f of JSON.parse\\(s\\)\\){for\\(const m of f.messages\\){console.log\\(f.filePath.split\\('dashboard\\\\\\\\\\\\\\\\'\\)[1]+':'+m.line+' ['+m.ruleId+'] '+m.message.split\\('\\\\n'\\)[0]\\)}}}\\)\")",
+      "Bash(node -e \"console.log\\(require\\('fs'\\).existsSync\\('node_modules/lucide-react/dist/esm/icons/undo-2.js'\\)\\)\")",
+      "Bash(git --no-pager diff src/pages/AttendanceEmployeeReportPage.jsx src/pages/AttendanceReportPage.jsx)",
+      "Bash(git --no-pager status --short)"
     ],
     "additionalDirectories": [
       "c:\\Users\\ragab\\Desktop\\work\\Raqi-App\\app\\Services"
