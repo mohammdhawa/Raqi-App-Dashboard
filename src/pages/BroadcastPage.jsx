@@ -3,14 +3,35 @@ import api from '../services/api'
 import { useToast } from '../components/ui/Toast'
 import { extractErrorMessage } from '../components/documents/shared'
 import {
-  Megaphone, Send, AlertTriangle, Bell, Loader2, CheckCircle2, Users, X,
+  Megaphone, Send, AlertTriangle, Bell, Loader2, CheckCircle2, Users, X, UserCog,
 } from 'lucide-react'
 
-// POST /admin/notifications/broadcast — admin-only. Answers 202 (not 200): the
+// POST /admin/notifications/broadcast — admin-only. `audience` is 'all' (the
+// default) or 'managers' (admin, chief, manager). Answers 202 (not 200): the
 // per-user rows and pushes are produced by a queued job, so recipients don't
 // appear in /notifications until a worker drains the queue.
 const MAX_TITLE = 255
 const MAX_BODY = 1500
+
+// Who the broadcast reaches. `value` is the API's `audience`; `reach` is the
+// phrase the warning and confirmation use after «إلى».
+const AUDIENCES = [
+  {
+    value: 'all',
+    label: 'جميع المستخدمين',
+    hint: 'كل مستخدمي النظام، الموظفون والمديرون.',
+    reach: 'جميع مستخدمي النظام',
+    icon: Users,
+  },
+  {
+    value: 'managers',
+    label: 'المديرون فقط',
+    hint: 'مدير النظام والرئيس الأعلى والمديرون، دون الموظفين.',
+    reach: 'المديرين فقط (مدير النظام، الرئيس الأعلى، المديرون)',
+    icon: UserCog,
+  },
+]
+const audienceOf = value => AUDIENCES.find(a => a.value === value) ?? AUDIENCES[0]
 
 const cardStyle = {
   background: '#fff', border: '1px solid var(--c-border)', borderRadius: 8,
@@ -50,6 +71,56 @@ const inputBase = {
   width: '100%', boxSizing: 'border-box', background: 'var(--c-surface)',
   borderRadius: 4, padding: '11px 12px', outline: 'none',
   fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--c-text)',
+}
+
+// ── Audience picker ───────────────────────────────────────────────────────────
+
+function AudiencePicker({ value, onChange, error }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div id="broadcast-audience-label" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--c-text)', marginBottom: 7 }}>
+        المستلمون
+        <span style={{ color: 'var(--c-rejected)', marginInlineStart: 3 }}>*</span>
+      </div>
+      <div
+        role="radiogroup" aria-labelledby="broadcast-audience-label"
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}
+      >
+        {AUDIENCES.map(a => {
+          const selected = a.value === value
+          const Icon = a.icon
+          return (
+            <button
+              key={a.value} type="button" role="radio" aria-checked={selected}
+              onClick={() => onChange(a.value)}
+              style={{
+                flex: '1 1 200px', minWidth: 0, textAlign: 'start',
+                display: 'flex', gap: 10, alignItems: 'flex-start',
+                padding: '11px 12px', borderRadius: 8, cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+                background: selected ? 'var(--c-primary-light)' : '#fff',
+                border: `1.5px solid ${selected ? 'var(--c-primary)' : 'var(--c-border)'}`,
+              }}
+            >
+              <span style={{
+                width: 30, height: 30, borderRadius: 4, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: selected ? 'var(--c-primary)' : 'var(--c-surface)',
+                color: selected ? '#fff' : 'var(--c-text-3)',
+              }}>
+                <Icon size={15} />
+              </span>
+              <span style={{ minWidth: 0 }}>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>{a.label}</span>
+                <span style={{ display: 'block', fontSize: 12, color: 'var(--c-text-3)', marginTop: 3, lineHeight: 1.6 }}>{a.hint}</span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      {error && <div style={{ fontSize: 12, color: 'var(--c-rejected)', marginTop: 5 }}>{error}</div>}
+    </div>
+  )
 }
 
 // ── Live preview — mirrors how a row renders in the Topbar notifications panel ─
@@ -102,7 +173,7 @@ function Preview({ title, body }) {
 
 // ── Confirmation modal ────────────────────────────────────────────────────────
 
-function ConfirmModal({ title, body, sending, onClose, onConfirm }) {
+function ConfirmModal({ title, body, audience, sending, onClose, onConfirm }) {
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape' && !sending) onClose() }
     window.addEventListener('keydown', onKey)
@@ -135,7 +206,7 @@ function ConfirmModal({ title, body, sending, onClose, onConfirm }) {
             إرسال إشعار عام؟
           </h3>
           <p style={{ margin: '0 auto', maxWidth: 360, fontSize: 13, color: 'var(--c-text-2)', lineHeight: 1.7 }}>
-            سيصل هذا الإشعار إلى <strong>جميع مستخدمي النظام</strong> داخل التطبيق وكإشعار فوري
+            سيصل هذا الإشعار إلى <strong>{audienceOf(audience).reach}</strong> داخل التطبيق وكإشعار فوري
             على أجهزتهم. لا يمكن التراجع عن الإرسال.
           </p>
           <div style={{
@@ -213,6 +284,9 @@ function QueuedPanel({ result, onNew }) {
           <span style={{ fontSize: 13.5, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
             {result.recipients} مستخدماً
           </span>
+          {result.audience === 'managers' && (
+            <span style={{ fontSize: 12.5, fontWeight: 700 }}>· {audienceOf(result.audience).label}</span>
+          )}
         </div>
       )}
 
@@ -246,6 +320,7 @@ export default function BroadcastPage() {
 
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
+  const [audience, setAudience] = useState('all')
   const [errors, setErrors] = useState({})
   const [confirming, setConfirming] = useState(false)
   const [sending, setSending] = useState(false)
@@ -269,14 +344,18 @@ export default function BroadcastPage() {
       const res = await api.post('/admin/notifications/broadcast', {
         title: title.trim(),
         body: body.trim(),
+        audience,
       })
       setResult({
         broadcast_id: res.data?.broadcast_id ?? null,
         recipients: res.data?.recipients ?? null,
+        audience: res.data?.audience ?? audience,
       })
       setConfirming(false)
       setTitle(''); setBody(''); setErrors({})
-      toast.success('تم قبول الإشعار وجارٍ إرساله للمستخدمين')
+      toast.success(audience === 'managers'
+        ? 'تم قبول الإشعار وجارٍ إرساله للمديرين'
+        : 'تم قبول الإشعار وجارٍ إرساله للمستخدمين')
     } catch (e) {
       // 422 comes back per-field; surface it on the inputs, not just as a toast.
       const fieldErrors = e?.response?.data?.errors
@@ -284,6 +363,7 @@ export default function BroadcastPage() {
         setErrors({
           title: fieldErrors.title?.[0],
           body: fieldErrors.body?.[0],
+          audience: fieldErrors.audience?.[0],
         })
         setConfirming(false)
       }
@@ -305,7 +385,7 @@ export default function BroadcastPage() {
             <div style={cardStyle}>
               <div style={cardHeaderStyle}>
                 <Megaphone size={15} style={{ color: 'var(--c-text-3)' }} />
-                <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--c-text)' }}>إشعار عام لجميع المستخدمين</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--c-text)' }}>إشعار عام</span>
               </div>
               <div style={{ padding: 20 }}>
 
@@ -315,10 +395,15 @@ export default function BroadcastPage() {
                 }}>
                   <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
                   <div style={{ fontSize: 12, lineHeight: 1.7 }}>
-                    يصل الإشعار إلى <strong>كل مستخدمي النظام</strong> داخل التطبيق وكإشعار فوري على
-                    أجهزتهم. لا يمكن التراجع بعد الإرسال.
+                    يصل الإشعار إلى <strong>{audienceOf(audience).reach}</strong> داخل التطبيق وكإشعار
+                    فوري على أجهزتهم. لا يمكن التراجع بعد الإرسال.
                   </div>
                 </div>
+
+                <AudiencePicker
+                  value={audience} error={errors.audience}
+                  onChange={v => { setAudience(v); setErrors(x => ({ ...x, audience: undefined })) }}
+                />
 
                 <FieldWrap
                   label="العنوان" required error={errors.title}
@@ -394,7 +479,7 @@ export default function BroadcastPage() {
 
       {confirming && (
         <ConfirmModal
-          title={title.trim()} body={body.trim()} sending={sending}
+          title={title.trim()} body={body.trim()} audience={audience} sending={sending}
           onClose={() => setConfirming(false)} onConfirm={send}
         />
       )}
